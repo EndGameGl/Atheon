@@ -1,6 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atheon", "Atheon\Atheon.csproj", "{98E2FDCF-5735-4357-9D1B-BE5B465A236D}"
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33205.214
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Atheon", "Atheon\Atheon.csproj", "{98E2FDCF-5735-4357-9D1B-BE5B465A236D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -12,5 +15,11 @@ Global
 		{98E2FDCF-5735-4357-9D1B-BE5B465A236D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{98E2FDCF-5735-4357-9D1B-BE5B465A236D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{98E2FDCF-5735-4357-9D1B-BE5B465A236D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {06E9946E-7DEE-4403-BAC4-0CC50E3D881F}
 	EndGlobalSection
 EndGlobal

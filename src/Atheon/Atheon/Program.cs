@@ -1,4 +1,14 @@
-﻿using Serilog;
+﻿using Atheon.Extensions;
+using Atheon.Options;
+using Atheon.Services;
+using Atheon.Services.Db.Sqlite;
+using Atheon.Services.Hosted;
+using Atheon.Services.Interfaces;
+using DotNetBungieAPI;
+using DotNetBungieAPI.DefinitionProvider.Sqlite;
+using DotNetBungieAPI.Extensions;
+using DotNetBungieAPI.Models;
+using Serilog;
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
@@ -26,6 +36,7 @@ catch (Exception exception)
 void ConfigureServices(WebApplicationBuilder applicationBuilder)
 {
     applicationBuilder.Services.AddControllersWithViews();
+    applicationBuilder.Services.AddSwaggerGen();
 
     applicationBuilder.Host.UseSerilog((context, services, configuration) =>
     {
@@ -36,24 +47,51 @@ void ConfigureServices(WebApplicationBuilder applicationBuilder)
             .WriteTo.Console();
     });
 
+    applicationBuilder.Services.AddDiscordServices();
 
-}
-
-void ConfigureApplication(WebApplication webApplication)
-{
-    if (!webApplication.Environment.IsDevelopment())
+    applicationBuilder.Services.Configure<DatabaseOptions>((settings) =>
     {
-        webApplication.UseHsts();
+        applicationBuilder.Configuration.GetSection("Database").Bind(settings);
+    });
+
+    switch (applicationBuilder.Configuration.GetSection("Database:CurrentMode").Value)
+    {
+        case DatabaseOptions.SqliteKey:
+            {
+                applicationBuilder.Services.AddSingleton<IDbConnectionFactory, SqliteDbConnectionFactory>();
+                applicationBuilder.Services.AddSingleton<IDbBootstrap, SqliteDbBootstrap>();
+                applicationBuilder.Services.AddSingleton<ISettingsStorage, SqliteSettingsStorage>();
+                applicationBuilder.Services.AddSingleton<IDbAccess, SqliteDbAccess>();
+                break;
+            }
     }
 
-    webApplication.UseHttpsRedirection();
-    webApplication.UseStaticFiles();
-    webApplication.UseRouting();
+    applicationBuilder.Services.AddSingleton<IBungieClientProvider, BungieClientProvider>();
+
+    applicationBuilder.Services.AddHostedService<ApplicationStartup>();
+}
+
+void ConfigureApplication(WebApplication app)
+{
+    if (!app.Environment.IsDevelopment())
+    {
+        app.UseHsts();
+    }
+
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI();
+    }
+
+    app.UseHttpsRedirection();
+    app.UseStaticFiles();
+    app.UseRouting();
 
 
-    webApplication.MapControllerRoute(
+    app.MapControllerRoute(
         name: "default",
         pattern: "{controller}/{action=Index}/{id?}");
 
-    webApplication.MapFallbackToFile("index.html");
+    app.MapFallbackToFile("index.html");
 }
