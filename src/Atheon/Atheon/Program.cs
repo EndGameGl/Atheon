@@ -4,10 +4,6 @@ using Atheon.Services;
 using Atheon.Services.Db.Sqlite;
 using Atheon.Services.Hosted;
 using Atheon.Services.Interfaces;
-using DotNetBungieAPI;
-using DotNetBungieAPI.DefinitionProvider.Sqlite;
-using DotNetBungieAPI.Extensions;
-using DotNetBungieAPI.Models;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -62,6 +58,7 @@ void ConfigureServices(WebApplicationBuilder applicationBuilder)
                 applicationBuilder.Services.AddSingleton<IDbBootstrap, SqliteDbBootstrap>();
                 applicationBuilder.Services.AddSingleton<ISettingsStorage, SqliteSettingsStorage>();
                 applicationBuilder.Services.AddSingleton<IDbAccess, SqliteDbAccess>();
+                applicationBuilder.Services.AddSingleton<IDbDataValidator, SqliteDbDataValidator>();
                 break;
             }
     }

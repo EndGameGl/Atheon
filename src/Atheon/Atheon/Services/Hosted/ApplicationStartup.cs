@@ -11,6 +11,7 @@ namespace Atheon.Services.Hosted
         private readonly IBungieClientProvider _bungieClientProvider;
         private readonly ILogger<ApplicationStartup> _logger;
         private readonly IDiscordEventHandler _discordEventHandler;
+        private readonly IDbDataValidator _dbDataValidator;
 
         public ApplicationStartup(
             IDiscordClientProvider discordClientProvider,
@@ -18,7 +19,8 @@ namespace Atheon.Services.Hosted
             ISettingsStorage settingsStorage,
             IBungieClientProvider bungieClientProvider,
             ILogger<ApplicationStartup> logger,
-            IDiscordEventHandler discordEventHandler)
+            IDiscordEventHandler discordEventHandler,
+            IDbDataValidator dbDataValidator)
         {
             _discordClientProvider = discordClientProvider;
             _dbBootstrap = dbBootstrap;
@@ -26,6 +28,7 @@ namespace Atheon.Services.Hosted
             _bungieClientProvider = bungieClientProvider;
             _logger = logger;
             _discordEventHandler = discordEventHandler;
+            _dbDataValidator = dbDataValidator;
         }
 
         private async Task RunInitialWarnings()
@@ -63,6 +66,8 @@ namespace Atheon.Services.Hosted
             await client.DefinitionProvider.Initialize();
 
             await _discordClientProvider.ConnectAsync();
+
+            await _dbDataValidator.ValidateDbData();
 
             _discordEventHandler.SubscribeToEvents();
         }
