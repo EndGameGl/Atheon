@@ -44,7 +44,6 @@ public class DiscordEventHandler : IDiscordEventHandler
         }
     }
 
-
     public void SubscribeToEvents()
     {
         _logger.LogInformation("Setting up discord event handlers...");

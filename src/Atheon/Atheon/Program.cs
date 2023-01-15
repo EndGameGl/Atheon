@@ -1,9 +1,11 @@
 ﻿using Atheon.Extensions;
 using Atheon.Options;
 using Atheon.Services;
+using Atheon.Services.BungieApi;
 using Atheon.Services.Db.Sqlite;
 using Atheon.Services.Hosted;
 using Atheon.Services.Interfaces;
+using Atheon.Services.Scanners.DestinyProfileScanner;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -64,6 +66,8 @@ void ConfigureServices(WebApplicationBuilder applicationBuilder)
     }
 
     applicationBuilder.Services.AddSingleton<IBungieClientProvider, BungieClientProvider>();
+    applicationBuilder.Services.AddSingleton<BungieNetApiCallLogger>();
+    applicationBuilder.Services.AddSingleton<DestinyProfileScanner>();
 
     applicationBuilder.Services.AddHostedService<ApplicationStartup>();
 }

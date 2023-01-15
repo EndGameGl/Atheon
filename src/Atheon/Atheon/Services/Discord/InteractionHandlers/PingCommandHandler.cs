@@ -1,11 +1,12 @@
-﻿using Discord.Interactions;
+﻿using Atheon.Services.Discord.InteractionHandlers.Base;
+using Discord.Interactions;
 using Discord.WebSocket;
 
 namespace Atheon.Services.Discord.InteractionHandlers;
 
-public class PingCommandHandler : InteractionModuleBase<ShardedInteractionContext<SocketSlashCommand>>
+public class PingCommandHandler : SlashCommandHandlerBase
 {
-    public PingCommandHandler()
+    public PingCommandHandler(ILogger<PingCommandHandler> logger) : base(logger)
     {
 
     }
