@@ -4,7 +4,7 @@ using System.Collections.Concurrent;
 
 namespace Atheon.Services.BungieApi;
 
-public class BungieNetApiCallLogger
+public class BungieNetApiCallHandler
 {
     public ulong TotalRequestsMade { get; private set; }
     public ulong TotalErrors { get; private set; }
@@ -13,7 +13,7 @@ public class BungieNetApiCallLogger
     public ulong SuccessfulRequests { get; private set; }
     public DateTime MeasureStartTime { get; private set; }
 
-    public BungieNetApiCallLogger()
+    public BungieNetApiCallHandler()
     {
         PerErrorRequests = new ConcurrentDictionary<PlatformErrorCodes, ulong>();
         MeasureStartTime = DateTime.UtcNow;
@@ -86,4 +86,30 @@ public class BungieNetApiCallLogger
         MeasureStartTime = DateTime.UtcNow;
     }
 
+    public async Task<BungieResponse<T>?> PerformRequestAndLog<T>(
+        Func<BungieNetApiCallHandler, Task<BungieResponse<T>>> action)
+    {
+        try
+        {
+            var response = await action(this);
+            if (response.IsSuccessfulResponseCode)
+            {
+                SuccessfulRequests++;
+                return response;
+            }
+
+            PerErrorRequests.AddOrUpdate(
+                response.ErrorCode,
+                (_) => 1,
+                (_, oldValue) => oldValue + 1);
+            TotalErrors++;
+
+            return response;
+        }
+        catch (OperationCanceledException)
+        {
+            LogTimeout();
+            return null;
+        }
+    }
 }

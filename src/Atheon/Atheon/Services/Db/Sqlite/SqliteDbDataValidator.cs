@@ -1,4 +1,4 @@
-﻿using Atheon.Models.Destiny;
+﻿using Atheon.Models.Database.Destiny;
 using Atheon.Services.Interfaces;
 using Discord.WebSocket;
 

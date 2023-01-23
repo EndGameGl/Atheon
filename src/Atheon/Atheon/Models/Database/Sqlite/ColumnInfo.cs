@@ -6,19 +6,19 @@ namespace Atheon.Models.Database.Sqlite;
 [DapperAutomap]
 public class ColumnInfo
 {
-    [DapperColumn("cid")]
+    [AutoColumn("cid")]
     public int Id { get; set; }
 
-    [DapperColumn("name")]
+    [AutoColumn("name")]
     public string Name { get; set; }
 
-    [DapperColumn("type")]
+    [AutoColumn("type")]
     public string Type { get; set; }
 
-    [DapperColumn("notnull")]
+    [AutoColumn("notnull")]
     public int NotNull { get; set; }
 
-    [DapperColumn("pk")]
+    [AutoColumn("pk")]
     public int PrimaryKey { get; set; }
 
     public bool IsEqualTo(DatabaseTableColumn databaseTableColumn)

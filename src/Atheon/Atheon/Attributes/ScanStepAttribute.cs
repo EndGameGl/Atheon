@@ -1,5 +1,6 @@
 ﻿namespace Atheon.Attributes;
 
+[AttributeUsage(AttributeTargets.Method)]
 public class ScanStepAttribute : Attribute
 {
     public string StepName { get; }

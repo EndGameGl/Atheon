@@ -12,12 +12,12 @@ namespace Atheon.Services.Scanners.DestinyProfileScanner
     public class DestinyProfileScanner : EntityScannerBase<DestinyProfileScannerInput, DestinyProfileScannerContext>
     {
         private readonly IBungieClientProvider _bungieClientProvider;
-        private readonly BungieNetApiCallLogger _bungieNetApiCallLogger;
+        private readonly BungieNetApiCallHandler _bungieNetApiCallLogger;
 
         public DestinyProfileScanner(
             ILogger<DestinyProfileScanner> logger,
             IBungieClientProvider bungieClientProvider,
-            BungieNetApiCallLogger bungieNetApiCallLogger) : base(logger)
+            BungieNetApiCallHandler bungieNetApiCallLogger) : base(logger)
         {
             _bungieClientProvider = bungieClientProvider;
             _bungieNetApiCallLogger = bungieNetApiCallLogger;

@@ -66,7 +66,7 @@ void ConfigureServices(WebApplicationBuilder applicationBuilder)
     }
 
     applicationBuilder.Services.AddSingleton<IBungieClientProvider, BungieClientProvider>();
-    applicationBuilder.Services.AddSingleton<BungieNetApiCallLogger>();
+    applicationBuilder.Services.AddSingleton<BungieNetApiCallHandler>();
     applicationBuilder.Services.AddSingleton<DestinyProfileScanner>();
 
     applicationBuilder.Services.AddHostedService<ApplicationStartup>();

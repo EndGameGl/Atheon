@@ -1,6 +1,6 @@
 ﻿using DotNetBungieAPI.Models.Destiny;
 
-namespace Atheon.Models.Destiny;
+namespace Atheon.Models.Database.Destiny;
 
 public class DefinitionTrackSettings<TDefinition> where TDefinition : IDestinyDefinition
 {

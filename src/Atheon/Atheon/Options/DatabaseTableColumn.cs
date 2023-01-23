@@ -18,7 +18,7 @@ public class DatabaseTableColumn
         switch (dbType)
         {
             case DatabaseOptions.SqliteKey:
-                return $"{Name} {Type[dbType]}{(PrimaryKey.HasValue ? " PRIMARY KEY" : string.Empty)}{(NotNull.HasValue ? " NOT NULL" : string.Empty)}";
+                return $"{Name} {Type[dbType]}{(PrimaryKey is true ? " PRIMARY KEY" : string.Empty)}{(NotNull is true ? " NOT NULL" : string.Empty)}";
             default:
                 return string.Empty;
         }

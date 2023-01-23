@@ -16,16 +16,9 @@ public static class Ensure
                 throw new ArgumentNullException(ParamName, errorMessage);
             }
 
-            try
+            if (predicate(Value))
             {
-                if (predicate(Value))
-                {
-                    return Value!;
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(errorMessage, ex);
+                return Value!;
             }
 
             throw new Exception(errorMessage);
