@@ -13,7 +13,9 @@ namespace Atheon.Services.Scanners.DestinyClanScanner
         public ReadOnlyCollection<GroupMember> Members { get; set; }
 
         public long ClanId { get; set; }
+
         public int MembersOnline { get; set; }
+
         public List<GroupMember> MembersToScan { get; set; }
     }
 }

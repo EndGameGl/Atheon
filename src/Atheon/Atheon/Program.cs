@@ -5,7 +5,8 @@ using Atheon.Services.BungieApi;
 using Atheon.Services.Db.Sqlite;
 using Atheon.Services.Hosted;
 using Atheon.Services.Interfaces;
-using Atheon.Services.Scanners.DestinyProfileScanner;
+using Atheon.Services.Scanners.DestinyClanMemberScanner;
+using Atheon.Services.Scanners.DestinyClanScanner;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -61,13 +62,20 @@ void ConfigureServices(WebApplicationBuilder applicationBuilder)
                 applicationBuilder.Services.AddSingleton<ISettingsStorage, SqliteSettingsStorage>();
                 applicationBuilder.Services.AddSingleton<IDbAccess, SqliteDbAccess>();
                 applicationBuilder.Services.AddSingleton<IDbDataValidator, SqliteDbDataValidator>();
+                applicationBuilder.Services.AddSingleton<IClansToScanProvider, SqliteClansToScanProvider>();
+
+                applicationBuilder.Services.AddSingleton<IDestinyDb, SqliteDestinyDb>();
                 break;
             }
     }
 
     applicationBuilder.Services.AddSingleton<IBungieClientProvider, BungieClientProvider>();
     applicationBuilder.Services.AddSingleton<BungieNetApiCallHandler>();
-    applicationBuilder.Services.AddSingleton<DestinyProfileScanner>();
+
+    applicationBuilder.Services.AddSingleton<DestinyInitialClanScanner>();
+    applicationBuilder.Services.AddSingleton<DestinyClanScanner>();
+    applicationBuilder.Services.AddSingleton<DestinyClanMemberBroadcastedScanner>();
+    applicationBuilder.Services.AddSingleton<DestinyClanMemberSilentScanner>();
 
     applicationBuilder.Services.AddHostedService<ApplicationStartup>();
 }

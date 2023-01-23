@@ -9,7 +9,7 @@ namespace Atheon.Services.Discord;
 public class DiscordEventHandler : IDiscordEventHandler
 {
     private readonly IDiscordClientProvider _discordClientProvider;
-    private readonly IDbAccess _dbAccess;
+    private readonly IDestinyDb _destinyDb;
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<DiscordEventHandler> _logger;
 
@@ -18,12 +18,12 @@ public class DiscordEventHandler : IDiscordEventHandler
 
     public DiscordEventHandler(
         IDiscordClientProvider discordClientProvider,
-        IDbAccess dbAccess,
+        IDestinyDb destinyDb,
         IServiceProvider serviceProvider,
         ILogger<DiscordEventHandler> logger)
     {
         _discordClientProvider = discordClientProvider;
-        _dbAccess = dbAccess;
+        _destinyDb = destinyDb;
         _serviceProvider = serviceProvider;
         _logger = logger;
     }
@@ -79,13 +79,13 @@ public class DiscordEventHandler : IDiscordEventHandler
 
     private async Task OnGuildJoin(SocketGuild socketGuild)
     {
-        var newGuildData = GuildSettings.CreateDefault(socketGuild.Id, socketGuild.Name);
+        var newGuildData = DiscordGuildSettingsDbModel.CreateDefault(socketGuild.Id, socketGuild.Name);
 
-        await _dbAccess.UpsertGuildSettingsAsync(newGuildData);
+        await _destinyDb.UpsertGuildSettingsAsync(newGuildData);
     }
 
     private async Task OnGuildLeft(SocketGuild socketGuild)
     {
-        await _dbAccess.DeleteGuildSettingsAsync(socketGuild.Id);
+        await _destinyDb.DeleteGuildSettingsAsync(socketGuild.Id);
     }
 }

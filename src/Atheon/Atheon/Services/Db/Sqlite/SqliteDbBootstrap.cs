@@ -10,12 +10,9 @@ using DotNetBungieAPI.Models.Destiny.Definitions.Metrics;
 using DotNetBungieAPI.Models.Destiny.Definitions.Progressions;
 using DotNetBungieAPI.Models.Destiny.Definitions.Records;
 using Microsoft.AspNetCore.Http.Json;
-using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection;
 using System.Text;
-using System.Text.Json;
 
 namespace Atheon.Services.Db.Sqlite;
 

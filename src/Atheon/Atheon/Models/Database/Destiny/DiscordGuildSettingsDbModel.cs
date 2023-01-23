@@ -4,6 +4,7 @@ using DotNetBungieAPI.Models.Destiny.Definitions.Collectibles;
 using DotNetBungieAPI.Models.Destiny.Definitions.Progressions;
 using DotNetBungieAPI.Models.GroupsV2;
 using Atheon.Attributes;
+using Atheon.Options;
 
 namespace Atheon.Models.Database.Destiny;
 
@@ -12,71 +13,71 @@ namespace Atheon.Models.Database.Destiny;
 /// </summary>
 [AutoTable("Guilds")]
 [DapperAutomap]
-public class GuildSettings
+public class DiscordGuildSettingsDbModel
 {
     /// <summary>
     ///     Discord server guild ID
     /// </summary>
-    [AutoColumn(nameof(GuildId), isPrimaryKey: true, notNull: true, sqliteType: "INTEGER")]
+    [AutoColumn(nameof(GuildId), isPrimaryKey: true, notNull: true, sqliteType: DatabaseOptions.SQLiteTypes.INTEGER.BIGINT)]
     public ulong GuildId { get; set; }
 
     /// <summary>
     ///     Discord server guild name
     /// </summary>
-    [AutoColumn(nameof(GuildName), sqliteType: "TEXT")]
+    [AutoColumn(nameof(GuildName), sqliteType: DatabaseOptions.SQLiteTypes.TEXT.DEFAULT_VALUE)]
     public string GuildName { get; set; }
 
     /// <summary>
     ///     Id of Discord channel all reports are sent to
     /// </summary>
-    [AutoColumn(nameof(DefaultReportChannel), sqliteType: "UNSIGNED BIG INT")]
+    [AutoColumn(nameof(DefaultReportChannel), sqliteType: DatabaseOptions.SQLiteTypes.INTEGER.UNSIGNED_BIG_INT)]
     public ulong? DefaultReportChannel { get; set; }
 
     /// <summary>
     ///     Destiny 2 <see cref="DestinyMetricDefinition"/> hashes
     /// </summary>
-    [AutoColumn(nameof(TrackedMetrics), sqliteType: "TEXT")]
+    [AutoColumn(nameof(TrackedMetrics), sqliteType: DatabaseOptions.SQLiteTypes.TEXT.DEFAULT_VALUE)]
     public DefinitionTrackSettings<DestinyMetricDefinition> TrackedMetrics { get; set; }
 
     /// <summary>
     ///     Destiny 2 <see cref="DestinyRecordDefinition"/> hashes
     /// </summary>
-    [AutoColumn(nameof(TrackedRecords), sqliteType: "TEXT")]
+    [AutoColumn(nameof(TrackedRecords), sqliteType: DatabaseOptions.SQLiteTypes.TEXT.DEFAULT_VALUE)]
     public DefinitionTrackSettings<DestinyRecordDefinition> TrackedRecords { get; set; }
 
     /// <summary>
     ///     Destiny 2 <see cref="DestinyCollectibleDefinition"/> hashes
     /// </summary>
-    [AutoColumn(nameof(TrackedCollectibles), sqliteType: "TEXT")]
+    [AutoColumn(nameof(TrackedCollectibles), sqliteType: DatabaseOptions.SQLiteTypes.TEXT.DEFAULT_VALUE)]
     public DefinitionTrackSettings<DestinyCollectibleDefinition> TrackedCollectibles { get; set; }
 
     /// <summary>
     ///     Destiny 2 <see cref="DestinyProgressionDefinition"/> hashes
     /// </summary>
-    [AutoColumn(nameof(TrackedProgressions), sqliteType: "TEXT")]
+    [AutoColumn(nameof(TrackedProgressions), sqliteType: DatabaseOptions.SQLiteTypes.TEXT.DEFAULT_VALUE)]
     public DefinitionTrackSettings<DestinyProgressionDefinition> TrackedProgressions { get; set; }
 
     /// <summary>
     ///     Whether system reports are sent to Discord channel
     /// </summary>
-    [AutoColumn(nameof(SystemReportsEnabled), sqliteType: "BOOLEAN")]
+    [AutoColumn(nameof(SystemReportsEnabled), sqliteType: DatabaseOptions.SQLiteTypes.NUMERIC.BOOLEAN)]
     public bool SystemReportsEnabled { get; set; }
 
     /// <summary>
     ///     Id of Discord channel all system reports are sent to
     /// </summary>
-    [AutoColumn(nameof(SystemReportsOverrideChannel), sqliteType: "UNSIGNED BIG INT")]
+    [AutoColumn(nameof(SystemReportsOverrideChannel), sqliteType: DatabaseOptions.SQLiteTypes.INTEGER.UNSIGNED_BIG_INT)]
     public ulong? SystemReportsOverrideChannel { get; set; }
 
     /// <summary>
     ///     Destiny 2 <see cref="GroupV2"/> IDs that are linked to this Discord guild
     /// </summary>
-    [AutoColumn(nameof(Clans), sqliteType: "TEXT")]
+    [AutoColumn(nameof(Clans), sqliteType: DatabaseOptions.SQLiteTypes.TEXT.DEFAULT_VALUE)]
     public HashSet<long> Clans { get; set; }
 
-    public static GuildSettings CreateDefault(ulong guildId, string guildName)
+    public static DiscordGuildSettingsDbModel CreateDefault(ulong guildId, string guildName)
     {
-        return new GuildSettings()
+        return new DiscordGuildSettingsDbModel()
         {
             GuildId = guildId,
             GuildName = guildName,

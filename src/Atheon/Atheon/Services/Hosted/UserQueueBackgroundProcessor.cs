@@ -63,11 +63,33 @@ public class UserQueueBackgroundProcessor : PeriodicBackgroundService, IUserQueu
         {
             if (entry.Silent)
             {
-                //await _silentMemberScanner.Scan(entry.Member, entry.UpdateContext, entry.CancellationToken);
+                await _silentMemberScanner.Scan(
+                    input: new DestinyClanMemberScannerInput()
+                    {
+                        BungieClient = entry.UpdateContext.BungieClient!,
+                        ClanScannerContext = entry.UpdateContext,
+                        GroupMember = entry.Member
+                    },
+                    context: new DestinyClanMemberScannerContext()
+                    {
+
+                    },
+                    entry.CancellationToken);
             }
             else
             {
-                //await _memberScanner.Scan(entry.Member, entry.UpdateContext, entry.CancellationToken);
+                await _memberScanner.Scan(
+                    input: new DestinyClanMemberScannerInput()
+                    {
+                        BungieClient = entry.UpdateContext.BungieClient!,
+                        ClanScannerContext = entry.UpdateContext,
+                        GroupMember = entry.Member
+                    },
+                    context: new DestinyClanMemberScannerContext()
+                    {
+
+                    },
+                    entry.CancellationToken);
             }
         }
         catch (Exception exception)
@@ -183,7 +205,7 @@ public class UserQueueBackgroundProcessor : PeriodicBackgroundService, IUserQueu
     }
 
     public Task<ClanScanProgress> EnqueueAndWaitForBroadcastedUserScans(
-        DestinyClanScannerContext context, 
+        DestinyClanScannerContext context,
         CancellationToken cancellationToken)
     {
         var tcs = new TaskCompletionSource<ClanScanProgress>();
