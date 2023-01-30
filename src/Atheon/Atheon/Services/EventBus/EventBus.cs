@@ -10,4 +10,9 @@ public class EventBus<TEventArgs> : IEventBus<TEventArgs>
     }
 
     public event Action<TEventArgs>? Event;
+
+    public void Publish(TEventArgs args)
+    {
+        Event?.Invoke(args);
+    }
 }
