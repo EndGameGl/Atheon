@@ -20,7 +20,7 @@ public class ClanBroadcastDbModel : IBroadcast
     [AutoColumn(nameof(Date), notNull: true, sqliteType: DatabaseOptions.SQLiteTypes.NUMERIC.DATETIME)]
     public DateTime Date { get; set; }
 
-    [AutoColumn(nameof(Date), notNull: true, sqliteType: DatabaseOptions.SQLiteTypes.INTEGER.DEFAULT_VALUE)]
+    [AutoColumn(nameof(Type), notNull: true, sqliteType: DatabaseOptions.SQLiteTypes.INTEGER.DEFAULT_VALUE)]
     public ClanBroadcastType Type { get; set; }
 
     [AutoColumn(nameof(OldValue), sqliteType: DatabaseOptions.SQLiteTypes.TEXT.DEFAULT_VALUE)]

@@ -182,11 +182,25 @@ public class SqliteDbBootstrap : IDbBootstrap
     {
         var sb = new StringBuilder();
 
-        sb.Append($"CREATE TABLE {tableName}(");
+        if (tableSettings.Columns.Count(x => x.PrimaryKey == true) > 1)
+        {
+            sb.Append($"CREATE TABLE {tableName}(");
 
-        sb.AppendJoin(", ", tableSettings.Columns.Select(x => x.FormatForCreateQuery(DatabaseOptions.SqliteKey)));
+            sb.AppendJoin(", ", tableSettings.Columns.Select(x => x.FormatForCreateQueryWithoutPK(DatabaseOptions.SqliteKey)));
 
-        sb.Append(");");
+            sb.Append($", PRIMARY KEY ({string.Join(',', tableSettings.Columns.Where(x => x.PrimaryKey == true).Select(x => x.Name))})");
+
+            sb.Append(");");
+        }
+        else
+        {
+
+            sb.Append($"CREATE TABLE {tableName}(");
+
+            sb.AppendJoin(", ", tableSettings.Columns.Select(x => x.FormatForCreateQuery(DatabaseOptions.SqliteKey)));
+
+            sb.Append(");");
+        }
 
         await _dbAccess.ExecuteAsync(sb.ToString());
     }

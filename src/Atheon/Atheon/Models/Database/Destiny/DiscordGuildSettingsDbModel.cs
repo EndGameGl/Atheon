@@ -75,6 +75,9 @@ public class DiscordGuildSettingsDbModel
     [AutoColumn(nameof(Clans), sqliteType: DatabaseOptions.SQLiteTypes.TEXT.DEFAULT_VALUE)]
     public HashSet<long> Clans { get; set; }
 
+    [AutoColumn(nameof(ReportClanChanges), notNull: true, sqliteType: DatabaseOptions.SQLiteTypes.NUMERIC.BOOLEAN)]
+    public bool ReportClanChanges { get; set; }
+
     public static DiscordGuildSettingsDbModel CreateDefault(ulong guildId, string guildName)
     {
         return new DiscordGuildSettingsDbModel()
@@ -88,7 +91,8 @@ public class DiscordGuildSettingsDbModel
             TrackedCollectibles = DefinitionTrackSettings<DestinyCollectibleDefinition>.CreateDefault(),
             TrackedMetrics = DefinitionTrackSettings<DestinyMetricDefinition>.CreateDefault(),
             TrackedProgressions = DefinitionTrackSettings<DestinyProgressionDefinition>.CreateDefault(),
-            TrackedRecords = DefinitionTrackSettings<DestinyRecordDefinition>.CreateDefault()
+            TrackedRecords = DefinitionTrackSettings<DestinyRecordDefinition>.CreateDefault(),
+            ReportClanChanges = true
         };
     }
 }

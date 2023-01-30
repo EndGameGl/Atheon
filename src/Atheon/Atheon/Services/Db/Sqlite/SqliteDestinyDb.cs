@@ -34,7 +34,8 @@ namespace Atheon.Services.Db.Sqlite
             {nameof(DiscordGuildSettingsDbModel.TrackedProgressions)},
             {nameof(DiscordGuildSettingsDbModel.SystemReportsEnabled)},
             {nameof(DiscordGuildSettingsDbModel.SystemReportsOverrideChannel)},
-            {nameof(DiscordGuildSettingsDbModel.Clans)}
+            {nameof(DiscordGuildSettingsDbModel.Clans)},
+            {nameof(DiscordGuildSettingsDbModel.ReportClanChanges)}
         )
         VALUES 
         (
@@ -47,7 +48,8 @@ namespace Atheon.Services.Db.Sqlite
             @{nameof(DiscordGuildSettingsDbModel.TrackedProgressions)},
             @{nameof(DiscordGuildSettingsDbModel.SystemReportsEnabled)},
             @{nameof(DiscordGuildSettingsDbModel.SystemReportsOverrideChannel)},
-            @{nameof(DiscordGuildSettingsDbModel.Clans)}
+            @{nameof(DiscordGuildSettingsDbModel.Clans)},
+            @{nameof(DiscordGuildSettingsDbModel.ReportClanChanges)}
         )
         ON CONFLICT (GuildId) DO UPDATE SET
             {nameof(DiscordGuildSettingsDbModel.GuildId)} = @{nameof(DiscordGuildSettingsDbModel.GuildId)},
@@ -58,8 +60,9 @@ namespace Atheon.Services.Db.Sqlite
             {nameof(DiscordGuildSettingsDbModel.TrackedCollectibles)} = @{nameof(DiscordGuildSettingsDbModel.TrackedCollectibles)},
             {nameof(DiscordGuildSettingsDbModel.TrackedProgressions)} = @{nameof(DiscordGuildSettingsDbModel.TrackedProgressions)},
             {nameof(DiscordGuildSettingsDbModel.SystemReportsEnabled)} = @{nameof(DiscordGuildSettingsDbModel.SystemReportsEnabled)},
-            {nameof(DiscordGuildSettingsDbModel.SystemReportsOverrideChannel)} = @{nameof(DiscordGuildSettingsDbModel.SystemReportsOverrideChannel)};
-            {nameof(DiscordGuildSettingsDbModel.Clans)} = @{nameof(DiscordGuildSettingsDbModel.Clans)}
+            {nameof(DiscordGuildSettingsDbModel.SystemReportsOverrideChannel)} = @{nameof(DiscordGuildSettingsDbModel.SystemReportsOverrideChannel)},
+            {nameof(DiscordGuildSettingsDbModel.Clans)} = @{nameof(DiscordGuildSettingsDbModel.Clans)},
+            {nameof(DiscordGuildSettingsDbModel.ReportClanChanges)} = @{nameof(DiscordGuildSettingsDbModel.ReportClanChanges)}
         """;
         public async Task UpsertGuildSettingsAsync(DiscordGuildSettingsDbModel guildSettings)
         {
@@ -92,6 +95,15 @@ namespace Atheon.Services.Db.Sqlite
         public async Task<List<long>> GetClanIdsAsync(bool isTracking)
         {
             return await _dbAccess.QueryAsync<long>(GetClanIdsQuery, new { IsTracking = isTracking });
+        }
+
+        private const string GetClanModelQuery = 
+            $"""
+            SELECT * FROM Clans WHERE {nameof(DestinyClanDbModel.ClanId)} = @{nameof(DestinyClanDbModel.ClanId)}
+            """;
+        public async Task<DestinyClanDbModel?> GetClanModelAsync(long clanId)
+        {
+            return await _dbAccess.QueryFirstOrDefaultAsync<DestinyClanDbModel>(GetClanModelQuery, new { ClanId = clanId });
         }
     }
 }

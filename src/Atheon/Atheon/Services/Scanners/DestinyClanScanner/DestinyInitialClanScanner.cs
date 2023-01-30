@@ -1,6 +1,7 @@
 ﻿using Atheon.Attributes;
 using Atheon.Models.Database.Destiny.Broadcasts;
 using Atheon.Services.BungieApi;
+using Atheon.Services.EventBus;
 using Atheon.Services.Interfaces;
 using Atheon.Services.Scanners.Entities;
 using DotNetBungieAPI.Models;
@@ -138,7 +139,6 @@ public class DestinyInitialClanScanner : EntityScannerBase<DestinyClanScannerInp
         CancellationToken cancellationToken)
     {
         var groupResponse = context.ClanData;
-
         //await _clansDbAccess.UpdateClan(groupResponse, context.MembersOnline, cancellationToken);
         //await _broadcastsDbAccess.SendClanBroadcast(new ClanBroadcast
         //{

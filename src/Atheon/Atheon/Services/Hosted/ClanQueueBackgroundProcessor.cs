@@ -13,16 +13,19 @@ public class ClanQueueBackgroundProcessor : PeriodicBackgroundService, IClanQueu
     private readonly ILogger<ClanQueueBackgroundProcessor> _logger;
     private readonly IClansToScanProvider _clansToScanProvider;
     private readonly DestinyClanScanner _destinyClanScanner;
+    private readonly DestinyInitialClanScanner _destinyInitialClanScanner;
     private readonly ConcurrentDictionary<long, OngoingScan> _ongoingScans;
 
     public ClanQueueBackgroundProcessor(
         ILogger<ClanQueueBackgroundProcessor> logger,
         IClansToScanProvider clansToScanProvider,
-        DestinyClanScanner destinyClanScanner) : base(logger)
+        DestinyClanScanner destinyClanScanner,
+        DestinyInitialClanScanner destinyInitialClanScanner) : base(logger)
     {
         _logger = logger;
         _clansToScanProvider = clansToScanProvider;
         _destinyClanScanner = destinyClanScanner;
+        _destinyInitialClanScanner = destinyInitialClanScanner;
         _ongoingScans = new ConcurrentDictionary<long, OngoingScan>();
     }
 

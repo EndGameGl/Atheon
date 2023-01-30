@@ -10,4 +10,5 @@ public interface IDestinyDb
     Task DeleteGuildSettingsAsync(ulong guildId);
 
     Task<List<long>> GetClanIdsAsync(bool isTracking);
+    Task<DestinyClanDbModel?> GetClanModelAsync(long clanId);
 }

@@ -3,6 +3,7 @@ using Atheon.Options;
 using Atheon.Services;
 using Atheon.Services.BungieApi;
 using Atheon.Services.Db.Sqlite;
+using Atheon.Services.EventBus;
 using Atheon.Services.Hosted;
 using Atheon.Services.Interfaces;
 using Atheon.Services.Scanners.DestinyClanMemberScanner;
@@ -46,6 +47,8 @@ void ConfigureServices(WebApplicationBuilder applicationBuilder)
             .WriteTo.Console();
     });
 
+    applicationBuilder.Services.AddSingleton(typeof(IEventBus<>), typeof(EventBus<>));
+
     applicationBuilder.Services.AddDiscordServices();
 
     applicationBuilder.Services.Configure<DatabaseOptions>((settings) =>
@@ -78,6 +81,10 @@ void ConfigureServices(WebApplicationBuilder applicationBuilder)
     applicationBuilder.Services.AddSingleton<DestinyClanMemberSilentScanner>();
 
     applicationBuilder.Services.AddHostedService<ApplicationStartup>();
+
+    applicationBuilder.Services.AddHostedServiceWithInterface<IUserQueue, UserQueueBackgroundProcessor>();
+    applicationBuilder.Services.AddHostedServiceWithInterface<IClanQueue, ClanQueueBackgroundProcessor>();
+    applicationBuilder.Services.AddHostedService<BroadcastBackgroundProcessor>();
 }
 
 void ConfigureApplication(WebApplication app)

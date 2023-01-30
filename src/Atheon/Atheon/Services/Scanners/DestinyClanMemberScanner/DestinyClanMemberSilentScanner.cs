@@ -6,6 +6,7 @@ using DotNetBungieAPI.Models.Destiny.Responses;
 using DotNetBungieAPI.Models;
 using System.Text.Json;
 using Atheon.Services.BungieApi;
+using Atheon.Services.EventBus;
 
 namespace Atheon.Services.Scanners.DestinyClanMemberScanner;
 

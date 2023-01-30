@@ -23,4 +23,15 @@ public class DatabaseTableColumn
                 return string.Empty;
         }
     }
+
+    public string FormatForCreateQueryWithoutPK(string dbType)
+    {
+        switch (dbType)
+        {
+            case DatabaseOptions.SqliteKey:
+                return $"{Name} {Type[dbType]}{(NotNull is true ? " NOT NULL" : string.Empty)}";
+            default:
+                return string.Empty;
+        }
+    }
 }
