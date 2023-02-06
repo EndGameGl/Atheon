@@ -1,5 +1,7 @@
 ﻿using Atheon.Services.Interfaces;
-using Atheon.Services.Discord;
+using Atheon.Services.DiscordHandlers;
+using Atheon.Services.Caching;
+using Atheon.Services.Hosted;
 
 namespace Atheon.Extensions;
 
@@ -26,4 +28,10 @@ public static class ServiceCollectionExtensions
         return serviceCollection;
     }
 
+    public static IServiceCollection AddMemoryCacheWithCleanup(this IServiceCollection serviceCollection)
+    {
+        serviceCollection.AddSingleton<IMemoryCache, MemoryCacheImplementation>();
+        serviceCollection.AddHostedService<MemoryCacheBackgroundCleaner>();
+        return serviceCollection;
+    }
 }

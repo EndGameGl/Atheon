@@ -1,4 +1,4 @@
-﻿using Atheon.Services.Discord;
+﻿using Atheon.Services.DiscordHandlers;
 using Atheon.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;

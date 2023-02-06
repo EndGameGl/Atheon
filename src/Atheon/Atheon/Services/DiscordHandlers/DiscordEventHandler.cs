@@ -4,7 +4,7 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using System.Reflection;
 
-namespace Atheon.Services.Discord;
+namespace Atheon.Services.DiscordHandlers;
 
 public class DiscordEventHandler : IDiscordEventHandler
 {

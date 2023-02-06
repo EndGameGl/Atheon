@@ -1,4 +1,5 @@
-﻿using Atheon.Models.Scanning;
+﻿using Atheon.Models.Collections;
+using Atheon.Models.Scanning;
 using Atheon.Services.Hosted.Utilities;
 using Atheon.Services.Interfaces;
 using Atheon.Services.Scanners.DestinyClanScanner;
@@ -16,6 +17,8 @@ public class ClanQueueBackgroundProcessor : PeriodicBackgroundService, IClanQueu
     private readonly DestinyInitialClanScanner _destinyInitialClanScanner;
     private readonly ConcurrentDictionary<long, OngoingScan> _ongoingScans;
 
+    private readonly UniqueConcurrentQueue<long> _firstTimeScanQueue;
+
     public ClanQueueBackgroundProcessor(
         ILogger<ClanQueueBackgroundProcessor> logger,
         IClansToScanProvider clansToScanProvider,
@@ -27,6 +30,7 @@ public class ClanQueueBackgroundProcessor : PeriodicBackgroundService, IClanQueu
         _destinyClanScanner = destinyClanScanner;
         _destinyInitialClanScanner = destinyInitialClanScanner;
         _ongoingScans = new ConcurrentDictionary<long, OngoingScan>();
+        _firstTimeScanQueue = new UniqueConcurrentQueue<long>();
     }
 
     protected override Task BeforeExecutionAsync(CancellationToken stoppingToken)
@@ -38,6 +42,7 @@ public class ClanQueueBackgroundProcessor : PeriodicBackgroundService, IClanQueu
     protected override async Task OnTimerExecuted(CancellationToken cancellationToken)
     {
         ClearOutFinishedScans();
+        await ScanFirstTimes();
         if (!await StartNewScans())
         {
             await Task.Delay(1000);
@@ -52,6 +57,22 @@ public class ClanQueueBackgroundProcessor : PeriodicBackgroundService, IClanQueu
         {
             _ongoingScans.TryRemove(finishedTask.Key, out _);
         }
+    }
+
+    private async Task ScanFirstTimes()
+    {
+        if (_firstTimeScanQueue.Count == 0)
+            return;
+
+        var clanIds = _firstTimeScanQueue.DequeueUpTo(_firstTimeScanQueue.Count).ToList();
+
+        await Parallel.ForEachAsync(clanIds, async (clanId, ct) =>
+        {
+            await _destinyInitialClanScanner.Scan(
+                new DestinyClanScannerInput() { ClanId = clanId },
+                new DestinyClanScannerContext() { ClanId = clanId },
+                ct);
+        });
     }
 
     private async ValueTask<bool> StartNewScans()
@@ -78,8 +99,13 @@ public class ClanQueueBackgroundProcessor : PeriodicBackgroundService, IClanQueu
     }
 
     private async Task<long> StartClanScan(long clanId)
-    {      
+    {
         await _destinyClanScanner.Scan(new DestinyClanScannerInput() { ClanId = clanId }, new DestinyClanScannerContext(), default);
         return clanId;
+    }
+
+    public void EnqueueFirstTimeScan(long clanId)
+    {
+        _firstTimeScanQueue.Enqueue(clanId);
     }
 }

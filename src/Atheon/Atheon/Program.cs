@@ -48,6 +48,7 @@ void ConfigureServices(WebApplicationBuilder applicationBuilder)
     });
 
     applicationBuilder.Services.AddSingleton(typeof(IEventBus<>), typeof(EventBus<>));
+    applicationBuilder.Services.AddMemoryCacheWithCleanup();
 
     applicationBuilder.Services.AddDiscordServices();
 

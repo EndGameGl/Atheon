@@ -2,7 +2,7 @@
 using Discord;
 using Discord.WebSocket;
 
-namespace Atheon.Services.Discord
+namespace Atheon.Services.DiscordHandlers
 {
     public class DiscordClientProvider : IDiscordClientProvider
     {

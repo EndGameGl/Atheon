@@ -127,6 +127,7 @@ public class DestinyInitialClanScanner : EntityScannerBase<DestinyClanScannerInp
         DestinyClanScannerContext context,
         CancellationToken cancellationToken)
     {
+        context.MembersToScan = context.Members.ToList();
         await _userQueue.EnqueueAndWaitForSilentUserScans(context, cancellationToken);
         return true;
     }

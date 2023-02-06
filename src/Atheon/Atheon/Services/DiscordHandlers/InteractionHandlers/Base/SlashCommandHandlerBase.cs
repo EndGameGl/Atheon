@@ -1,7 +1,7 @@
 ﻿using Discord.Interactions;
 using Discord.WebSocket;
 
-namespace Atheon.Services.Discord.InteractionHandlers.Base
+namespace Atheon.Services.DiscordHandlers.InteractionHandlers.Base
 {
     public abstract class SlashCommandHandlerBase : InteractionModuleBase<ShardedInteractionContext<SocketSlashCommand>>
     {

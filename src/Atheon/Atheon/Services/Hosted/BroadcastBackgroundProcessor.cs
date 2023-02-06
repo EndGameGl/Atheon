@@ -1,7 +1,7 @@
 ﻿using Atheon.Models.Collections;
 using Atheon.Models.Database.Destiny.Broadcasts;
 using Atheon.Models.Database.Destiny.Interfaces;
-using Atheon.Services.Discord.EmbedBuilders;
+using Atheon.Services.DiscordHandlers.EmbedBuilders;
 using Atheon.Services.EventBus;
 using Atheon.Services.Hosted.Utilities;
 using Atheon.Services.Interfaces;

@@ -12,6 +12,5 @@ namespace Atheon.Services.Interfaces
         Task<ClanScanProgress> EnqueueAndWaitForSilentUserScans(
             DestinyClanScannerContext input,
             CancellationToken cancellationToken);
-
     }
 }

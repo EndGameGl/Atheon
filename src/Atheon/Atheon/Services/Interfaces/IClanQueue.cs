@@ -2,4 +2,5 @@
 
 public interface IClanQueue
 {
+    void EnqueueFirstTimeScan(long clanId);
 }

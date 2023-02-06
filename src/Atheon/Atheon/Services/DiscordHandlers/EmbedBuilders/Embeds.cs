@@ -2,7 +2,7 @@
 using Atheon.Models.Database.Destiny.Broadcasts;
 using Discord;
 
-namespace Atheon.Services.Discord.EmbedBuilders;
+namespace Atheon.Services.DiscordHandlers.EmbedBuilders;
 
 public static partial class Embeds
 {
