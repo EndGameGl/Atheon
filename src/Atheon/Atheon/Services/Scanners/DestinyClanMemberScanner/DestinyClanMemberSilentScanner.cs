@@ -134,9 +134,12 @@ public class DestinyClanMemberSilentScanner : EntityScannerBase<DestinyClanMembe
         CancellationToken cancellationToken)
     {
         var profile = await _destinyDb.GetDestinyProfileAsync(input.GroupMember.DestinyUserInfo.MembershipId);
-
-        profile ??= DestinyProfileDbModel.CreateFromApiResponse(context.DestinyProfileResponse!, input.BungieClient);
-
+        if (profile is null)
+        {
+            profile = DestinyProfileDbModel.CreateFromApiResponse(context.DestinyProfileResponse!, input.BungieClient);
+            await _destinyDb.UpsertDestinyProfileAsync(profile);
+            return false;
+        }
         context.ProfileDbModel = profile;
         return true;
     }

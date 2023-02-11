@@ -20,7 +20,7 @@ public class DestinyProfileDbModel
     [AutoColumn(nameof(MembershipId), isPrimaryKey: true, notNull: true, sqliteType: DatabaseOptions.SQLiteTypes.INTEGER.BIGINT)]
     public long MembershipId { get; set; }
 
-    [AutoColumn(nameof(MembershipType), isPrimaryKey: true, notNull: true, sqliteType: DatabaseOptions.SQLiteTypes.INTEGER.INT)]
+    [AutoColumn(nameof(MembershipType), notNull: true, sqliteType: DatabaseOptions.SQLiteTypes.INTEGER.INT)]
     public BungieMembershipType MembershipType { get; set; }
 
     [AutoColumn(nameof(Name), sqliteType: DatabaseOptions.SQLiteTypes.TEXT.DEFAULT_VALUE)]

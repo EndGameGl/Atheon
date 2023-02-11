@@ -1,5 +1,6 @@
 ﻿using Atheon.Models.Database.Destiny;
 using Atheon.Services.Interfaces;
+using DotNetBungieAPI.HashReferences;
 using System.Security.Claims;
 
 namespace Atheon.Services.Db.Sqlite
@@ -115,6 +116,61 @@ namespace Atheon.Services.Db.Sqlite
         public async Task<DestinyProfileDbModel?> GetDestinyProfileAsync(long membershipId)
         {
             return await _dbAccess.QueryFirstOrDefaultAsync<DestinyProfileDbModel?>(GetDestinyProfileQuery, new { MembershipId = membershipId });
+        }
+
+        private const string UpsertDestinyProfileQuery =
+            $"""
+            INSERT INTO DestinyProfiles
+            (
+                {nameof(DestinyProfileDbModel.MembershipId)},
+                {nameof(DestinyProfileDbModel.MembershipType)},
+                {nameof(DestinyProfileDbModel.Name)},
+                {nameof(DestinyProfileDbModel.DateLastPlayed)},
+                {nameof(DestinyProfileDbModel.MinutesPlayedTotal)},
+                {nameof(DestinyProfileDbModel.Collectibles)},
+                {nameof(DestinyProfileDbModel.Records)},
+                {nameof(DestinyProfileDbModel.Progressions)},
+                {nameof(DestinyProfileDbModel.ResponseMintedTimestamp)},
+                {nameof(DestinyProfileDbModel.SecondaryComponentsMintedTimestamp)}
+            )
+            VALUES 
+            (
+                @{nameof(DestinyProfileDbModel.MembershipId)},
+                @{nameof(DestinyProfileDbModel.MembershipType)},
+                @{nameof(DestinyProfileDbModel.Name)},
+                @{nameof(DestinyProfileDbModel.DateLastPlayed)},
+                @{nameof(DestinyProfileDbModel.MinutesPlayedTotal)},
+                @{nameof(DestinyProfileDbModel.Collectibles)},
+                @{nameof(DestinyProfileDbModel.Records)},
+                @{nameof(DestinyProfileDbModel.Progressions)},
+                @{nameof(DestinyProfileDbModel.ResponseMintedTimestamp)},
+                @{nameof(DestinyProfileDbModel.SecondaryComponentsMintedTimestamp)}
+            )
+            ON CONFLICT ({nameof(DestinyProfileDbModel.MembershipId)}) DO UPDATE SET 
+                {nameof(DestinyProfileDbModel.MembershipType)} = @{nameof(DestinyProfileDbModel.MembershipType)},
+                {nameof(DestinyProfileDbModel.Name)} = @{nameof(DestinyProfileDbModel.Name)},
+                {nameof(DestinyProfileDbModel.DateLastPlayed)} = @{nameof(DestinyProfileDbModel.DateLastPlayed)},
+                {nameof(DestinyProfileDbModel.MinutesPlayedTotal)} = @{nameof(DestinyProfileDbModel.MinutesPlayedTotal)},
+                {nameof(DestinyProfileDbModel.Collectibles)} = @{nameof(DestinyProfileDbModel.Collectibles)},
+                {nameof(DestinyProfileDbModel.Records)} = @{nameof(DestinyProfileDbModel.Records)},
+                {nameof(DestinyProfileDbModel.Progressions)} = @{nameof(DestinyProfileDbModel.Progressions)},
+                {nameof(DestinyProfileDbModel.ResponseMintedTimestamp)} = @{nameof(DestinyProfileDbModel.ResponseMintedTimestamp)},
+                {nameof(DestinyProfileDbModel.SecondaryComponentsMintedTimestamp)} = @{nameof(DestinyProfileDbModel.SecondaryComponentsMintedTimestamp)}
+            """;
+        public async Task UpsertDestinyProfileAsync(DestinyProfileDbModel profileDbModel)
+        {
+            await _dbAccess.ExecuteAsync(UpsertDestinyProfileQuery, profileDbModel, default);
+        }
+
+        private const string GetProfilesWithCollectibleQuery =
+            $"""
+            SELECT *
+            FROM DestinyProfiles
+            WHERE EXISTS (SELECT 1 FROM json_each(Collectibles) WHERE value = @CollectibleHash)
+            """;
+        public async Task<List<DestinyProfileDbModel>> GetProfilesWithCollectibleAsync(uint collectibleHash)
+        {
+            return await _dbAccess.QueryAsync<DestinyProfileDbModel>(GetProfilesWithCollectibleQuery, new { CollectibleHash = collectibleHash });
         }
     }
 }

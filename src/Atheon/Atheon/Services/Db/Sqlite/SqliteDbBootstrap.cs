@@ -1,6 +1,7 @@
 ﻿using Atheon.Attributes;
 using Atheon.DapperExtensions;
 using Atheon.Models.Database.Destiny;
+using Atheon.Models.Database.Destiny.Profiles;
 using Atheon.Models.Database.Sqlite;
 using Atheon.Options;
 using Atheon.Services.Interfaces;
@@ -64,6 +65,9 @@ public class SqliteDbBootstrap : IDbBootstrap
         RegisterJsonHandler<DefinitionTrackSettings<DestinyCollectibleDefinition>>();
         RegisterJsonHandler<DefinitionTrackSettings<DestinyProgressionDefinition>>();
         RegisterJsonHandler<HashSet<long>>();
+        RegisterJsonHandler<HashSet<uint>>();
+        RegisterJsonHandler<Dictionary<uint, DestinyRecordDbModel>>();
+        RegisterJsonHandler<Dictionary<uint, DestinyProgressionDbModel>>();
     }
 
     public async Task InitialiseDb(CancellationToken cancellationToken = default)

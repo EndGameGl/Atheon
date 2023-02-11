@@ -13,4 +13,7 @@ public interface IDestinyDb
     Task<DestinyClanDbModel?> GetClanModelAsync(long clanId);
 
     Task<DestinyProfileDbModel?> GetDestinyProfileAsync(long membershipId);
+    Task UpsertDestinyProfileAsync(DestinyProfileDbModel profileDbModel);
+
+    Task<List<DestinyProfileDbModel>> GetProfilesWithCollectibleAsync(uint collectibleHash);
 }
