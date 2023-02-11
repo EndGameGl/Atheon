@@ -162,10 +162,18 @@ public class DestinyClanMemberSilentScanner : EntityScannerBase<DestinyClanMembe
         DestinyClanMemberScannerContext context,
         CancellationToken cancellationToken)
     {
+        var shouldUpdatePrimary = context.ProfileDbModel.ResponseMintedTimestamp < context.DestinyProfileResponse.ResponseMintedTimestamp;
+        var shouldUpdateSecondary = context.ProfileDbModel.SecondaryComponentsMintedTimestamp < context.DestinyProfileResponse.SecondaryComponentsMintedTimestamp;
+
         for (int i = 0; i < _profileUpdaters.Length; i++)
         {
             var updater = _profileUpdaters[i];
-            updater.UpdateSilent(context.ProfileDbModel!, context.DestinyProfileResponse!);
+
+            if ((!updater.ReliesOnSecondaryComponents && shouldUpdatePrimary) ||
+                (updater.ReliesOnSecondaryComponents && shouldUpdateSecondary))
+            {
+                updater.UpdateSilent(input.BungieClient, context.ProfileDbModel!, context.DestinyProfileResponse!);
+            }
         }
 
         return true;

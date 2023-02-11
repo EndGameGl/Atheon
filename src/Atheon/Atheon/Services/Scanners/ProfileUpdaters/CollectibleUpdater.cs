@@ -5,12 +5,15 @@ using DotNetBungieAPI.Models;
 using DotNetBungieAPI.Models.Destiny.Components;
 using DotNetBungieAPI.Models.Destiny.Definitions.Collectibles;
 using DotNetBungieAPI.Models.Destiny.Responses;
+using DotNetBungieAPI.Service.Abstractions;
 
 namespace Atheon.Services.Scanners.ProfileUpdaters;
 
 public class CollectibleUpdater : IProfileUpdater
 {
     private readonly ICommonEvents _commonEvents;
+
+    public bool ReliesOnSecondaryComponents => true;
 
     public CollectibleUpdater(
         ICommonEvents commonEvents)
@@ -19,6 +22,7 @@ public class CollectibleUpdater : IProfileUpdater
     }
 
     public void Update(
+        IBungieClient bungieClient,
         DestinyProfileDbModel dbProfile,
         DestinyProfileResponse profileResponse,
         List<DiscordGuildSettingsDbModel> guildSettings)
@@ -71,6 +75,7 @@ public class CollectibleUpdater : IProfileUpdater
     }
 
     public void UpdateSilent(
+        IBungieClient bungieClient,
         DestinyProfileDbModel dbProfile,
         DestinyProfileResponse profileResponse)
     {

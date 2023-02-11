@@ -84,6 +84,7 @@ void ConfigureServices(WebApplicationBuilder applicationBuilder)
     applicationBuilder.Services.AddSingleton<DestinyClanMemberSilentScanner>();
 
     applicationBuilder.Services.AddSingleton<IProfileUpdater, CollectibleUpdater>();
+    applicationBuilder.Services.AddSingleton<IProfileUpdater, ProgressionUpdater>();
 
     applicationBuilder.Services.AddHostedService<ApplicationStartup>();
 
