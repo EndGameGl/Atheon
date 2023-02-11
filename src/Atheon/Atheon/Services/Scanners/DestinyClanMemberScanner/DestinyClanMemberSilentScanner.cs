@@ -14,15 +14,18 @@ public class DestinyClanMemberSilentScanner : EntityScannerBase<DestinyClanMembe
 {
     private readonly BungieNetApiCallHandler _bungieNetApiCallHandler;
     private readonly IDestinyDb _destinyDb;
+    private readonly IProfileUpdater[] _profileUpdaters;
 
     public DestinyClanMemberSilentScanner(
         ILogger<DestinyClanMemberSilentScanner> logger,
         BungieNetApiCallHandler bungieNetApiCallHandler,
-        IDestinyDb destinyDb) : base(logger)
+        IDestinyDb destinyDb,
+        IEnumerable<IProfileUpdater> profileUpdaters) : base(logger)
     {
         Initialize();
         _bungieNetApiCallHandler = bungieNetApiCallHandler;
         _destinyDb = destinyDb;
+        _profileUpdaters = profileUpdaters.ToArray();
     }
 
     [ScanStep(nameof(CheckIfMemberIsOnline), 1)]
@@ -134,13 +137,30 @@ public class DestinyClanMemberSilentScanner : EntityScannerBase<DestinyClanMembe
         CancellationToken cancellationToken)
     {
         var profile = await _destinyDb.GetDestinyProfileAsync(input.GroupMember.DestinyUserInfo.MembershipId);
+
         if (profile is null)
         {
-            profile = DestinyProfileDbModel.CreateFromApiResponse(context.DestinyProfileResponse!, input.BungieClient);
+            profile = DestinyProfileDbModel.CreateFromApiResponse(
+                input.GroupMember.GroupId, 
+                context.DestinyProfileResponse!, 
+                input.BungieClient);
             await _destinyDb.UpsertDestinyProfileAsync(profile);
             return false;
         }
+        else
+        {
+            profile.ClanId = input.GroupMember.GroupId;
+        }
         context.ProfileDbModel = profile;
+        return true;
+    }
+
+    [ScanStep(nameof(LoadCuratedTrackables), 5)]
+    public async ValueTask<bool> LoadCuratedTrackables(
+        DestinyClanMemberScannerInput input,
+        DestinyClanMemberScannerContext context,
+        CancellationToken cancellationToken)
+    {
         return true;
     }
 }

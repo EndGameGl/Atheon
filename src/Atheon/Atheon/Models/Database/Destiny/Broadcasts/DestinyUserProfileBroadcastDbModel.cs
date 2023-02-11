@@ -30,5 +30,5 @@ public class DestinyUserProfileBroadcastDbModel : IBroadcast
     public uint DefinitionHash { get; set; }
 
     [AutoColumn(nameof(AdditionalData), sqliteType: DatabaseOptions.SQLiteTypes.TEXT.DEFAULT_VALUE)]
-    public Dictionary<string, string> AdditionalData { get; set; }
+    public Dictionary<string, string>? AdditionalData { get; set; }
 }

@@ -124,6 +124,7 @@ namespace Atheon.Services.Db.Sqlite
             (
                 {nameof(DestinyProfileDbModel.MembershipId)},
                 {nameof(DestinyProfileDbModel.MembershipType)},
+                {nameof(DestinyProfileDbModel.ClanId)},
                 {nameof(DestinyProfileDbModel.Name)},
                 {nameof(DestinyProfileDbModel.DateLastPlayed)},
                 {nameof(DestinyProfileDbModel.MinutesPlayedTotal)},
@@ -138,6 +139,7 @@ namespace Atheon.Services.Db.Sqlite
                 @{nameof(DestinyProfileDbModel.MembershipId)},
                 @{nameof(DestinyProfileDbModel.MembershipType)},
                 @{nameof(DestinyProfileDbModel.Name)},
+                @{nameof(DestinyProfileDbModel.ClanId)},
                 @{nameof(DestinyProfileDbModel.DateLastPlayed)},
                 @{nameof(DestinyProfileDbModel.MinutesPlayedTotal)},
                 @{nameof(DestinyProfileDbModel.Collectibles)},
@@ -148,6 +150,7 @@ namespace Atheon.Services.Db.Sqlite
             )
             ON CONFLICT ({nameof(DestinyProfileDbModel.MembershipId)}) DO UPDATE SET 
                 {nameof(DestinyProfileDbModel.MembershipType)} = @{nameof(DestinyProfileDbModel.MembershipType)},
+                {nameof(DestinyProfileDbModel.ClanId)} = @{nameof(DestinyProfileDbModel.ClanId)},
                 {nameof(DestinyProfileDbModel.Name)} = @{nameof(DestinyProfileDbModel.Name)},
                 {nameof(DestinyProfileDbModel.DateLastPlayed)} = @{nameof(DestinyProfileDbModel.DateLastPlayed)},
                 {nameof(DestinyProfileDbModel.MinutesPlayedTotal)} = @{nameof(DestinyProfileDbModel.MinutesPlayedTotal)},

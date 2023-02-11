@@ -2,7 +2,19 @@
 
 namespace Atheon.Models.Database.Destiny;
 
-public class DefinitionTrackSettings<TDefinition> where TDefinition : IDestinyDefinition
+public class DefinitionTrackSettings<TDefinition> : DefinitionTrackSettings where TDefinition : IDestinyDefinition
+{
+    public static DefinitionTrackSettings<TDefinition> CreateDefault()
+    {
+        return new DefinitionTrackSettings<TDefinition>()
+        {
+            TrackedHashes = new HashSet<uint>()
+        };
+    }
+}
+
+
+public abstract class DefinitionTrackSettings
 {
     public HashSet<uint> TrackedHashes { get; set; }
 
@@ -11,12 +23,4 @@ public class DefinitionTrackSettings<TDefinition> where TDefinition : IDestinyDe
     public bool IsReported { get; set; }
 
     public ulong? OverrideReportChannel { get; set; }
-
-    public static DefinitionTrackSettings<TDefinition> CreateDefault()
-    {
-        return new DefinitionTrackSettings<TDefinition>()
-        {
-            TrackedHashes = new HashSet<uint>()
-        };
-    }
 }

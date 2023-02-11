@@ -23,6 +23,9 @@ public class DestinyProfileDbModel
     [AutoColumn(nameof(MembershipType), notNull: true, sqliteType: DatabaseOptions.SQLiteTypes.INTEGER.INT)]
     public BungieMembershipType MembershipType { get; set; }
 
+    [AutoColumn(nameof(ClanId), sqliteType: DatabaseOptions.SQLiteTypes.INTEGER.BIGINT)]
+    public long? ClanId { get; set; }
+
     [AutoColumn(nameof(Name), sqliteType: DatabaseOptions.SQLiteTypes.TEXT.DEFAULT_VALUE)]
     public string? Name { get; set; }
 
@@ -51,6 +54,7 @@ public class DestinyProfileDbModel
     public DateTime? SecondaryComponentsMintedTimestamp { get; set; }
 
     public static DestinyProfileDbModel CreateFromApiResponse(
+        long clanId,
         DestinyProfileResponse destinyProfileResponse,
         IBungieClient bungieClient)
     {

@@ -9,10 +9,10 @@ public class EventBus<TEventArgs> : IEventBus<TEventArgs>
         Instance = this;
     }
 
-    public event Action<TEventArgs>? Event;
+    public event Action<TEventArgs>? Published;
 
     public void Publish(TEventArgs args)
     {
-        Event?.Invoke(args);
+        Published?.Invoke(args);
     }
 }

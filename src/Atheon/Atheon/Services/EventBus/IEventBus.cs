@@ -2,7 +2,7 @@
 
 public interface IEventBus<TEventArgs>
 {
-    public event Action<TEventArgs> Event;
+    event Action<TEventArgs> Published;
 
-    public void Publish(TEventArgs args);
+    void Publish(TEventArgs args);
 }

@@ -34,8 +34,8 @@ namespace Atheon.Services.Hosted
 
         protected override Task BeforeExecutionAsync(CancellationToken stoppingToken)
         {
-            _clanBroadcastEventChannel.Event += (clanBroadcast) => { _clanBroadcasts.Enqueue(clanBroadcast); };
-            _profileBroadcastEventChannel.Event += (userBroadcast) => { _userBroadcasts.Enqueue(userBroadcast); };
+            _clanBroadcastEventChannel.Published += (clanBroadcast) => { _clanBroadcasts.Enqueue(clanBroadcast); };
+            _profileBroadcastEventChannel.Published += (userBroadcast) => { _userBroadcasts.Enqueue(userBroadcast); };
 
             this.ChangeTimerSafe(TimeSpan.FromMinutes(1));
             return Task.CompletedTask;

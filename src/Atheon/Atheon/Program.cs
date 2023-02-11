@@ -8,6 +8,7 @@ using Atheon.Services.Hosted;
 using Atheon.Services.Interfaces;
 using Atheon.Services.Scanners.DestinyClanMemberScanner;
 using Atheon.Services.Scanners.DestinyClanScanner;
+using Atheon.Services.Scanners.ProfileUpdaters;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -48,6 +49,7 @@ void ConfigureServices(WebApplicationBuilder applicationBuilder)
     });
 
     applicationBuilder.Services.AddSingleton(typeof(IEventBus<>), typeof(EventBus<>));
+    applicationBuilder.Services.AddSingleton<ICommonEvents, CommonEvents>();
     applicationBuilder.Services.AddMemoryCacheWithCleanup();
 
     applicationBuilder.Services.AddDiscordServices();
@@ -80,6 +82,8 @@ void ConfigureServices(WebApplicationBuilder applicationBuilder)
     applicationBuilder.Services.AddSingleton<DestinyClanScanner>();
     applicationBuilder.Services.AddSingleton<DestinyClanMemberBroadcastedScanner>();
     applicationBuilder.Services.AddSingleton<DestinyClanMemberSilentScanner>();
+
+    applicationBuilder.Services.AddSingleton<IProfileUpdater, CollectibleUpdater>();
 
     applicationBuilder.Services.AddHostedService<ApplicationStartup>();
 
