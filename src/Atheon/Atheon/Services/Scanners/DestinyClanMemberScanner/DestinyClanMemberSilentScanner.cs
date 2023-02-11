@@ -7,6 +7,7 @@ using System.Text.Json;
 using Atheon.Services.BungieApi;
 using Atheon.Services.Interfaces;
 using Atheon.Models.Database.Destiny;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Atheon.Services.Scanners.DestinyClanMemberScanner;
 
@@ -155,12 +156,28 @@ public class DestinyClanMemberSilentScanner : EntityScannerBase<DestinyClanMembe
         return true;
     }
 
-    [ScanStep(nameof(LoadCuratedTrackables), 5)]
-    public async ValueTask<bool> LoadCuratedTrackables(
+    [ScanStep(nameof(UpdateProfile), 5)]
+    public async ValueTask<bool> UpdateProfile(
         DestinyClanMemberScannerInput input,
         DestinyClanMemberScannerContext context,
         CancellationToken cancellationToken)
     {
+        for (int i = 0; i < _profileUpdaters.Length; i++)
+        {
+            var updater = _profileUpdaters[i];
+            updater.UpdateSilent(context.ProfileDbModel!, context.DestinyProfileResponse!);
+        }
+
+        return true;
+    }
+
+    [ScanStep(nameof(SaveProfileData), 6)]
+    public async ValueTask<bool> SaveProfileData(
+        DestinyClanMemberScannerInput input,
+        DestinyClanMemberScannerContext context,
+        CancellationToken cancellationToken)
+    {
+        await _destinyDb.UpsertDestinyProfileAsync(context.ProfileDbModel!);
         return true;
     }
 }

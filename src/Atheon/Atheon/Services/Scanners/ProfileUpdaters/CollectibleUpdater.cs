@@ -59,7 +59,7 @@ public class CollectibleUpdater : IProfileUpdater
             _commonEvents.ProfileBroadcasts.Publish(new DestinyUserProfileBroadcastDbModel()
             {
                 Date = DateTime.UtcNow,
-                ClanId = dbProfile.ClanId,
+                ClanId = dbProfile.ClanId.GetValueOrDefault(),
                 WasAnnounced = false,
                 DefinitionHash = collectibleHashValue,
                 GuildId = guildSetting.GuildId,
@@ -74,6 +74,31 @@ public class CollectibleUpdater : IProfileUpdater
         DestinyProfileDbModel dbProfile,
         DestinyProfileResponse profileResponse)
     {
+        foreach (var (collectiblePointer, collectibleComponent) in profileResponse.ProfileCollectibles.Data.Collectibles)
+        {
+            ProcessCollectible(dbProfile, collectiblePointer, collectibleComponent);
+        }
 
+        foreach (var (characterId, collectibleComponents) in profileResponse.CharacterCollectibles.Data)
+        {
+            foreach (var (collectiblePointer, collectibleComponent) in collectibleComponents.Collectibles)
+            {
+                ProcessCollectible(dbProfile, collectiblePointer, collectibleComponent);
+            }
+        }
+    }
+
+    private void ProcessCollectible(
+        DestinyProfileDbModel dbProfile,
+        DefinitionHashPointer<DestinyCollectibleDefinition> collectiblePointer,
+        DestinyCollectibleComponent collectibleComponent)
+    {
+        if (collectibleComponent.State.HasFlag(DotNetBungieAPI.Models.Destiny.DestinyCollectibleState.NotAcquired))
+            return;
+
+        var collectibleHashValue = collectiblePointer.Hash.GetValueOrDefault();
+
+        if (!dbProfile.Collectibles.Add(collectibleHashValue))
+            return;
     }
 }
