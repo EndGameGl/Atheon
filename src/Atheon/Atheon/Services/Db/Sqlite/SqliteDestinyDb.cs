@@ -1,5 +1,6 @@
 ﻿using Atheon.Models.Database.Destiny;
 using Atheon.Services.Interfaces;
+using System.Security.Claims;
 
 namespace Atheon.Services.Db.Sqlite
 {
@@ -104,6 +105,16 @@ namespace Atheon.Services.Db.Sqlite
         public async Task<DestinyClanDbModel?> GetClanModelAsync(long clanId)
         {
             return await _dbAccess.QueryFirstOrDefaultAsync<DestinyClanDbModel>(GetClanModelQuery, new { ClanId = clanId });
+        }
+
+
+        private const string GetDestinyProfileQuery =
+            $"""
+            SELECT * FROM DestinyProfiles WHERE ({nameof(DestinyProfileDbModel.MembershipId)}) = @{nameof(DestinyProfileDbModel.MembershipId)}
+            """;
+        public async Task<DestinyProfileDbModel?> GetDestinyProfileAsync(long membershipId)
+        {
+            return await _dbAccess.QueryFirstOrDefaultAsync<DestinyProfileDbModel?>(GetDestinyProfileQuery, new { MembershipId = membershipId });
         }
     }
 }

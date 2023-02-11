@@ -5,18 +5,24 @@ using DotNetBungieAPI.Models.Destiny.Responses;
 using DotNetBungieAPI.Models;
 using System.Text.Json;
 using Atheon.Services.BungieApi;
+using Atheon.Services.Interfaces;
+using Atheon.Models.Database.Destiny;
 
 namespace Atheon.Services.Scanners.DestinyClanMemberScanner;
 
 public class DestinyClanMemberSilentScanner : EntityScannerBase<DestinyClanMemberScannerInput, DestinyClanMemberScannerContext>
 {
     private readonly BungieNetApiCallHandler _bungieNetApiCallHandler;
+    private readonly IDestinyDb _destinyDb;
 
     public DestinyClanMemberSilentScanner(
         ILogger<DestinyClanMemberSilentScanner> logger,
-        BungieNetApiCallHandler bungieNetApiCallHandler) : base(logger)
+        BungieNetApiCallHandler bungieNetApiCallHandler,
+        IDestinyDb destinyDb) : base(logger)
     {
+        Initialize();
         _bungieNetApiCallHandler = bungieNetApiCallHandler;
+        _destinyDb = destinyDb;
     }
 
     [ScanStep(nameof(CheckIfMemberIsOnline), 1)]
@@ -119,5 +125,19 @@ public class DestinyClanMemberSilentScanner : EntityScannerBase<DestinyClanMembe
          CancellationToken cancellationToken)
     {
         return ValueTask.FromResult(context.DestinyProfileResponse!.HasPublicRecords());
+    }
+
+    [ScanStep(nameof(LoadOrCreateDbProfile), 4)]
+    public async ValueTask<bool> LoadOrCreateDbProfile(
+        DestinyClanMemberScannerInput input,
+        DestinyClanMemberScannerContext context,
+        CancellationToken cancellationToken)
+    {
+        var profile = await _destinyDb.GetDestinyProfileAsync(input.GroupMember.DestinyUserInfo.MembershipId);
+
+        profile ??= DestinyProfileDbModel.CreateFromApiResponse(context.DestinyProfileResponse!, input.BungieClient);
+
+        context.ProfileDbModel = profile;
+        return true;
     }
 }

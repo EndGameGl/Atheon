@@ -3,7 +3,13 @@ using Atheon.Models.Database.Destiny.Profiles;
 using Atheon.Options;
 using DotNetBungieAPI.Models;
 using DotNetBungieAPI.Models.Destiny;
+using DotNetBungieAPI.Models.Destiny.Components;
+using DotNetBungieAPI.Models.Destiny.Definitions.Progressions;
+using DotNetBungieAPI.Models.Destiny.Milestones;
+using DotNetBungieAPI.Models.Destiny.Progressions;
+using DotNetBungieAPI.Models.Destiny.Quests;
 using DotNetBungieAPI.Models.Destiny.Responses;
+using DotNetBungieAPI.Service.Abstractions;
 
 namespace Atheon.Models.Database.Destiny;
 
@@ -32,6 +38,9 @@ public class DestinyProfileDbModel
     [AutoColumn(nameof(Records), sqliteType: DatabaseOptions.SQLiteTypes.TEXT.DEFAULT_VALUE)]
     public Dictionary<uint, DestinyRecordDbModel> Records { get; set; } = new();
 
+    [AutoColumn(nameof(Progressions), sqliteType: DatabaseOptions.SQLiteTypes.TEXT.DEFAULT_VALUE)]
+    public Dictionary<uint, DestinyProgressionDbModel> Progressions { get; set; } = new();
+
     [AutoColumn(nameof(ResponseMintedTimestamp), sqliteType: DatabaseOptions.SQLiteTypes.NUMERIC.DATETIME)]
     public DateTime? ResponseMintedTimestamp { get; set; }
 
@@ -42,7 +51,8 @@ public class DestinyProfileDbModel
     public DateTime? SecondaryComponentsMintedTimestamp { get; set; }
 
     public static DestinyProfileDbModel CreateFromApiResponse(
-        DestinyProfileResponse destinyProfileResponse)
+        DestinyProfileResponse destinyProfileResponse,
+        IBungieClient bungieClient)
     {
         var userInfo = destinyProfileResponse.Profile.Data.UserInfo;
 
@@ -62,6 +72,7 @@ public class DestinyProfileDbModel
 
         dbModel.FillCollectibles(destinyProfileResponse);
         dbModel.FillRecords(destinyProfileResponse);
+        dbModel.FillProgressions(destinyProfileResponse, bungieClient);
 
         return dbModel;
     }
@@ -96,11 +107,73 @@ public class DestinyProfileDbModel
             {
                 State = recordComponent.State,
                 CompletedCount = recordComponent.CompletedCount,
-                Objectives = recordComponent.Objectives.Count > 0 ? new List<DestinyObjectiveProgressDbModel>() : null,
-                IntervalObjectives = recordComponent.IntervalObjectives.Count > 0 ? new List<DestinyObjectiveProgressDbModel>() : null,
+                Objectives = recordComponent.Objectives.Count > 0 ? ConvertToDbObjectives(recordComponent.Objectives) : null,
+                IntervalObjectives = recordComponent.IntervalObjectives.Count > 0 ? ConvertToDbObjectives(recordComponent.IntervalObjectives) : null,
             };
 
             Records.TryAdd(recordHash, recordDbModel);
         }
+    }
+
+    private void FillProgressions(
+        DestinyProfileResponse destinyProfileResponse,
+        IBungieClient bungieClient)
+    {
+        if (destinyProfileResponse.CharacterProgressions.Data.Count == 0)
+            return;
+
+        var firstCharacter = destinyProfileResponse.CharacterProgressions.Data.First().Value;
+
+        foreach (var (progressionHash, _) in firstCharacter.Progressions)
+        {
+            var progressionData = GetMostCompletedProgressionAcrossCharacters(
+                destinyProfileResponse.CharacterProgressions.Data,
+                progressionHash.Hash!.Value,
+                bungieClient);
+
+            Progressions.Add(progressionHash.Hash.Value, new DestinyProgressionDbModel(progressionData));
+        }
+    }
+
+    private DestinyProgression GetMostCompletedProgressionAcrossCharacters(
+        IDictionary<long, DestinyCharacterProgressionComponent> characterProgressions,
+        uint progressionHash,
+        IBungieClient bungieClient)
+    {
+        var progressionComponents = new List<DestinyProgression>(characterProgressions.Count);
+
+        foreach (var (_, progressions) in characterProgressions)
+        {
+            if (progressions.Progressions.TryGetValue(progressionHash, out var destinyProgression))
+            {
+                progressionComponents.Add(destinyProgression);
+            }
+        }
+
+        if (bungieClient.Repository.TryGetDestinyDefinition<DestinyProgressionDefinition>(
+            progressionHash,
+            BungieLocales.EN,
+            out var progressionDefinition))
+        {
+            if (progressionComponents.Any(x => x.CurrentResetCount is not null))
+            {
+                var totalProgressPoints = progressionDefinition.Steps.Sum(x => x.ProgressTotal);
+                return progressionComponents.MaxBy(x => x.CurrentResetCount.GetValueOrDefault() * totalProgressPoints + x.CurrentProgress)!;
+            }
+            else
+            {
+                return progressionComponents.MaxBy(x => x.CurrentProgress)!;
+            }
+        }
+        else
+        {
+            return progressionComponents.MaxBy(x => x.CurrentProgress)!;
+        }
+
+    }
+
+    private static List<DestinyObjectiveProgressDbModel> ConvertToDbObjectives(IEnumerable<DestinyObjectiveProgress> source)
+    {
+        return source.Select(x => new DestinyObjectiveProgressDbModel(x)).ToList();
     }
 }
