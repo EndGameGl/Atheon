@@ -17,7 +17,23 @@ public class ProgressionUpdater : IProfileUpdater
         DestinyProfileResponse profileResponse,
         List<DiscordGuildSettingsDbModel> guildSettings)
     {
-        throw new NotImplementedException();
+        var character = profileResponse.CharacterProgressions.Data.First().Value;
+
+        foreach (var (progressionPointer, _) in character.Progressions)
+        {
+            var progressionHash = progressionPointer.Hash.GetValueOrDefault();
+            var progressionData = profileResponse.CharacterProgressions.Data.GetMostCompletedProgressionAcrossCharacters(progressionHash, bungieClient);
+
+            if (dbProfile.Progressions.TryGetValue(progressionHash, out var savedProgressionData))
+            {
+                savedProgressionData.CurrentProgress = progressionData.CurrentProgress;
+                savedProgressionData.CurrentResetCount = progressionData.CurrentResetCount;
+            }
+            else
+            {
+                dbProfile.Progressions.Add(progressionHash, new DestinyProgressionDbModel(progressionData));
+            }
+        }
     }
 
     public void UpdateSilent(

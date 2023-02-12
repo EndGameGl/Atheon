@@ -5,8 +5,8 @@ namespace Atheon.Models.Database.Destiny.Profiles;
 
 public class DestinyObjectiveProgressDbModel
 {
-    [JsonPropertyName("objectiveHash"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public uint? ObjectiveHash { get; set; }
+    [JsonPropertyName("objectiveHash")]
+    public uint ObjectiveHash { get; set; }
 
     [JsonPropertyName("progress"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public int? Progress { get; set; }
@@ -22,7 +22,7 @@ public class DestinyObjectiveProgressDbModel
     public DestinyObjectiveProgressDbModel(
         DestinyObjectiveProgress destinyObjectiveProgress)
     {
-        ObjectiveHash = destinyObjectiveProgress.Objective.Hash;
+        ObjectiveHash = destinyObjectiveProgress.Objective.Hash.GetValueOrDefault();
         Progress = destinyObjectiveProgress.Progress;
         CompletionValue = destinyObjectiveProgress.CompletionValue;
         IsComplete = destinyObjectiveProgress.IsComplete;

@@ -1,4 +1,5 @@
 ﻿using Atheon.Attributes;
+using Atheon.Extensions;
 using Atheon.Models.Database.Destiny.Profiles;
 using Atheon.Options;
 using DotNetBungieAPI.Models;
@@ -117,6 +118,15 @@ public class DestinyProfileDbModel
 
             Records.TryAdd(recordHash, recordDbModel);
         }
+
+        var firstCharacter = destinyProfileResponse.CharacterRecords.Data.First().Value;
+
+        foreach (var (recordHash, _) in firstCharacter.Records)
+        {
+            var recordComponent = destinyProfileResponse.CharacterRecords.Data.GetOptimalRecordAcrossCharacters(recordHash);
+
+            Records.Add(recordHash, new DestinyRecordDbModel(recordComponent));
+        }
     }
 
     private void FillProgressions(
@@ -130,50 +140,12 @@ public class DestinyProfileDbModel
 
         foreach (var (progressionHash, _) in firstCharacter.Progressions)
         {
-            var progressionData = GetMostCompletedProgressionAcrossCharacters(
-                destinyProfileResponse.CharacterProgressions.Data,
+            var progressionData = destinyProfileResponse.CharacterProgressions.Data.GetMostCompletedProgressionAcrossCharacters(
                 progressionHash.Hash!.Value,
                 bungieClient);
 
             Progressions.Add(progressionHash.Hash.Value, new DestinyProgressionDbModel(progressionData));
         }
-    }
-
-    private DestinyProgression GetMostCompletedProgressionAcrossCharacters(
-        IDictionary<long, DestinyCharacterProgressionComponent> characterProgressions,
-        uint progressionHash,
-        IBungieClient bungieClient)
-    {
-        var progressionComponents = new List<DestinyProgression>(characterProgressions.Count);
-
-        foreach (var (_, progressions) in characterProgressions)
-        {
-            if (progressions.Progressions.TryGetValue(progressionHash, out var destinyProgression))
-            {
-                progressionComponents.Add(destinyProgression);
-            }
-        }
-
-        if (bungieClient.Repository.TryGetDestinyDefinition<DestinyProgressionDefinition>(
-            progressionHash,
-            BungieLocales.EN,
-            out var progressionDefinition))
-        {
-            if (progressionComponents.Any(x => x.CurrentResetCount is not null))
-            {
-                var totalProgressPoints = progressionDefinition.Steps.Sum(x => x.ProgressTotal);
-                return progressionComponents.MaxBy(x => x.CurrentResetCount.GetValueOrDefault() * totalProgressPoints + x.CurrentProgress)!;
-            }
-            else
-            {
-                return progressionComponents.MaxBy(x => x.CurrentProgress)!;
-            }
-        }
-        else
-        {
-            return progressionComponents.MaxBy(x => x.CurrentProgress)!;
-        }
-
     }
 
     private static List<DestinyObjectiveProgressDbModel> ConvertToDbObjectives(IEnumerable<DestinyObjectiveProgress> source)
