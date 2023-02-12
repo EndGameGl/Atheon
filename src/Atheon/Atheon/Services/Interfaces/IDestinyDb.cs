@@ -11,6 +11,7 @@ public interface IDestinyDb
 
     Task<List<long>> GetClanIdsAsync(bool isTracking);
     Task<DestinyClanDbModel?> GetClanModelAsync(long clanId);
+    Task UpsertClanModelAsync(DestinyClanDbModel clanDbModel);
 
     Task<DestinyProfileDbModel?> GetDestinyProfileAsync(long membershipId);
     Task UpsertDestinyProfileAsync(DestinyProfileDbModel profileDbModel);

@@ -108,6 +108,47 @@ namespace Atheon.Services.Db.Sqlite
             return await _dbAccess.QueryFirstOrDefaultAsync<DestinyClanDbModel>(GetClanModelQuery, new { ClanId = clanId });
         }
 
+        private const string UpsertClanModelQuery =
+            $"""
+            INSERT INTO Clans
+            (
+                {nameof(DestinyClanDbModel.ClanId)},
+                {nameof(DestinyClanDbModel.ClanName)},
+                {nameof(DestinyClanDbModel.ClanCallsign)},
+                {nameof(DestinyClanDbModel.ClanLevel)},
+                {nameof(DestinyClanDbModel.MemberCount)},
+                {nameof(DestinyClanDbModel.MembersOnline)},
+                {nameof(DestinyClanDbModel.IsTracking)},
+                {nameof(DestinyClanDbModel.JoinedOn)},
+                {nameof(DestinyClanDbModel.LastScan)}
+            )
+            VALUES 
+            (   
+                @{nameof(DestinyClanDbModel.ClanId)},
+                @{nameof(DestinyClanDbModel.ClanName)},
+                @{nameof(DestinyClanDbModel.ClanCallsign)},
+                @{nameof(DestinyClanDbModel.ClanLevel)},
+                @{nameof(DestinyClanDbModel.MemberCount)},
+                @{nameof(DestinyClanDbModel.MembersOnline)},
+                @{nameof(DestinyClanDbModel.IsTracking)},
+                @{nameof(DestinyClanDbModel.JoinedOn)},
+                @{nameof(DestinyClanDbModel.LastScan)}
+            )
+            ON CONFLICT ({nameof(DestinyClanDbModel.ClanId)}) DO UPDATE SET 
+                {nameof(DestinyClanDbModel.ClanName)} = @{nameof(DestinyClanDbModel.ClanName)},
+                {nameof(DestinyClanDbModel.ClanCallsign)} = @{nameof(DestinyClanDbModel.ClanCallsign)},
+                {nameof(DestinyClanDbModel.ClanLevel)} = @{nameof(DestinyClanDbModel.ClanLevel)},
+                {nameof(DestinyClanDbModel.MemberCount)} = @{nameof(DestinyClanDbModel.MemberCount)},
+                {nameof(DestinyClanDbModel.MembersOnline)} = @{nameof(DestinyClanDbModel.MembersOnline)},
+                {nameof(DestinyClanDbModel.IsTracking)} = @{nameof(DestinyClanDbModel.IsTracking)},
+                {nameof(DestinyClanDbModel.JoinedOn)} = @{nameof(DestinyClanDbModel.JoinedOn)},
+                {nameof(DestinyClanDbModel.LastScan)} = @{nameof(DestinyClanDbModel.LastScan)}
+            """;
+        public async Task UpsertClanModelAsync(DestinyClanDbModel clanDbModel)
+        {
+            await _dbAccess.ExecuteAsync(UpsertClanModelQuery, clanDbModel);
+        }
+
 
         private const string GetDestinyProfileQuery =
             $"""

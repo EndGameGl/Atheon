@@ -1,4 +1,5 @@
 ﻿using Atheon.Attributes;
+using Atheon.Models.Database.Destiny;
 using Atheon.Models.Database.Destiny.Broadcasts;
 using Atheon.Services.BungieApi;
 using Atheon.Services.EventBus;
@@ -15,6 +16,7 @@ public class DestinyInitialClanScanner : EntityScannerBase<DestinyClanScannerInp
     private readonly BungieNetApiCallHandler _bungieNetApiCallHandler;
     private readonly IUserQueue _userQueue;
     private readonly IDestinyDb _destinyDb;
+    private readonly ICommonEvents _commonEvents;
     private AsyncPolicy _apiCallPolicy;
 
     public DestinyInitialClanScanner(
@@ -22,7 +24,8 @@ public class DestinyInitialClanScanner : EntityScannerBase<DestinyClanScannerInp
         IBungieClientProvider bungieClientProvider,
         BungieNetApiCallHandler bungieNetApiCallHandler,
         IUserQueue userQueue,
-        IDestinyDb destinyDb) : base(logger)
+        IDestinyDb destinyDb,
+        ICommonEvents commonEvents) : base(logger)
     {
         Initialize();
         BuildApiCallPolicy();
@@ -30,6 +33,7 @@ public class DestinyInitialClanScanner : EntityScannerBase<DestinyClanScannerInp
         _bungieNetApiCallHandler = bungieNetApiCallHandler;
         _userQueue = userQueue;
         _destinyDb = destinyDb;
+        _commonEvents = commonEvents;
     }
 
     private void BuildApiCallPolicy()
@@ -83,7 +87,7 @@ public class DestinyInitialClanScanner : EntityScannerBase<DestinyClanScannerInp
         context.ClanData = groupResponse.Response;
 
         return true;
-    } 
+    }
 
 
     [ScanStep(nameof(GetMembersOfGroup), 2)]
@@ -132,24 +136,24 @@ public class DestinyInitialClanScanner : EntityScannerBase<DestinyClanScannerInp
         return true;
     }
 
-
     [ScanStep(nameof(UpdateOrInsertClanDataInDb), 4, true)]
     public async ValueTask<bool> UpdateOrInsertClanDataInDb(
         DestinyClanScannerInput input,
         DestinyClanScannerContext context,
         CancellationToken cancellationToken)
     {
-        var groupResponse = context.ClanData;
-        //await _clansDbAccess.UpdateClan(groupResponse, context.MembersOnline, cancellationToken);
-        //await _broadcastsDbAccess.SendClanBroadcast(new ClanBroadcast
-        //{
-        //    ClanId = entry.ClanId,
-        //    Date = DateTime.UtcNow,
-        //    GuildId = entry.GuildId,
-        //    Type = ClanBroadcastType.ClanScanFinished,
-        //    WasAnnounced = false,
-        //    NewValue = entry.ChannelId.ToString()
-        //}, cancellationToken);
+        var clanData = DestinyClanDbModel.CreateFromApiResponse(context.ClanData);
+        clanData.LastScan = DateTime.UtcNow;
+
+        await _destinyDb.UpsertClanModelAsync(clanData);
+        _commonEvents.ClanBroadcasts.Publish(new ClanBroadcastDbModel()
+        {
+            ClanId = clanData.ClanId,
+            Date = DateTime.UtcNow,
+            GuildId = 0,
+            Type = ClanBroadcastType.ClanScanFinished,
+            WasAnnounced = false
+        });
         return true;
     }
 
