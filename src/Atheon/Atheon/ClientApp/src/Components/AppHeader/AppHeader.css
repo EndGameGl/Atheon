@@ -1,0 +1,14 @@
+.app-header-container {
+    background-color: #202225;
+    display: flex;
+    flex: 1;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.app-header-label {
+    margin: 20px;
+    font-family: sans-serif;
+    font-weight: bold;
+    text-transform: full-width;
+}

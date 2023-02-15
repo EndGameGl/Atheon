@@ -6,7 +6,7 @@ using Newtonsoft.Json.Linq;
 namespace Atheon.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route("api/[controller]")]
 public class SettingsStorageController : ControllerBase
 {
     private readonly ISettingsStorage _settingsStorage;
