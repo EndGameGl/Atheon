@@ -8,14 +8,18 @@ import {
 import { DefinitionDictionary } from "../../Models/Destiny/DefinitionDictionary";
 import { RootState } from "../store";
 
-interface DestinyDefinitionsState {
-    InventoryItems: DefinitionDictionary<DestinyInventoryItemDefinition>;
-    Seasons: DefinitionDictionary<DestinySeasonDefinition>;
-    Checklists: DefinitionDictionary<DestinyChecklistDefinition>;
-    Artifacts: DefinitionDictionary<DestinyArtifactDefinition>;
+export interface DestinyDefinitionsState {
+    IsLoading: boolean;
+    ManifestVersion: string | null;
+    InventoryItems: DefinitionDictionary<DestinyInventoryItemDefinition> | null;
+    Seasons: DefinitionDictionary<DestinySeasonDefinition> | null;
+    Checklists: DefinitionDictionary<DestinyChecklistDefinition> | null;
+    Artifacts: DefinitionDictionary<DestinyArtifactDefinition> | null;
 }
 
 const initialState: DestinyDefinitionsState = {
+    IsLoading: false,
+    ManifestVersion: null,
     InventoryItems: { Type: 'DestinyInventoryItemDefinition' },
     Seasons: { Type: 'DestinySeasonDefinition' },
     Checklists: { Type: 'DestinyChecklistDefinition' },
@@ -28,11 +32,14 @@ export const definitionsSlice = createSlice({
     reducers: {
         setDefinitions: (state, newState: PayloadAction<DestinyDefinitionsState>) => {
             state = newState.payload;
+        },
+        setIsLoading: (state, payload: PayloadAction<boolean>) => {
+            state.IsLoading = payload.payload;
         }
     }
 });
 
-export const { setDefinitions } = definitionsSlice.actions;
+export const { setDefinitions, setIsLoading } = definitionsSlice.actions;
 
 export const selectDefinitions = (state: RootState) => state.destinyDefinitions;
 

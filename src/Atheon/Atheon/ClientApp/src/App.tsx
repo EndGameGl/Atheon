@@ -6,6 +6,9 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import SettingsMenu from './Components/SettingsMenu/SettingsMenu';
 import Guilds from './Components/Guilds/Guilds';
 import { QueryClient, QueryClientProvider } from 'react-query';
+import { Provider } from 'react-redux';
+import { store } from './Stores/store';
+import Destiny2ManifestUpdater from './Components/ServiceComponents/Destiny2ManifestUpdater';
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -18,23 +21,26 @@ const queryClient = new QueryClient({
 function App() {
     return (
         <React.StrictMode>
-            <QueryClientProvider client={queryClient}>
-                <BrowserRouter>
-                    <div className='application'>
-                        <AppHeader />
-                        <div className='application-body-container'>
-                            <SideBarMenu />
-                            <div className='application-content-container'>
-                                <Routes>
-                                    <Route path='/' element={<App />} />
-                                    <Route path='/settings' element={<SettingsMenu />} />
-                                    <Route path='/guilds' element={<Guilds />} />
-                                </Routes>
+            <Provider store={store}>
+                <QueryClientProvider client={queryClient}>
+                    <BrowserRouter>
+                        <div className='application'>
+                            <Destiny2ManifestUpdater />
+                            <AppHeader />
+                            <div className='application-body-container'>
+                                <SideBarMenu />
+                                <div className='application-content-container'>
+                                    <Routes>
+                                        <Route path='/' element={<App />} />
+                                        <Route path='/settings' element={<SettingsMenu />} />
+                                        <Route path='/guilds' element={<Guilds />} />
+                                    </Routes>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </BrowserRouter>
-            </QueryClientProvider>
+                    </BrowserRouter>
+                </QueryClientProvider>
+            </Provider>
         </React.StrictMode >
     );
 }

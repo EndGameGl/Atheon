@@ -1,11 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit'
 import destinyDefinitionsReducer from '../Stores/Slices/destinyDefinitionsSlice';
 
-const store = configureStore({
+export const store = configureStore({
     reducer: {
         destinyDefinitions: destinyDefinitionsReducer
     },
-})
+});
 
 export type RootState = ReturnType<typeof store.getState>;
 

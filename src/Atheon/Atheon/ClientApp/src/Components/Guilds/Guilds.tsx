@@ -18,6 +18,7 @@ function Guilds() {
         const inviteUrl = `https://discord.com/api/oauth2/authorize?client_id=${Data}&permissions=0&scope=bot%20applications.commands`
         window.open(inviteUrl);
     };
+    
     return (
         <>
             {getGuildsQuery.isLoading ?
