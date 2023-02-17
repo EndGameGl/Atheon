@@ -1,9 +1,11 @@
 ﻿using Atheon.Models.Database.Destiny;
+using Atheon.Models.Database.Destiny.Guilds;
 
 namespace Atheon.Services.Interfaces;
 
 public interface IDestinyDb
 {
+    Task<List<GuildReference>> GetGuildReferencesAsync();
     Task<List<DiscordGuildSettingsDbModel>> GetAllGuildSettings();
     Task<DiscordGuildSettingsDbModel?> GetGuildSettingsAsync(ulong guildId);
     Task UpsertGuildSettingsAsync(DiscordGuildSettingsDbModel guildSettings);

@@ -6,15 +6,9 @@ import {
     setBungieManifestPathAsync,
     getBungieManifestPathAsync
 } from "../../Services/settingsApi";
+import { useQuery } from "react-query";
 
 function SettingsMenu() {
-    useEffect(() => {
-        getBungieManifestPathAsync()
-            .then((resp) => {
-                setBungieManifestPath(resp.Data);
-            });
-    }, [])
-
     const [discordToken, setDiscordToken] = useState<string | null>(null);
     const [reloadDiscordClient, setReloadDiscordClient] = useState<boolean>(false);
 
@@ -22,6 +16,12 @@ function SettingsMenu() {
 
     const [bungieManifestPath, setBungieManifestPath] = useState<string | null>(null);
     const [reloadBungieManifestPath, setReloadBungieManifestPath] = useState<boolean>(false);
+
+    const bungieManifestPathQuery = useQuery('bungieManifestPath', async () => {
+        const manifestPath = await getBungieManifestPathAsync();
+        return manifestPath.Data;
+    }, { onSuccess: setBungieManifestPath });
+
 
     const updateDiscordToken = () => {
         setDiscordTokenAsync(discordToken, reloadDiscordClient)
@@ -66,7 +66,7 @@ function SettingsMenu() {
         return (
             <div className="input-wrapper">
                 <label>Destiny 2 Manifest path: </label>
-                <input type="text" value={bungieManifestPath} onChange={(e) => { setBungieManifestPath(e.target.value) }} />
+                <input type="text" value={bungieManifestPathQuery.isLoading ? 'Loading...' : bungieManifestPath} onChange={(e) => { setBungieManifestPath(e.target.value) }} />
                 <input type="checkbox" checked={reloadBungieManifestPath} onChange={(e) => {
                     setReloadBungieManifestPath(!reloadBungieManifestPath)
                 }} />

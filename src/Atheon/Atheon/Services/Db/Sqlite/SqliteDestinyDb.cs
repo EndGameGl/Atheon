@@ -1,7 +1,6 @@
 ﻿using Atheon.Models.Database.Destiny;
+using Atheon.Models.Database.Destiny.Guilds;
 using Atheon.Services.Interfaces;
-using DotNetBungieAPI.HashReferences;
-using System.Security.Claims;
 
 namespace Atheon.Services.Db.Sqlite
 {
@@ -12,6 +11,18 @@ namespace Atheon.Services.Db.Sqlite
         public SqliteDestinyDb(IDbAccess dbAccess)
         {
             _dbAccess = dbAccess;
+        }
+
+        private const string GetGuildReferencesQuery =
+            """
+            SELECT 
+                GuildId,
+                GuildName
+            FROM Guilds;
+            """;
+        public async Task<List<GuildReference>> GetGuildReferencesAsync()
+        {
+            return await _dbAccess.QueryAsync<GuildReference>(GetGuildReferencesQuery);
         }
 
         private const string GetAllGuildSettingsQuery = 
