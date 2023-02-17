@@ -27,7 +27,7 @@ public class SettingsStorageController : ControllerBase
     }
 
     [HttpPost("SetDiscordToken/{reload}")]
-    public async Task<ActionResult> SetDiscordTokenAsync([FromBody] string token, bool reload)
+    public async Task<IActionResult> SetDiscordTokenAsync([FromBody] string token, bool reload)
     {
         try
         {
@@ -46,7 +46,7 @@ public class SettingsStorageController : ControllerBase
     }
 
     [HttpPost("SetBungieApiKey")]
-    public async Task<ActionResult> SetBungieApiKey([FromBody] string apiKey)
+    public async Task<IActionResult> SetBungieApiKey([FromBody] string apiKey)
     {
         try
         {
@@ -62,7 +62,7 @@ public class SettingsStorageController : ControllerBase
     }
 
     [HttpPost("SetDestinyManifestPath/{reload}")]
-    public async Task<ActionResult> SetDestinyManifestPath([FromBody] string manifestPath, bool reload)
+    public async Task<IActionResult> SetDestinyManifestPath([FromBody] string manifestPath, bool reload)
     {
         try
         {

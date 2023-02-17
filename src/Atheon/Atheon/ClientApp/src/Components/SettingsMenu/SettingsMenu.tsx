@@ -17,8 +17,7 @@ function SettingsMenu() {
                 <label>Discord token: </label>
                 <input type="text" value={discordToken} onChange={(e) => { setDiscordToken(e.target.value) }} />
                 <input type="checkbox" checked={reloadDiscordClient} onChange={(e) => {
-                    console.log(e.target.value);
-                    setReloadDiscordClient(e.target.value === 'on')
+                    setReloadDiscordClient(!reloadDiscordClient)
                 }} />
                 <label>Reload client</label>
                 <button onClick={updateDiscordToken}>Update</button>

@@ -1,14 +1,12 @@
+import callApi from "./apiAccess";
+
 async function setDiscordTokenAsync(
     discordToken: string,
     reloadDiscordClient: boolean): Promise<ApiResponse<boolean>> {
-    const response = await fetch(
+    return await callApi(
         `api/SettingsStorage/SetDiscordToken/${reloadDiscordClient}`,
-        {
-            method: 'POST', 
-            body: discordToken
-        });
-    const result =  await response.json() as ApiResponse<boolean>;
-    return result;
+        discordToken,
+        'POST');
 }
 
 export default setDiscordTokenAsync;

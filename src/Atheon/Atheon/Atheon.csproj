@@ -28,14 +28,131 @@
 
   <ItemGroup>
     <!-- Don't publish the SPA source files, but do show them in the project files list -->
+    <Compile Remove="bin\**" />
+    <Compile Remove="obj\**" />
     <Content Remove="$(SpaRoot)**" />
+    <Content Remove="bin\**" />
+    <Content Remove="obj\**" />
+    <EmbeddedResource Remove="bin\**" />
+    <EmbeddedResource Remove="obj\**" />
     <Content Include="ClientApp\tsconfig.json" />
     <None Remove="$(SpaRoot)**" />
+    <None Remove="bin\**" />
+    <None Remove="obj\**" />
     <None Include="$(SpaRoot)**" Exclude="$(SpaRoot)node_modules\**" />
   </ItemGroup>
 
   <ItemGroup>
     <EditorConfigFiles Remove="F:\ProgrammingStuff\Projects\Atheon\src\Atheon\Atheon\Services\Hosted\.editorconfig" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="bin\Debug\net7.0\Atheon.deps.json" />
+    <None Remove="bin\Debug\net7.0\Atheon.dll" />
+    <None Remove="bin\Debug\net7.0\Atheon.exe" />
+    <None Remove="bin\Debug\net7.0\Atheon.pdb" />
+    <None Remove="bin\Debug\net7.0\Atheon.runtimeconfig.json" />
+    <None Remove="bin\Debug\net7.0\ComposableAsync.Core.dll" />
+    <None Remove="bin\Debug\net7.0\Dapper.dll" />
+    <None Remove="bin\Debug\net7.0\Discord.Net.Commands.dll" />
+    <None Remove="bin\Debug\net7.0\Discord.Net.Core.dll" />
+    <None Remove="bin\Debug\net7.0\Discord.Net.Interactions.dll" />
+    <None Remove="bin\Debug\net7.0\Discord.Net.Rest.dll" />
+    <None Remove="bin\Debug\net7.0\Discord.Net.Webhook.dll" />
+    <None Remove="bin\Debug\net7.0\Discord.Net.WebSocket.dll" />
+    <None Remove="bin\Debug\net7.0\DotNetBungieAPI.DefinitionProvider.Sqlite.dll" />
+    <None Remove="bin\Debug\net7.0\DotNetBungieAPI.dll" />
+    <None Remove="bin\Debug\net7.0\DotNetBungieAPI.HashReferences.dll" />
+    <None Remove="bin\Debug\net7.0\DotNetBungieAPI.Models.dll" />
+    <None Remove="bin\Debug\net7.0\DotNetBungieAPI.Service.Abstractions.dll" />
+    <None Remove="bin\Debug\net7.0\Microsoft.Data.Sqlite.dll" />
+    <None Remove="bin\Debug\net7.0\Microsoft.Extensions.DependencyModel.dll" />
+    <None Remove="bin\Debug\net7.0\Microsoft.OpenApi.dll" />
+    <None Remove="bin\Debug\net7.0\Newtonsoft.Json.dll" />
+    <None Remove="bin\Debug\net7.0\Polly.dll" />
+    <None Remove="bin\Debug\net7.0\RateLimiter.dll" />
+    <None Remove="bin\Debug\net7.0\runtimes\alpine-arm64\native\libe_sqlite3.so" />
+    <None Remove="bin\Debug\net7.0\runtimes\alpine-arm\native\libe_sqlite3.so" />
+    <None Remove="bin\Debug\net7.0\runtimes\alpine-x64\native\libe_sqlite3.so" />
+    <None Remove="bin\Debug\net7.0\runtimes\browser-wasm\nativeassets\net7.0\e_sqlite3.a" />
+    <None Remove="bin\Debug\net7.0\runtimes\linux-arm64\native\libe_sqlite3.so" />
+    <None Remove="bin\Debug\net7.0\runtimes\linux-armel\native\libe_sqlite3.so" />
+    <None Remove="bin\Debug\net7.0\runtimes\linux-arm\native\libe_sqlite3.so" />
+    <None Remove="bin\Debug\net7.0\runtimes\linux-mips64\native\libe_sqlite3.so" />
+    <None Remove="bin\Debug\net7.0\runtimes\linux-musl-arm64\native\libe_sqlite3.so" />
+    <None Remove="bin\Debug\net7.0\runtimes\linux-musl-arm\native\libe_sqlite3.so" />
+    <None Remove="bin\Debug\net7.0\runtimes\linux-musl-x64\native\libe_sqlite3.so" />
+    <None Remove="bin\Debug\net7.0\runtimes\linux-ppc64le\native\libe_sqlite3.so" />
+    <None Remove="bin\Debug\net7.0\runtimes\linux-s390x\native\libe_sqlite3.so" />
+    <None Remove="bin\Debug\net7.0\runtimes\linux-x64\native\libe_sqlite3.so" />
+    <None Remove="bin\Debug\net7.0\runtimes\linux-x86\native\libe_sqlite3.so" />
+    <None Remove="bin\Debug\net7.0\runtimes\maccatalyst-arm64\native\libe_sqlite3.dylib" />
+    <None Remove="bin\Debug\net7.0\runtimes\maccatalyst-x64\native\libe_sqlite3.dylib" />
+    <None Remove="bin\Debug\net7.0\runtimes\osx-arm64\native\libe_sqlite3.dylib" />
+    <None Remove="bin\Debug\net7.0\runtimes\osx-x64\native\libe_sqlite3.dylib" />
+    <None Remove="bin\Debug\net7.0\runtimes\win-arm64\native\e_sqlite3.dll" />
+    <None Remove="bin\Debug\net7.0\runtimes\win-arm\native\e_sqlite3.dll" />
+    <None Remove="bin\Debug\net7.0\runtimes\win-x64\native\e_sqlite3.dll" />
+    <None Remove="bin\Debug\net7.0\runtimes\win-x86\native\e_sqlite3.dll" />
+    <None Remove="bin\Debug\net7.0\Serilog.AspNetCore.dll" />
+    <None Remove="bin\Debug\net7.0\Serilog.dll" />
+    <None Remove="bin\Debug\net7.0\Serilog.Extensions.Hosting.dll" />
+    <None Remove="bin\Debug\net7.0\Serilog.Extensions.Logging.dll" />
+    <None Remove="bin\Debug\net7.0\Serilog.Formatting.Compact.dll" />
+    <None Remove="bin\Debug\net7.0\Serilog.Settings.Configuration.dll" />
+    <None Remove="bin\Debug\net7.0\Serilog.Sinks.Console.dll" />
+    <None Remove="bin\Debug\net7.0\Serilog.Sinks.Debug.dll" />
+    <None Remove="bin\Debug\net7.0\Serilog.Sinks.File.dll" />
+    <None Remove="bin\Debug\net7.0\SQLitePCLRaw.batteries_v2.dll" />
+    <None Remove="bin\Debug\net7.0\SQLitePCLRaw.core.dll" />
+    <None Remove="bin\Debug\net7.0\SQLitePCLRaw.provider.e_sqlite3.dll" />
+    <None Remove="bin\Debug\net7.0\Swashbuckle.AspNetCore.Swagger.dll" />
+    <None Remove="bin\Debug\net7.0\Swashbuckle.AspNetCore.SwaggerGen.dll" />
+    <None Remove="bin\Debug\net7.0\Swashbuckle.AspNetCore.SwaggerUI.dll" />
+    <None Remove="bin\Debug\net7.0\System.Interactive.Async.dll" />
+    <None Remove="bin\Debug\net7.0\System.Linq.Async.dll" />
+    <None Remove="bin\Debug\net7.0\System.Reactive.dll" />
+    <None Remove="obj\Atheon.csproj.nuget.dgspec.json" />
+    <None Remove="obj\Atheon.csproj.nuget.g.props" />
+    <None Remove="obj\Atheon.csproj.nuget.g.targets" />
+    <None Remove="obj\Debug\net7.0\.NETCoreApp,Version=v7.0.AssemblyAttributes.cs" />
+    <None Remove="obj\Debug\net7.0\apphost.exe" />
+    <None Remove="obj\Debug\net7.0\Atheon.AssemblyInfo.cs" />
+    <None Remove="obj\Debug\net7.0\Atheon.AssemblyInfoInputs.cache" />
+    <None Remove="obj\Debug\net7.0\Atheon.assets.cache" />
+    <None Remove="obj\Debug\net7.0\Atheon.csproj.AssemblyReference.cache" />
+    <None Remove="obj\Debug\net7.0\Atheon.csproj.BuildWithSkipAnalyzers" />
+    <None Remove="obj\Debug\net7.0\Atheon.csproj.CopyComplete" />
+    <None Remove="obj\Debug\net7.0\Atheon.csproj.CoreCompileInputs.cache" />
+    <None Remove="obj\Debug\net7.0\Atheon.csproj.FileListAbsolute.txt" />
+    <None Remove="obj\Debug\net7.0\Atheon.dll" />
+    <None Remove="obj\Debug\net7.0\Atheon.GeneratedMSBuildEditorConfig.editorconfig" />
+    <None Remove="obj\Debug\net7.0\Atheon.genruntimeconfig.cache" />
+    <None Remove="obj\Debug\net7.0\Atheon.GlobalUsings.g.cs" />
+    <None Remove="obj\Debug\net7.0\Atheon.MvcApplicationPartsAssemblyInfo.cache" />
+    <None Remove="obj\Debug\net7.0\Atheon.MvcApplicationPartsAssemblyInfo.cs" />
+    <None Remove="obj\Debug\net7.0\Atheon.pdb" />
+    <None Remove="obj\Debug\net7.0\refint\Atheon.dll" />
+    <None Remove="obj\Debug\net7.0\ref\Atheon.dll" />
+    <None Remove="obj\Debug\net7.0\staticwebassets.build.json" />
+    <None Remove="obj\Debug\net7.0\staticwebassets\msbuild.build.Atheon.props" />
+    <None Remove="obj\Debug\net7.0\staticwebassets\msbuild.buildMultiTargeting.Atheon.props" />
+    <None Remove="obj\Debug\net7.0\staticwebassets\msbuild.buildTransitive.Atheon.props" />
+    <None Remove="obj\project.assets.json" />
+    <None Remove="obj\project.nuget.cache" />
+    <None Remove="obj\project.packagespec.json" />
+    <None Remove="obj\Release\net7.0\.NETCoreApp,Version=v7.0.AssemblyAttributes.cs" />
+    <None Remove="obj\Release\net7.0\Atheon.AssemblyInfo.cs" />
+    <None Remove="obj\Release\net7.0\Atheon.AssemblyInfoInputs.cache" />
+    <None Remove="obj\Release\net7.0\Atheon.assets.cache" />
+    <None Remove="obj\Release\net7.0\Atheon.csproj.AssemblyReference.cache" />
+    <None Remove="obj\Release\net7.0\Atheon.GeneratedMSBuildEditorConfig.editorconfig" />
+    <None Remove="obj\Release\net7.0\Atheon.GlobalUsings.g.cs" />
+    <None Remove="obj\rider.project.restore.info" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Models\Api\" />
   </ItemGroup>
 
 </Project>
