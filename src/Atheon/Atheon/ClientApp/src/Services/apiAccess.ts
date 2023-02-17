@@ -1,3 +1,5 @@
+import ApiResponse from "../Models/ApiResponse";
+
 async function callApi<T>(
     url: string,
     body: any,
@@ -6,7 +8,7 @@ async function callApi<T>(
         url,
         {
             method: method,
-            body: JSON.stringify(body),
+            body: body ? JSON.stringify(body) : null,
             headers: {
                 'Content-Type': 'application/json'
             }

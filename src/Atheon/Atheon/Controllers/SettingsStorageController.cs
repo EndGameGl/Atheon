@@ -1,4 +1,5 @@
-﻿using Atheon.Services.DiscordHandlers;
+﻿using Atheon.Models.Api;
+using Atheon.Services.DiscordHandlers;
 using Atheon.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
@@ -27,6 +28,7 @@ public class SettingsStorageController : ControllerBase
     }
 
     [HttpPost("SetDiscordToken/{reload}")]
+    [Produces(typeof(ApiResponse<bool>))]
     public async Task<IActionResult> SetDiscordTokenAsync([FromBody] string token, bool reload)
     {
         try
@@ -35,8 +37,8 @@ public class SettingsStorageController : ControllerBase
             if (reload)
             {
                 await _discordClientProvider.ForceReloadClientAsync();
-            }          
-            return Ok();
+            }
+            return new ObjectResult(ApiResponse<bool>.Ok(true));
         }
         catch (Exception ex)
         {
@@ -46,13 +48,14 @@ public class SettingsStorageController : ControllerBase
     }
 
     [HttpPost("SetBungieApiKey")]
+    [Produces(typeof(ApiResponse<bool>))]
     public async Task<IActionResult> SetBungieApiKey([FromBody] string apiKey)
     {
         try
         {
             await _settingsStorage.SetOption(SettingKeys.BungieApiKey, apiKey);
             _bungieClientProvider.SetApiKey(apiKey);
-            return Ok();
+            return new ObjectResult(ApiResponse<bool>.Ok(true));
         }
         catch (Exception ex)
         {
@@ -62,18 +65,35 @@ public class SettingsStorageController : ControllerBase
     }
 
     [HttpPost("SetDestinyManifestPath/{reload}")]
+    [Produces(typeof(ApiResponse<bool>))]
     public async Task<IActionResult> SetDestinyManifestPath([FromBody] string manifestPath, bool reload)
     {
         try
         {
             await _settingsStorage.SetOption(SettingKeys.BungieManifestStoragePath, manifestPath);
             await _bungieClientProvider.SetManifestPath(manifestPath, reload);
-            return Ok();
+            return new ObjectResult(ApiResponse<bool>.Ok(true));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to save discord token");
             return this.BadRequest();
+        }
+    }
+
+    [HttpGet("GetDestinyManifestPath")]
+    [Produces(typeof(ApiResponse<string>))]
+    public async Task<IActionResult> GetDestinyManifestPath()
+    {
+        try
+        {
+            var path = await _settingsStorage.GetOption<string>(SettingKeys.BungieManifestStoragePath);
+            return new ObjectResult(ApiResponse<string>.Ok(path));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to save discord token");
+            return new ObjectResult(ApiResponse<string>.Error(ex));
         }
     }
 }

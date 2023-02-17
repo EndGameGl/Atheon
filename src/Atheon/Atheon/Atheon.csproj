@@ -31,14 +31,10 @@
     <Compile Remove="bin\**" />
     <Compile Remove="obj\**" />
     <Content Remove="$(SpaRoot)**" />
-    <Content Remove="bin\**" />
-    <Content Remove="obj\**" />
     <EmbeddedResource Remove="bin\**" />
     <EmbeddedResource Remove="obj\**" />
     <Content Include="ClientApp\tsconfig.json" />
     <None Remove="$(SpaRoot)**" />
-    <None Remove="bin\**" />
-    <None Remove="obj\**" />
     <None Include="$(SpaRoot)**" Exclude="$(SpaRoot)node_modules\**" />
   </ItemGroup>
 
@@ -149,10 +145,6 @@
     <None Remove="obj\Release\net7.0\Atheon.GeneratedMSBuildEditorConfig.editorconfig" />
     <None Remove="obj\Release\net7.0\Atheon.GlobalUsings.g.cs" />
     <None Remove="obj\rider.project.restore.info" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Models\Api\" />
   </ItemGroup>
 
 </Project>

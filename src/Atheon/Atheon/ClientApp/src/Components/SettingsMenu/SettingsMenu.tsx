@@ -1,18 +1,45 @@
-import React, { useState } from "react";
-import setDiscordTokenAsync from "../../Services/setDiscordToken";
+import React, { useEffect, useState } from "react";
 import './SettingsMenu.css';
+import {
+    setDiscordTokenAsync,
+    setBungieApiKeyAsync,
+    setBungieManifestPathAsync,
+    getBungieManifestPathAsync
+} from "../../Services/settingsApi";
 
 function SettingsMenu() {
+    useEffect(() => {
+        getBungieManifestPathAsync()
+            .then((resp) => {
+                setBungieManifestPath(resp.Data);
+            });
+    }, [])
+
     const [discordToken, setDiscordToken] = useState<string | null>(null);
     const [reloadDiscordClient, setReloadDiscordClient] = useState<boolean>(false);
 
+    const [bungieApiKey, setBungieApiKey] = useState<string | null>(null);
+
+    const [bungieManifestPath, setBungieManifestPath] = useState<string | null>(null);
+    const [reloadBungieManifestPath, setReloadBungieManifestPath] = useState<boolean>(false);
+
     const updateDiscordToken = () => {
         setDiscordTokenAsync(discordToken, reloadDiscordClient)
-            .catch((e) => console.log(e))
+            .catch((e) => console.log(e));
     }
 
-    return (
-        <div>
+    const updateBungieApiKey = () => {
+        setBungieApiKeyAsync(bungieApiKey)
+            .catch((e) => console.log(e));
+    }
+
+    const updateDestinyManifestPath = () => {
+        setBungieManifestPathAsync(bungieManifestPath, reloadBungieManifestPath)
+            .catch((e) => console.log(e));
+    }
+
+    const discordInput = (): JSX.Element => {
+        return (
             <div className="input-wrapper">
                 <label>Discord token: </label>
                 <input type="text" value={discordToken} onChange={(e) => { setDiscordToken(e.target.value) }} />
@@ -22,6 +49,38 @@ function SettingsMenu() {
                 <label>Reload client</label>
                 <button onClick={updateDiscordToken}>Update</button>
             </div>
+        );
+    }
+
+    const bungieApiKeyInput = (): JSX.Element => {
+        return (
+            <div className="input-wrapper">
+                <label>Bungie API key: </label>
+                <input type="text" value={bungieApiKey} onChange={(e) => { setBungieApiKey(e.target.value) }} />
+                <button onClick={updateBungieApiKey}>Update</button>
+            </div>
+        );
+    }
+
+    const bungieManifestPathInput = (): JSX.Element => {
+        return (
+            <div className="input-wrapper">
+                <label>Destiny 2 Manifest path: </label>
+                <input type="text" value={bungieManifestPath} onChange={(e) => { setBungieManifestPath(e.target.value) }} />
+                <input type="checkbox" checked={reloadBungieManifestPath} onChange={(e) => {
+                    setReloadBungieManifestPath(!reloadBungieManifestPath)
+                }} />
+                <label>Reload client</label>
+                <button onClick={updateDestinyManifestPath}>Update</button>
+            </div>
+        );
+    }
+
+    return (
+        <div>
+            {discordInput()}
+            {bungieApiKeyInput()}
+            {bungieManifestPathInput()}
         </div>
     );
 }

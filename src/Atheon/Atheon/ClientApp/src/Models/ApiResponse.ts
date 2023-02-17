@@ -4,3 +4,4 @@ interface ApiResponse<T> {
     Code: number;
 }
 
+export default ApiResponse;
