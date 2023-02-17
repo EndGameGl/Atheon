@@ -13,6 +13,15 @@ namespace Atheon.Controllers.Base
             Logger = logger;
         }
 
+        protected IActionResult CustomResult<T>(T data, ApiResponseCode code)
+        {
+            return new ObjectResult(new ApiResponse<T>()
+            {
+                Data = data,
+                Code = code
+            });
+        }
+
         protected IActionResult OkResult<T>(T data)
         {
             return new ObjectResult(ApiResponse<T>.Ok(data));

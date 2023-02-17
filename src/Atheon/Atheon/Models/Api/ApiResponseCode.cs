@@ -3,6 +3,8 @@
     public enum ApiResponseCode
     {
         Ok = 200,
-        InternalError = 500
+        InternalError = 500,
+
+        DiscordClientNotReady = 600
     }
 }
