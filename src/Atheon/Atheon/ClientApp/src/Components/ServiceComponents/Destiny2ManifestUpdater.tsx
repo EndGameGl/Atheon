@@ -1,6 +1,6 @@
 import { DestinyManifest } from "quria";
 import React, { useEffect, useState } from "react";
-import { useAppDispatch, useAppSelector } from "../../hooks";
+import { useAppDispatch, useAppSelector, useInterval } from "../../hooks";
 import { DefinitionDictionary } from "../../Models/Destiny/DefinitionDictionary";
 import quriaService from "../../Services/quriaService";
 import { manifestDb } from "../../Stores/IndexedDb/ManifestDb";
@@ -19,6 +19,9 @@ function Destiny2ManifestUpdater() {
     const dispatch = useAppDispatch();
 
     const updateManifest = () => {
+
+        console.log('Checking manifest...');
+
         if (definitionsState.IsLoading)
             return;
 
@@ -36,8 +39,8 @@ function Destiny2ManifestUpdater() {
                     .startsWith('D')
                     .primaryKeys();
 
-                let manifestIsMissing = currentManifest !== undefined;
-                let manifestIsOutdated = manifestIsMissing && currentManifest?.Manifest.version === manifest.version;
+                let manifestIsMissing = !currentManifest;
+                let manifestIsOutdated = manifestIsMissing && currentManifest?.Manifest.version !== manifest.version;
                 let definitionTypesToAdd: string[] = []
                 let definitionTypesToRemove: string[] = [];
                 currentLoadedDefinitions.forEach(loadedDefinition => {
@@ -52,6 +55,8 @@ function Destiny2ManifestUpdater() {
                 });
 
                 if (manifestIsMissing || manifestIsOutdated || definitionTypesToAdd.length > 0 || definitionTypesToRemove.length > 0) {
+                    console.log(`Manifest data requires update due to: \n- Manifest missing: ${manifestIsMissing} \n- Manifest outdated: ${manifestIsOutdated} ${definitionTypesToAdd.length > 0 ? `\n-Need to add defs: ${definitionTypesToAdd}` : ''}`);
+
                     let manifestTable = await getManifestTables(manifest);
                     await validateStoredTables(manifestTable, definitionTypesToAdd, definitionTypesToRemove);
                     await updateManifestDataInDb(manifest);
@@ -65,25 +70,16 @@ function Destiny2ManifestUpdater() {
                     };
                     dispatch(setDefinitions(loadedDefs));
                 }
-
+                else {
+                    console.log('Manifest is up to date');
+                }
             })
             .finally(() => {
                 dispatch(setIsLoading(false));
             });
     }
 
-    useEffect(() => {
-        updateManifest();
-        const timerId = setInterval(
-            () => {
-                updateManifest();
-                return () => {
-                    clearInterval(timerId);
-                }
-            },
-            1000 * 60 * 10);
-        return () => { clearInterval(timerId); };
-    });
+    useInterval(updateManifest, 1000 * 60);
 
     return (<></>);
 }
