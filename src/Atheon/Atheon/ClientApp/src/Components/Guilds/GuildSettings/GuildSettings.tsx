@@ -50,15 +50,15 @@ function GuildSettings() {
 
     return (
         <div>
-            <div id="guild-settings-menu-element">
+            <div id="guild-settings-menu-element grid-menu-element">
                 <label>Discord Guild ID:</label>
                 <label>{guildSettings?.guildId}</label>
             </div>
-            <div id="guild-settings-menu-element">
+            <div id="guild-settings-menu-element grid-menu-element">
                 <label>Discord Guild Name:</label>
                 <label>{guildSettings?.guildName}</label>
             </div>
-            <div id="guild-settings-menu-element">
+            <div id="guild-settings-menu-element grid-menu-element">
                 <label>Discord Default Report Channel ID:</label>
                 <select onChange={(e) => {
                     const newChannelValue = e.target.value;
@@ -78,7 +78,7 @@ function GuildSettings() {
                     ))}
                 </select>
             </div>
-            <div id="guild-settings-menu-element">
+            <div id="guild-settings-menu-element grid-menu-element">
                 <label>System Reports Enabled:</label>
                 <input
                     type={'checkbox'}
@@ -89,7 +89,7 @@ function GuildSettings() {
                     })}
                     checked={guildSettings?.systemReportsEnabled} />
             </div>
-            <div id="guild-settings-menu-element">
+            <div id="guild-settings-menu-element grid-menu-element">
                 <label>System Reports Override Channel:</label>
                 <select onChange={(e) => {
                     const newChannelValue = e.target.value;
@@ -109,7 +109,7 @@ function GuildSettings() {
                     ))}
                 </select>
             </div>
-            <div id="guild-settings-menu-element">
+            <div id="guild-settings-menu-element grid-menu-element">
                 <label>Report Clan Changes:</label>
                 <input
                     type={'checkbox'}
@@ -120,7 +120,7 @@ function GuildSettings() {
                     })}
                     checked={guildSettings?.reportClanChanges} />
             </div>
-            <div id="guild-settings-menu-element">
+            <div id="guild-settings-menu-element grid-menu-element">
                 <label>Destiny 2 Clans:</label>
                 <div>
                     {guildSettings?.clans.length > 0 ?
@@ -133,7 +133,7 @@ function GuildSettings() {
                         </ul> :
                         <label>No clans added currently</label>}
                     <div className="clan-input-wrapper">
-                        <input type={'text'}></input>
+                        <input type="text"></input>
                         <button>Add new clan</button>
                     </div>
                 </div>
@@ -170,7 +170,7 @@ function GuildSettings() {
                     />
                 </Foldout>
             </div>
-            <div id="guild-settings-menu-element">
+            <div id="guild-settings-menu-element grid-menu-element">
                 <button>Save settings</button>
             </div>
         </div>
