@@ -9,6 +9,7 @@ import { DefinitionDictionary } from "../../Models/Destiny/DefinitionDictionary"
 import { RootState } from "../store";
 
 export interface DestinyDefinitionsState {
+    IsLoaded: boolean;
     IsLoading: boolean;
     ManifestVersion: string | null;
     InventoryItems: DefinitionDictionary<DestinyInventoryItemDefinition> | null;
@@ -18,6 +19,7 @@ export interface DestinyDefinitionsState {
 }
 
 const initialState: DestinyDefinitionsState = {
+    IsLoaded: false,
     IsLoading: false,
     ManifestVersion: null,
     InventoryItems: { Type: 'DestinyInventoryItemDefinition' },

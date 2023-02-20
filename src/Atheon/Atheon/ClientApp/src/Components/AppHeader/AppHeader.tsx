@@ -3,7 +3,7 @@ import './AppHeader.css'
 import { useAppSelector } from "../../hooks";
 
 function AppHeader() {
-    const definitionsLoadingState = useAppSelector((state) => state.destinyDefinitions.IsLoading);
+    const headerMessage = useAppSelector((state) => state.headerText.text);
 
     return (
         <div className="app-header-container">
@@ -11,7 +11,7 @@ function AppHeader() {
                 Atheon
             </div>
             <div>
-                {definitionsLoadingState ? 'Definitions are updating...' : ''}
+                {headerMessage}
             </div>
         </div>
     )

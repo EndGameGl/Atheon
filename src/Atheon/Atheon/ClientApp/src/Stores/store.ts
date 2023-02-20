@@ -1,9 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit'
 import destinyDefinitionsReducer from '../Stores/Slices/destinyDefinitionsSlice';
+import headerStatusMessageReducer from '../Stores/Slices/headerStatusMessageSlice'
 
 export const store = configureStore({
     reducer: {
-        destinyDefinitions: destinyDefinitionsReducer
+        destinyDefinitions: destinyDefinitionsReducer,
+        headerText: headerStatusMessageReducer
     },
 });
 

@@ -5,6 +5,7 @@ import { DefinitionDictionary } from "../../Models/Destiny/DefinitionDictionary"
 import quriaService from "../../Services/quriaService";
 import { manifestDb } from "../../Stores/IndexedDb/ManifestDb";
 import { DestinyDefinitionsState, setDefinitions, setIsLoading } from "../../Stores/Slices/destinyDefinitionsSlice";
+import { setMessage, clearMessage } from "../../Stores/Slices/headerStatusMessageSlice";
 
 const DefinitionsToStore = [
     "DestinyInventoryItemDefinition",
@@ -19,14 +20,12 @@ function Destiny2ManifestUpdater() {
     const dispatch = useAppDispatch();
 
     const updateManifest = () => {
-
-        console.log('Checking manifest...');
-
+        dispatch(setMessage('Checking manifest...'));
         if (definitionsState.IsLoading)
             return;
 
         dispatch(setIsLoading(true));
-
+        dispatch(setMessage('Manifest is updating...'));
         quriaService
             .destiny2
             .GetDestinyManifest()
@@ -60,7 +59,8 @@ function Destiny2ManifestUpdater() {
                     let manifestTable = await getManifestTables(manifest);
                     await validateStoredTables(manifestTable, definitionTypesToAdd, definitionTypesToRemove);
                     await updateManifestDataInDb(manifest);
-                    const loadedDefs : DestinyDefinitionsState = {
+                    const loadedDefs: DestinyDefinitionsState = {
+                        IsLoaded: true,
                         IsLoading: false,
                         ManifestVersion: manifest.version,
                         InventoryItems: LoadTypesInMemory(manifestTable, definitionsState.InventoryItems.Type),
@@ -71,11 +71,25 @@ function Destiny2ManifestUpdater() {
                     dispatch(setDefinitions(loadedDefs));
                 }
                 else {
+                    if (!definitionsState.IsLoaded) {
+                        let manifestTable = await getManifestTables(manifest);
+                        const loadedDefs: DestinyDefinitionsState = {
+                            IsLoaded: true,
+                            IsLoading: false,
+                            ManifestVersion: manifest.version,
+                            InventoryItems: LoadTypesInMemory(manifestTable, definitionsState.InventoryItems.Type),
+                            Seasons: LoadTypesInMemory(manifestTable, definitionsState.Seasons.Type),
+                            Checklists: LoadTypesInMemory(manifestTable, definitionsState.Checklists.Type),
+                            Artifacts: LoadTypesInMemory(manifestTable, definitionsState.Artifacts.Type)
+                        };
+                        dispatch(setDefinitions(loadedDefs));
+                    }
                     console.log('Manifest is up to date');
                 }
             })
             .finally(() => {
                 dispatch(setIsLoading(false));
+                dispatch(clearMessage());
             });
     }
 
