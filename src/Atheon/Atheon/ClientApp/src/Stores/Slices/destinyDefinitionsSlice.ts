@@ -4,6 +4,8 @@ import {
     DestinyChecklistDefinition,
     DestinyCollectibleDefinition,
     DestinyInventoryItemDefinition,
+    DestinyMetricDefinition,
+    DestinyProgressionDefinition,
     DestinyRecordDefinition,
     DestinySeasonDefinition
 } from "quria";
@@ -20,6 +22,8 @@ export interface DestinyDefinitionsState {
     Artifacts: DefinitionDictionary<DestinyArtifactDefinition> | null;
     Collectibles: DefinitionDictionary<DestinyCollectibleDefinition> | null;
     Records: DefinitionDictionary<DestinyRecordDefinition> | null;
+    Metrics: DefinitionDictionary<DestinyMetricDefinition> | null;
+    Progressions: DefinitionDictionary<DestinyProgressionDefinition> | null;
 }
 
 const initialState: DestinyDefinitionsState = {
@@ -31,7 +35,9 @@ const initialState: DestinyDefinitionsState = {
     Checklists: { Type: 'DestinyChecklistDefinition' },
     Artifacts: { Type: 'DestinyArtifactDefinition' },
     Collectibles: { Type: 'DestinyCollectibleDefinition' },
-    Records: { Type: 'DestinyRecordDefinition' }
+    Records: { Type: 'DestinyRecordDefinition' },
+    Metrics: { Type: "DestinyMetricDefinition" },
+    Progressions: { Type: "DestinyProgressionDefinition" }
 }
 
 export const definitionsSlice = createSlice({

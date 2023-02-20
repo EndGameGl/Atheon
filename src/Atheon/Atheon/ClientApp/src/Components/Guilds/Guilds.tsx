@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useQuery } from "react-query";
+import { Link } from "react-router-dom";
 import { GuildReference } from "../../Models/GuildReference";
 import { getDiscordClientIdAsync } from "../../Services/discordDataApi";
 import { getGuildReferencesAsync } from "../../Services/guildsApi";
@@ -18,7 +19,7 @@ function Guilds() {
         const inviteUrl = `https://discord.com/api/oauth2/authorize?client_id=${Data}&permissions=0&scope=bot%20applications.commands`
         window.open(inviteUrl);
     };
-    
+
     return (
         <>
             {getGuildsQuery.isLoading ?
@@ -26,8 +27,9 @@ function Guilds() {
                 <ul>
                     {guilds.map(x =>
                         <li>
-                            {x.guildId} - {x.guildName}
-                        </li>)}
+                            <Link to={`/guilds/settings/${x.guildId}`}>{x.guildName}</Link>
+                        </li>
+                    )}
                 </ul>
             }
             <button onClick={redirectToBotInvite}>

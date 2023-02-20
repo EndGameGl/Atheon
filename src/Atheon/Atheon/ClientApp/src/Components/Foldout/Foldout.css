@@ -1,0 +1,31 @@
+.foldout-container {
+    background-color: #2f3136;
+    padding: 4px;
+}
+
+.foldout-content-hidden {
+    display: none;
+}
+
+.foldout-content-displayed {
+    background-color: #36393f;
+    margin: 5px;
+    padding: 5px;
+}
+
+.foldout-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    align-content: center;
+    padding: 5px;
+}
+
+.foldout-header-arrow {
+    margin: 10px;
+    background-image: url("/src/Resources/arrow-right.png");
+}
+
+.foldout-header-arrow-displayed {
+    transform: rotate(90deg);
+}

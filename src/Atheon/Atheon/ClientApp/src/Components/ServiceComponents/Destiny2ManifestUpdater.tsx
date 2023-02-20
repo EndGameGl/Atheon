@@ -1,5 +1,5 @@
 import { DestinyManifest } from "quria";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useAppDispatch, useAppSelector, useInterval } from "../../hooks";
 import { DefinitionDictionary } from "../../Models/Destiny/DefinitionDictionary";
 import quriaService from "../../Services/quriaService";
@@ -13,7 +13,9 @@ const DefinitionsToStore = [
     "DestinyChecklistDefinition",
     "DestinyArtifactDefinition",
     "DestinyCollectibleDefinition",
-    "DestinyRecordDefinition"
+    "DestinyRecordDefinition",
+    "DestinyMetricDefinition",
+    "DestinyProgressionDefinition"
 ];
 
 
@@ -70,7 +72,9 @@ function Destiny2ManifestUpdater() {
                         Checklists: LoadTypesInMemory(manifestTable, definitionsState.Checklists.Type),
                         Artifacts: LoadTypesInMemory(manifestTable, definitionsState.Artifacts.Type),
                         Collectibles: LoadTypesInMemory(manifestTable, definitionsState.Collectibles.Type),
-                        Records: LoadTypesInMemory(manifestTable, definitionsState.Records.Type)
+                        Records: LoadTypesInMemory(manifestTable, definitionsState.Records.Type),
+                        Metrics: LoadTypesInMemory(manifestTable, definitionsState.Metrics.Type),
+                        Progressions: LoadTypesInMemory(manifestTable, definitionsState.Progressions.Type),
                     };
                     dispatch(setDefinitions(loadedDefs));
                 }
@@ -87,14 +91,14 @@ function Destiny2ManifestUpdater() {
                             Checklists: LoadTypesInMemory(manifestTable, definitionsState.Checklists.Type),
                             Artifacts: LoadTypesInMemory(manifestTable, definitionsState.Artifacts.Type),
                             Collectibles: LoadTypesInMemory(manifestTable, definitionsState.Collectibles.Type),
-                            Records: LoadTypesInMemory(manifestTable, definitionsState.Records.Type)
+                            Records: LoadTypesInMemory(manifestTable, definitionsState.Records.Type),
+                            Metrics: LoadTypesInMemory(manifestTable, definitionsState.Metrics.Type),
+                            Progressions: LoadTypesInMemory(manifestTable, definitionsState.Progressions.Type),
                         };
                         dispatch(setDefinitions(loadedDefs));
+                        console.log(loadedDefs);
                     }
                 }
-            })
-            .finally(() => {
-                dispatch(setIsLoading(false));
                 dispatch(clearMessage());
             });
     }

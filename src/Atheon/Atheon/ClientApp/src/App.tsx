@@ -9,6 +9,7 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import { store } from './Stores/store';
 import Destiny2ManifestUpdater from './Components/ServiceComponents/Destiny2ManifestUpdater';
+import GuildSettings from './Components/Guilds/GuildSettings/GuildSettings';
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -34,6 +35,7 @@ function App() {
                                         <Route path='/' element={<App />} />
                                         <Route path='/settings' element={<SettingsMenu />} />
                                         <Route path='/guilds' element={<Guilds />} />
+                                        <Route path='/guilds/settings/:guildId' element={<GuildSettings />} />
                                     </Routes>
                                 </div>
                             </div>

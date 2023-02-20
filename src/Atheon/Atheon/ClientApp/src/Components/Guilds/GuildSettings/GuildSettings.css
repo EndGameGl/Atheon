@@ -1,0 +1,10 @@
+div#guild-settings-menu-element {
+  margin: 20px;
+  display: grid;
+  grid-template-columns: 280px 600px;
+}
+
+.clan-input-wrapper {
+  display: flex;
+  flex-direction: row;
+}
