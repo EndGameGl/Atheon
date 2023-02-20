@@ -13,7 +13,7 @@ export async function getGuildReferencesAsync(): Promise<ApiResponse<GuildRefere
 
 export async function getGuildSettingsAsync(guildId: string): Promise<ApiResponse<GuildSettingsModel>> {
     return await callApi(
-        `/api/Guilds/Settings/${guildId}`,
+        `/api/Guilds/${guildId}/Settings`,
         null,
         'GET');
 }

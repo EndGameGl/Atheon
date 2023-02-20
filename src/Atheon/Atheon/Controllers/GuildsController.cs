@@ -39,7 +39,7 @@ public class GuildsController : ApiResponseControllerBase
         }
     }
 
-    [HttpGet("Settings/{guildId}")]
+    [HttpGet("{guildId}/Settings")]
     [Produces(typeof(ApiResponse<DiscordGuildSettingsDbModel>))]
     public async Task<IActionResult> GetGuildSettings(ulong guildId)
     {
