@@ -25,7 +25,6 @@ function Destiny2ManifestUpdater() {
             return;
 
         dispatch(setIsLoading(true));
-        dispatch(setMessage('Manifest is updating...'));
         quriaService
             .destiny2
             .GetDestinyManifest()
@@ -54,6 +53,7 @@ function Destiny2ManifestUpdater() {
                 });
 
                 if (manifestIsMissing || manifestIsOutdated || definitionTypesToAdd.length > 0 || definitionTypesToRemove.length > 0) {
+                    dispatch(setMessage('Manifest is updating...'));
                     console.log(`Manifest data requires update due to: \n- Manifest missing: ${manifestIsMissing} \n- Manifest outdated: ${manifestIsOutdated} ${definitionTypesToAdd.length > 0 ? `\n-Need to add defs: ${definitionTypesToAdd}` : ''}`);
 
                     let manifestTable = await getManifestTables(manifest);
@@ -72,6 +72,7 @@ function Destiny2ManifestUpdater() {
                 }
                 else {
                     if (!definitionsState.IsLoaded) {
+                        dispatch(setMessage('Loading definitions...'));
                         let manifestTable = await getManifestTables(manifest);
                         const loadedDefs: DestinyDefinitionsState = {
                             IsLoaded: true,
@@ -84,7 +85,6 @@ function Destiny2ManifestUpdater() {
                         };
                         dispatch(setDefinitions(loadedDefs));
                     }
-                    console.log('Manifest is up to date');
                 }
             })
             .finally(() => {
