@@ -2,7 +2,9 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import {
     DestinyArtifactDefinition,
     DestinyChecklistDefinition,
+    DestinyCollectibleDefinition,
     DestinyInventoryItemDefinition,
+    DestinyRecordDefinition,
     DestinySeasonDefinition
 } from "quria";
 import { DefinitionDictionary } from "../../Models/Destiny/DefinitionDictionary";
@@ -16,6 +18,8 @@ export interface DestinyDefinitionsState {
     Seasons: DefinitionDictionary<DestinySeasonDefinition> | null;
     Checklists: DefinitionDictionary<DestinyChecklistDefinition> | null;
     Artifacts: DefinitionDictionary<DestinyArtifactDefinition> | null;
+    Collectibles: DefinitionDictionary<DestinyCollectibleDefinition> | null;
+    Records: DefinitionDictionary<DestinyRecordDefinition> | null;
 }
 
 const initialState: DestinyDefinitionsState = {
@@ -25,7 +29,9 @@ const initialState: DestinyDefinitionsState = {
     InventoryItems: { Type: 'DestinyInventoryItemDefinition' },
     Seasons: { Type: 'DestinySeasonDefinition' },
     Checklists: { Type: 'DestinyChecklistDefinition' },
-    Artifacts: { Type: 'DestinyArtifactDefinition' }
+    Artifacts: { Type: 'DestinyArtifactDefinition' },
+    Collectibles: { Type: 'DestinyCollectibleDefinition' },
+    Records: { Type: 'DestinyRecordDefinition' }
 }
 
 export const definitionsSlice = createSlice({

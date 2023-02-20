@@ -11,7 +11,9 @@ const DefinitionsToStore = [
     "DestinyInventoryItemDefinition",
     "DestinySeasonDefinition",
     "DestinyChecklistDefinition",
-    "DestinyArtifactDefinition"
+    "DestinyArtifactDefinition",
+    "DestinyCollectibleDefinition",
+    "DestinyRecordDefinition"
 ];
 
 
@@ -66,7 +68,9 @@ function Destiny2ManifestUpdater() {
                         InventoryItems: LoadTypesInMemory(manifestTable, definitionsState.InventoryItems.Type),
                         Seasons: LoadTypesInMemory(manifestTable, definitionsState.Seasons.Type),
                         Checklists: LoadTypesInMemory(manifestTable, definitionsState.Checklists.Type),
-                        Artifacts: LoadTypesInMemory(manifestTable, definitionsState.Artifacts.Type)
+                        Artifacts: LoadTypesInMemory(manifestTable, definitionsState.Artifacts.Type),
+                        Collectibles: LoadTypesInMemory(manifestTable, definitionsState.Collectibles.Type),
+                        Records: LoadTypesInMemory(manifestTable, definitionsState.Records.Type)
                     };
                     dispatch(setDefinitions(loadedDefs));
                 }
@@ -81,7 +85,9 @@ function Destiny2ManifestUpdater() {
                             InventoryItems: LoadTypesInMemory(manifestTable, definitionsState.InventoryItems.Type),
                             Seasons: LoadTypesInMemory(manifestTable, definitionsState.Seasons.Type),
                             Checklists: LoadTypesInMemory(manifestTable, definitionsState.Checklists.Type),
-                            Artifacts: LoadTypesInMemory(manifestTable, definitionsState.Artifacts.Type)
+                            Artifacts: LoadTypesInMemory(manifestTable, definitionsState.Artifacts.Type),
+                            Collectibles: LoadTypesInMemory(manifestTable, definitionsState.Collectibles.Type),
+                            Records: LoadTypesInMemory(manifestTable, definitionsState.Records.Type)
                         };
                         dispatch(setDefinitions(loadedDefs));
                     }
