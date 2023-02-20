@@ -5,6 +5,7 @@ using DotNetBungieAPI.Models.Destiny.Definitions.Progressions;
 using DotNetBungieAPI.Models.GroupsV2;
 using Atheon.Attributes;
 using Atheon.Options;
+using System.Text.Json.Serialization;
 
 namespace Atheon.Models.Database.Destiny;
 
@@ -19,6 +20,7 @@ public class DiscordGuildSettingsDbModel
     ///     Discord server guild ID
     /// </summary>
     [AutoColumn(nameof(GuildId), isPrimaryKey: true, notNull: true, sqliteType: DatabaseOptions.SQLiteTypes.INTEGER.BIGINT)]
+    [JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
     public ulong GuildId { get; set; }
 
     /// <summary>
@@ -31,6 +33,7 @@ public class DiscordGuildSettingsDbModel
     ///     Id of Discord channel all reports are sent to
     /// </summary>
     [AutoColumn(nameof(DefaultReportChannel), sqliteType: DatabaseOptions.SQLiteTypes.INTEGER.UNSIGNED_BIG_INT)]
+    [JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
     public ulong? DefaultReportChannel { get; set; }
 
     /// <summary>
@@ -67,6 +70,7 @@ public class DiscordGuildSettingsDbModel
     ///     Id of Discord channel all system reports are sent to
     /// </summary>
     [AutoColumn(nameof(SystemReportsOverrideChannel), sqliteType: DatabaseOptions.SQLiteTypes.INTEGER.UNSIGNED_BIG_INT)]
+    [JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
     public ulong? SystemReportsOverrideChannel { get; set; }
 
     /// <summary>

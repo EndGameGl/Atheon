@@ -1,9 +1,9 @@
-div#guild-settings-menu-element {
+.guild-settings-menu-element {
   margin: 20px;
 
 }
 
-div#grid-menu-element {
+.grid-menu-element {
   display: grid;
   grid-template-columns: 280px 600px;
 }

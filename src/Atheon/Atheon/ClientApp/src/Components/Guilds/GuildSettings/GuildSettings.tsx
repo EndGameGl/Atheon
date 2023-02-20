@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useQuery } from "react-query";
 import { useParams } from "react-router-dom";
-import { getGuildSettingsAsync, getGuildTextChannelsAsync } from "../../../Services/guildsApi";
+import { getGuildSettingsAsync, getGuildTextChannelsAsync, updateGuildDbModelAsync } from "../../../Services/guildsApi";
 import { GuildSettingsModel } from "../../../Models/Guilds/GuildSettings";
 import './GuildSettings.css';
 import Foldout from "../../Foldout/Foldout";
@@ -50,15 +50,15 @@ function GuildSettings() {
 
     return (
         <div>
-            <div id="guild-settings-menu-element grid-menu-element">
+            <div className="guild-settings-menu-element grid-menu-element">
                 <label>Discord Guild ID:</label>
                 <label>{guildSettings?.guildId}</label>
             </div>
-            <div id="guild-settings-menu-element grid-menu-element">
+            <div className="guild-settings-menu-element grid-menu-element">
                 <label>Discord Guild Name:</label>
                 <label>{guildSettings?.guildName}</label>
             </div>
-            <div id="guild-settings-menu-element grid-menu-element">
+            <div className="guild-settings-menu-element grid-menu-element">
                 <label>Discord Default Report Channel ID:</label>
                 <select onChange={(e) => {
                     const newChannelValue = e.target.value;
@@ -78,7 +78,7 @@ function GuildSettings() {
                     ))}
                 </select>
             </div>
-            <div id="guild-settings-menu-element grid-menu-element">
+            <div className="guild-settings-menu-element grid-menu-element">
                 <label>System Reports Enabled:</label>
                 <input
                     type={'checkbox'}
@@ -89,7 +89,7 @@ function GuildSettings() {
                     })}
                     checked={guildSettings?.systemReportsEnabled} />
             </div>
-            <div id="guild-settings-menu-element grid-menu-element">
+            <div className="guild-settings-menu-element grid-menu-element">
                 <label>System Reports Override Channel:</label>
                 <select onChange={(e) => {
                     const newChannelValue = e.target.value;
@@ -109,7 +109,7 @@ function GuildSettings() {
                     ))}
                 </select>
             </div>
-            <div id="guild-settings-menu-element grid-menu-element">
+            <div className="guild-settings-menu-element grid-menu-element">
                 <label>Report Clan Changes:</label>
                 <input
                     type={'checkbox'}
@@ -120,7 +120,7 @@ function GuildSettings() {
                     })}
                     checked={guildSettings?.reportClanChanges} />
             </div>
-            <div id="guild-settings-menu-element grid-menu-element">
+            <div className="guild-settings-menu-element grid-menu-element">
                 <label>Destiny 2 Clans:</label>
                 <div>
                     {guildSettings?.clans.length > 0 ?
@@ -138,7 +138,7 @@ function GuildSettings() {
                     </div>
                 </div>
             </div>
-            <div id="guild-settings-menu-element">
+            <div className="guild-settings-menu-element">
                 <Foldout headerText="Metric settings" foldedByDefault={true}>
                     <DefinitionTrackSettings<DestinyMetricDefinition>
                         settings={guildSettings.trackedMetrics}
@@ -146,7 +146,7 @@ function GuildSettings() {
                     />
                 </Foldout>
             </div>
-            <div id="guild-settings-menu-element">
+            <div className="guild-settings-menu-element">
                 <Foldout headerText="Record settings" foldedByDefault={true}>
                     <DefinitionTrackSettings<DestinyRecordDefinition>
                         settings={guildSettings.trackedRecords}
@@ -154,7 +154,7 @@ function GuildSettings() {
                     />
                 </Foldout>
             </div>
-            <div id="guild-settings-menu-element">
+            <div className="guild-settings-menu-element">
                 <Foldout headerText="Collectible settings" foldedByDefault={true}>
                     <DefinitionTrackSettings<DestinyCollectibleDefinition>
                         settings={guildSettings.trackedCollectibles}
@@ -162,7 +162,7 @@ function GuildSettings() {
                     />
                 </Foldout>
             </div>
-            <div id="guild-settings-menu-element">
+            <div className="guild-settings-menu-element">
                 <Foldout headerText="Progression settings" foldedByDefault={true}>
                     <DefinitionTrackSettings<DestinyProgressionDefinition>
                         settings={guildSettings.trackedProgressions}
@@ -170,7 +170,15 @@ function GuildSettings() {
                     />
                 </Foldout>
             </div>
-            <div id="guild-settings-menu-element grid-menu-element">
+            <div
+                className="guild-settings-menu-element grid-menu-element"
+                onClick={() => {
+                    updateGuildDbModelAsync(guildSettings)
+                        .then((data) => {
+                            setGuildSettings(data.Data)
+                        })
+                        .catch((e) => console.error(`Failed to update guild settings: ${e}`));
+                }}>
                 <button>Save settings</button>
             </div>
         </div>

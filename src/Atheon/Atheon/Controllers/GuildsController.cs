@@ -57,7 +57,7 @@ public class GuildsController : ApiResponseControllerBase
 
     [HttpGet("{guildId}/TextChannels")]
     [Produces(typeof(ApiResponse<List<DiscordChannelReference>>))]
-    public async Task<IActionResult> GetAvailableGuildTextChannels(ulong guildId)
+    public IActionResult GetAvailableGuildTextChannels(ulong guildId)
     {
         try
         {
@@ -85,9 +85,10 @@ public class GuildsController : ApiResponseControllerBase
         }
     }
 
-    [HttpPost("Settings/{guildId}/Update")]
+    [HttpPost("{guildId}/Settings/Update")]
+    [Produces(typeof(ApiResponse<DiscordGuildSettingsDbModel>))]
     public async Task<IActionResult> UpdateGuildDbModel(
-        [FromRoute] ulong guildId,
+        ulong guildId,
         [FromBody] DiscordGuildSettingsDbModel guildDbModel)
     {
         try

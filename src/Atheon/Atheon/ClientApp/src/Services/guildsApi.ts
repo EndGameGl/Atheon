@@ -27,7 +27,7 @@ export async function getGuildTextChannelsAsync(guildId: string): Promise<ApiRes
 
 export async function updateGuildDbModelAsync(settingsModel: GuildSettingsModel): Promise<ApiResponse<GuildSettingsModel>> {
     return await callApi(
-        `/api/Guilds/${settingsModel.guildId}/Update`,
+        `/api/Guilds/${settingsModel.guildId}/Settings/Update`,
         settingsModel,
         'POST');
 }
