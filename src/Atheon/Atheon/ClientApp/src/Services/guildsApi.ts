@@ -24,3 +24,10 @@ export async function getGuildTextChannelsAsync(guildId: string): Promise<ApiRes
         null,
         'GET');
 }
+
+export async function updateGuildDbModelAsync(settingsModel: GuildSettingsModel): Promise<ApiResponse<GuildSettingsModel>> {
+    return await callApi(
+        `/api/Guilds/${settingsModel.guildId}/Update`,
+        settingsModel,
+        'POST');
+}

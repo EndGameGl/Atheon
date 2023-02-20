@@ -84,4 +84,22 @@ public class GuildsController : ApiResponseControllerBase
             return ErrorResult(ex);
         }
     }
+
+    [HttpPost("Settings/{guildId}/Update")]
+    public async Task<IActionResult> UpdateGuildDbModel(
+        [FromRoute] ulong guildId,
+        [FromBody] DiscordGuildSettingsDbModel guildDbModel)
+    {
+        try
+        {
+            await _destinyDb.UpsertGuildSettingsAsync(guildDbModel);
+            var guildSettings = await _destinyDb.GetGuildSettingsAsync(guildId);
+            return OkResult(guildSettings);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, $"Error in {nameof(GetAvailableGuilds)}");
+            return ErrorResult(ex);
+        }
+    }
 }
