@@ -48,6 +48,9 @@ public class DestinyProfileDbModel
     [AutoColumn(nameof(ResponseMintedTimestamp), sqliteType: DatabaseOptions.SQLiteTypes.NUMERIC.DATETIME)]
     public DateTime? ResponseMintedTimestamp { get; set; }
 
+    [AutoColumn(nameof(LastUpdated), sqliteType: DatabaseOptions.SQLiteTypes.NUMERIC.DATETIME)]
+    public DateTime? LastUpdated { get; set; }
+
     /// <summary>
     ///     Components to check: PresentationNodes, Records, Collectibles, Metrics, StringVariables, Craftables, Transitory
     /// </summary>

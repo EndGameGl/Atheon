@@ -2,5 +2,5 @@
 
 public interface IClansToScanProvider
 {
-    ValueTask<List<long>> GetClansToScanAsync(int maxAmount);
+    ValueTask<List<long>> GetClansToScanAsync(int maxAmount, DateTime olderThan);
 }

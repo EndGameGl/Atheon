@@ -17,6 +17,8 @@ public class BungieClientProvider : IBungieClientProvider
     private IBungieClientConfiguration? _bungieClientConfiguration;
     private SqliteDefinitionProviderConfiguration? _providerConfiguration;
 
+    public bool IsReady { get; private set; }
+
     public BungieClientProvider(
         ISettingsStorage settingsStorage)
     {
@@ -54,6 +56,11 @@ public class BungieClientProvider : IBungieClientProvider
 
         _bungieClientConfiguration = serviceProvider.GetRequiredService<IBungieClientConfiguration>();
         _providerConfiguration = serviceProvider.GetRequiredService<SqliteDefinitionProviderConfiguration>();
+
+        await client.DefinitionProvider.Initialize();
+        await client.DefinitionProvider.ReadToRepository(client.Repository);
+
+        IsReady = true;
 
         return client;
     }

@@ -15,6 +15,8 @@ public class ClanQueueBackgroundProcessor : PeriodicBackgroundService, IClanQueu
     private readonly IClansToScanProvider _clansToScanProvider;
     private readonly DestinyClanScanner _destinyClanScanner;
     private readonly DestinyInitialClanScanner _destinyInitialClanScanner;
+    private readonly IBungieClientProvider _bungieClientProvider;
+    private readonly IDiscordClientProvider _discordClientProvider;
     private readonly ConcurrentDictionary<long, OngoingScan> _ongoingScans;
 
     private readonly UniqueConcurrentQueue<long> _firstTimeScanQueue;
@@ -23,12 +25,16 @@ public class ClanQueueBackgroundProcessor : PeriodicBackgroundService, IClanQueu
         ILogger<ClanQueueBackgroundProcessor> logger,
         IClansToScanProvider clansToScanProvider,
         DestinyClanScanner destinyClanScanner,
-        DestinyInitialClanScanner destinyInitialClanScanner) : base(logger)
+        DestinyInitialClanScanner destinyInitialClanScanner,
+        IBungieClientProvider bungieClientProvider,
+        IDiscordClientProvider discordClientProvider) : base(logger)
     {
         _logger = logger;
         _clansToScanProvider = clansToScanProvider;
         _destinyClanScanner = destinyClanScanner;
         _destinyInitialClanScanner = destinyInitialClanScanner;
+        _bungieClientProvider = bungieClientProvider;
+        _discordClientProvider = discordClientProvider;
         _ongoingScans = new ConcurrentDictionary<long, OngoingScan>();
         _firstTimeScanQueue = new UniqueConcurrentQueue<long>();
     }
@@ -41,11 +47,18 @@ public class ClanQueueBackgroundProcessor : PeriodicBackgroundService, IClanQueu
 
     protected override async Task OnTimerExecuted(CancellationToken cancellationToken)
     {
-        ClearOutFinishedScans();
-        await ScanFirstTimes();
-        if (!await StartNewScans())
+        if (!_bungieClientProvider.IsReady || !_discordClientProvider.IsReady)
         {
             await Task.Delay(1000);
+            return;
+        }
+
+        ClearOutFinishedScans();
+        await ScanFirstTimes();
+
+        if (!await StartNewScans())
+        {
+            await Task.Delay(10000);
         }
     }
 
@@ -80,18 +93,21 @@ public class ClanQueueBackgroundProcessor : PeriodicBackgroundService, IClanQueu
         var freeSlots = MaxParallelClanScans - _ongoingScans.Count;
         if (freeSlots > 0)
         {
-            var newClans = await _clansToScanProvider.GetClansToScanAsync(freeSlots);
+            var newClans = await _clansToScanProvider.GetClansToScanAsync(freeSlots, olderThan: OneMinuteAgo());
 
             foreach (var clan in newClans)
             {
-                var scanTask = StartClanScan(clan);
-
-                if (!_ongoingScans.TryAdd(
-                        clan,
-                        new OngoingScan(scanTask, default)))
+                if (!_ongoingScans.ContainsKey(clan))
                 {
-                    _logger.LogWarning("Failed to add clan to scanning: {Id}",
-                        clan);
+                    var scanTask = StartClanScan(clan);
+
+                    if (!_ongoingScans.TryAdd(
+                            clan,
+                            new OngoingScan(scanTask, default)))
+                    {
+                        _logger.LogWarning("Failed to add clan to scanning: {Id}",
+                            clan);
+                    }
                 }
             }
         }
@@ -107,5 +123,11 @@ public class ClanQueueBackgroundProcessor : PeriodicBackgroundService, IClanQueu
     public void EnqueueFirstTimeScan(long clanId)
     {
         _firstTimeScanQueue.Enqueue(clanId);
+    }
+
+    private DateTime OneMinuteAgo()
+    {
+        var currentTime = DateTime.UtcNow;
+        return currentTime.AddMinutes(-1);
     }
 }

@@ -185,6 +185,7 @@ public class DestinyClanMemberSilentScanner : EntityScannerBase<DestinyClanMembe
         DestinyClanMemberScannerContext context,
         CancellationToken cancellationToken)
     {
+        context.ProfileDbModel.LastUpdated = DateTime.UtcNow;
         await _destinyDb.UpsertDestinyProfileAsync(context.ProfileDbModel!);
         return true;
     }

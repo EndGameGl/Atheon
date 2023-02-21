@@ -30,7 +30,7 @@ namespace Atheon.Services.Scanners.Entities
                 {
                     if (!shouldContinue && !nextStep.ExecuteAfterErrors)
                         continue;
-
+                    Logger.LogInformation("Executing step: {StepName}", nextStep.StepName);
                     var executionResult = await nextStep.Delegate(input, context, cancellationToken);
                     if (executionResult is false)
                     {

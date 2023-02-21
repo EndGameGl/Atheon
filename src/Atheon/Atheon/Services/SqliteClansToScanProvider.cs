@@ -18,7 +18,7 @@ public class SqliteClansToScanProvider : IClansToScanProvider
         EmptyList = Array.Empty<long>().ToList();
     }
 
-    public async ValueTask<List<long>> GetClansToScanAsync(int maxAmount)
+    public async ValueTask<List<long>> GetClansToScanAsync(int maxAmount, DateTime olderThan)
     {
         if (_clanIds.Count > 0)
         {
@@ -26,7 +26,7 @@ public class SqliteClansToScanProvider : IClansToScanProvider
             return result;
         }
 
-        if (await TryLoadClanIds())
+        if (await TryLoadClanIds(olderThan))
         {
             var result = _clanIds.DequeueUpTo(maxAmount).ToList();
             return result;
@@ -35,9 +35,9 @@ public class SqliteClansToScanProvider : IClansToScanProvider
         return EmptyList;
     }
 
-    private async Task<bool> TryLoadClanIds()
+    private async Task<bool> TryLoadClanIds(DateTime olderThan)
     {
-        var ids = await _destinyDb.GetClanIdsAsync(true);
+        var ids = await _destinyDb.GetClanIdsAsync(true, olderThan);
 
         _clanIds.EnqueueRange(ids);
 

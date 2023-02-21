@@ -52,10 +52,15 @@ namespace Atheon.Services.Hosted
             {
                 await ProcessClanBrocast(client, clanBroadcast);
             }
+
+            foreach (var userBroadcast in TryDequeue(_userBroadcasts))
+            {
+                await ProcessProfileBroadcast(client, userBroadcast);
+            }
         }
 
         private async Task ProcessClanBrocast(
-            DiscordShardedClient client, 
+            DiscordShardedClient client,
             ClanBroadcastDbModel clanBroadcast)
         {
             var settings = await _destinyDb.GetGuildSettingsAsync(clanBroadcast.GuildId);
@@ -77,6 +82,13 @@ namespace Atheon.Services.Hosted
             var channel = guild.GetTextChannel(settings.DefaultReportChannel.Value);
 
             await channel.SendMessageAsync(embed: clanEmbed);
+        }
+
+        private async Task ProcessProfileBroadcast(
+             DiscordShardedClient client,
+             DestinyUserProfileBroadcastDbModel profileBroadcast)
+        {
+
         }
 
         private IEnumerable<T> TryDequeue<T>(ConcurrentQueue<T> source)

@@ -6,6 +6,7 @@ using Atheon.Services.Scanners.Entities;
 using DotNetBungieAPI.Models;
 using Polly;
 using DotNetBungieAPI.HashReferences;
+using Atheon.Extensions;
 
 namespace Atheon.Services.Scanners.DestinyClanScanner;
 
@@ -60,6 +61,8 @@ public class DestinyClanScanner : EntityScannerBase<DestinyClanScannerInput, Des
 
         context.BungieClient = bungieClient;
 
+        context.ClanId = input.ClanId;
+
         var groupResponse = await _bungieNetApiCallHandler.PerformRequestAndLog(async (handler) =>
         {
             var apiCallResult = await _apiCallPolicy.ExecuteAndCaptureAsync(async (ct) =>
@@ -105,7 +108,7 @@ public class DestinyClanScanner : EntityScannerBase<DestinyClanScannerInput, Des
                    .ApiAccess
                    .GroupV2
                    .GetMembersOfGroup(
-                       context.ClanId,
+                       input.ClanId,
                        cancellationToken: ct),
                    cancellationToken: cancellationToken);
 
@@ -146,19 +149,8 @@ public class DestinyClanScanner : EntityScannerBase<DestinyClanScannerInput, Des
         return context.LinkedGuildSettings?.Count > 0;
     }
 
-    [ScanStep(nameof(UpdateClanMembers), 4)]
-    public async ValueTask<bool> UpdateClanMembers(
-        DestinyClanScannerInput input,
-        DestinyClanScannerContext context,
-        CancellationToken cancellationToken)
-    {
-        context.MembersToScan = context.Members.Where(x => x.IsOnline).ToList();
-        await _userQueue.EnqueueAndWaitForBroadcastedUserScans(context, cancellationToken);
-        return true;
-    }
-
-    [ScanStep(nameof(UpdateClanData), 5)]
-    public async ValueTask<bool> UpdateClanData(
+    [ScanStep(nameof(LoadClanDataFromDb), 4)]
+    public async ValueTask<bool> LoadClanDataFromDb(
         DestinyClanScannerInput input,
         DestinyClanScannerContext context,
         CancellationToken cancellationToken)
@@ -167,6 +159,35 @@ public class DestinyClanScanner : EntityScannerBase<DestinyClanScannerInput, Des
 
         context.DestinyClanDbModel = clanModel;
 
+        return true;
+    }
+
+    [ScanStep(nameof(UpdateClanMembers), 5)]
+    public async ValueTask<bool> UpdateClanMembers(
+        DestinyClanScannerInput input,
+        DestinyClanScannerContext context,
+        CancellationToken cancellationToken)
+    {
+        if (!context.DestinyClanDbModel.LastScan.HasValue ||
+            (DateTime.UtcNow - context.DestinyClanDbModel.LastScan.Value).TotalMinutes > 10)
+        {
+            context.MembersToScan = context.Members.ToList();
+            await _userQueue.EnqueueAndWaitForSilentUserScans(context, cancellationToken);
+        }
+        else
+        {
+            context.MembersToScan = context.Members.Where(x => x.ShouldScanClanMember()).ToList();
+            await _userQueue.EnqueueAndWaitForBroadcastedUserScans(context, cancellationToken);
+        }
+        return true;
+    }
+
+    [ScanStep(nameof(UpdateClanData), 6)]
+    public async ValueTask<bool> UpdateClanData(
+        DestinyClanScannerInput input,
+        DestinyClanScannerContext context,
+        CancellationToken cancellationToken)
+    {
         UpdateClanName(context);
         UpdateClanLevel(context);
         UpdateClanCallsign(context);
@@ -176,7 +197,7 @@ public class DestinyClanScanner : EntityScannerBase<DestinyClanScannerInput, Des
         return true;
     }
 
-    [ScanStep(nameof(UpdateOrInsertClanDataInDb), 6, true)]
+    [ScanStep(nameof(UpdateOrInsertClanDataInDb), 7, true)]
     public async ValueTask<bool> UpdateOrInsertClanDataInDb(
        DestinyClanScannerInput input,
        DestinyClanScannerContext context,

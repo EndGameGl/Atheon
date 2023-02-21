@@ -5,6 +5,7 @@ using DotNetBungieAPI.Models;
 using DotNetBungieAPI.Models.Destiny.Responses;
 using DotNetBungieAPI.Service.Abstractions;
 using DotNetBungieAPI.Models.Destiny.Definitions.Records;
+using DotNetBungieAPI.Models.GroupsV2;
 
 namespace Atheon.Extensions;
 
@@ -102,5 +103,13 @@ public static class DestinyExtensions
             .First();
 
         return optimalRecord;
+    }
+
+    public static bool ShouldScanClanMember(this GroupMember clanMember)
+    {
+        if (clanMember.IsOnline)
+            return true;
+
+        return (DateTime.UtcNow - clanMember.LastOnlineStatusChange.UnixTimeStampToDateTime()).TotalMinutes <= 15;
     }
 }

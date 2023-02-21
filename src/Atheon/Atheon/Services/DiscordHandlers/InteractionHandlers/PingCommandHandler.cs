@@ -1,4 +1,5 @@
 ﻿using Atheon.Models.Database.Destiny.Broadcasts;
+using Atheon.Services.DiscordHandlers.Autocompleters;
 using Atheon.Services.DiscordHandlers.InteractionHandlers.Base;
 using Atheon.Services.EventBus;
 using Atheon.Services.Interfaces;
@@ -59,8 +60,9 @@ public class PingCommandHandler : SlashCommandHandlerBase
 
     [SlashCommand("item-check", "Checks who has items")]
     public async Task GetUsersWithItem(
-        [Summary(description: "Collectible Id")] uint itemHash)
+        [Autocomplete(typeof(DestinyCollectibleDefinitionAutocompleter))] [Summary(description: "Collectible")] string collectibleHash)
     {
+        var itemHash = uint.Parse(collectibleHash);
         var users = await _destinyDb.GetProfilesWithCollectibleAsync(itemHash);
 
         var bungieClient = await _bungieClientProvider.GetClientAsync();

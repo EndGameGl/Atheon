@@ -5,25 +5,34 @@ using DotNetBungieAPI.Models;
 using Atheon.Extensions;
 using Atheon.Services.BungieApi;
 using System.Text.Json;
+using Atheon.Models.Database.Destiny;
+using Atheon.Services.Interfaces;
 
 namespace Atheon.Services.Scanners.DestinyClanMemberScanner;
 
 public class DestinyClanMemberBroadcastedScanner : EntityScannerBase<DestinyClanMemberScannerInput, DestinyClanMemberScannerContext>
 {
     private readonly BungieNetApiCallHandler _bungieNetApiCallHandler;
+    private readonly IDestinyDb _destinyDb;
+    private readonly IProfileUpdater[] _profileUpdaters;
 
     public DestinyClanMemberBroadcastedScanner(
         ILogger<DestinyClanMemberBroadcastedScanner> logger,
-        BungieNetApiCallHandler bungieNetApiCallHandler) : base(logger)
+        BungieNetApiCallHandler bungieNetApiCallHandler,
+        IDestinyDb destinyDb,
+        IEnumerable<IProfileUpdater> profileUpdaters) : base(logger)
     {
+        Initialize();
         _bungieNetApiCallHandler = bungieNetApiCallHandler;
+        _destinyDb = destinyDb;
+        _profileUpdaters = profileUpdaters.ToArray();
     }
 
     [ScanStep(nameof(CheckIfMemberIsOnline), 1)]
     public ValueTask<bool> CheckIfMemberIsOnline(
-        DestinyClanMemberScannerInput input,
-        DestinyClanMemberScannerContext context,
-        CancellationToken cancellationToken)
+    DestinyClanMemberScannerInput input,
+    DestinyClanMemberScannerContext context,
+    CancellationToken cancellationToken)
     {
         if (!input.GroupMember.IsOnline)
             return ValueTask.FromResult(true);
@@ -114,10 +123,69 @@ public class DestinyClanMemberBroadcastedScanner : EntityScannerBase<DestinyClan
 
     [ScanStep(nameof(CheckIfProfileIsPublic), 3)]
     public ValueTask<bool> CheckIfProfileIsPublic(
-         DestinyClanMemberScannerInput input, 
+         DestinyClanMemberScannerInput input,
          DestinyClanMemberScannerContext context,
          CancellationToken cancellationToken)
     {
         return ValueTask.FromResult(context.DestinyProfileResponse!.HasPublicRecords());
+    }
+
+    [ScanStep(nameof(LoadOrCreateDbProfile), 4)]
+    public async ValueTask<bool> LoadOrCreateDbProfile(
+        DestinyClanMemberScannerInput input,
+        DestinyClanMemberScannerContext context,
+        CancellationToken cancellationToken)
+    {
+        var profile = await _destinyDb.GetDestinyProfileAsync(input.GroupMember.DestinyUserInfo.MembershipId);
+
+        if (profile is null)
+        {
+            profile = DestinyProfileDbModel.CreateFromApiResponse(
+                input.GroupMember.GroupId,
+            context.DestinyProfileResponse!,
+                input.BungieClient);
+            await _destinyDb.UpsertDestinyProfileAsync(profile);
+            return false;
+        }
+        else
+        {
+            profile.ClanId = input.GroupMember.GroupId;
+        }
+        context.ProfileDbModel = profile;
+        return true;
+    }
+
+    [ScanStep(nameof(UpdateProfile), 5)]
+    public async ValueTask<bool> UpdateProfile(
+        DestinyClanMemberScannerInput input,
+        DestinyClanMemberScannerContext context,
+        CancellationToken cancellationToken)
+    {
+        var shouldUpdatePrimary = context.ProfileDbModel.ResponseMintedTimestamp < context.DestinyProfileResponse.ResponseMintedTimestamp;
+        var shouldUpdateSecondary = context.ProfileDbModel.SecondaryComponentsMintedTimestamp < context.DestinyProfileResponse.SecondaryComponentsMintedTimestamp;
+
+        for (int i = 0; i < _profileUpdaters.Length; i++)
+        {
+            var updater = _profileUpdaters[i];
+
+            if ((!updater.ReliesOnSecondaryComponents && shouldUpdatePrimary) ||
+                (updater.ReliesOnSecondaryComponents && shouldUpdateSecondary))
+            {
+                updater.Update(input.BungieClient, context.ProfileDbModel!, context.DestinyProfileResponse!, input.ClanScannerContext.LinkedGuildSettings);
+            }
+        }
+
+        return true;
+    }
+
+    [ScanStep(nameof(SaveProfileData), 6)]
+    public async ValueTask<bool> SaveProfileData(
+        DestinyClanMemberScannerInput input,
+        DestinyClanMemberScannerContext context,
+        CancellationToken cancellationToken)
+    {
+        context.ProfileDbModel.LastUpdated = DateTime.UtcNow;
+        await _destinyDb.UpsertDestinyProfileAsync(context.ProfileDbModel!);
+        return true;
     }
 }

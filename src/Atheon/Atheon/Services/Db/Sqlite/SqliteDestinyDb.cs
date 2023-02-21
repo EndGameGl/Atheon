@@ -25,7 +25,7 @@ namespace Atheon.Services.Db.Sqlite
             return await _dbAccess.QueryAsync<GuildReference>(GetGuildReferencesQuery);
         }
 
-        private const string GetAllGuildSettingsQuery = 
+        private const string GetAllGuildSettingsQuery =
             """
             SELECT * FROM Guilds;
             """;
@@ -113,14 +113,23 @@ namespace Atheon.Services.Db.Sqlite
 
         private const string GetClanIdsQuery =
             $"""
-            SELECT ({nameof(DestinyClanDbModel.ClanId)}) FROM Clans WHERE {nameof(DestinyClanDbModel.IsTracking)} = @{nameof(DestinyClanDbModel.IsTracking)};
+            SELECT ({nameof(DestinyClanDbModel.ClanId)}) FROM Clans 
+            WHERE 
+                {nameof(DestinyClanDbModel.IsTracking)} = @{nameof(DestinyClanDbModel.IsTracking)} AND
+                {nameof(DestinyClanDbModel.LastScan)} < @OlderThan;
             """;
-        public async Task<List<long>> GetClanIdsAsync(bool isTracking)
+        public async Task<List<long>> GetClanIdsAsync(bool isTracking, DateTime olderThan)
         {
-            return await _dbAccess.QueryAsync<long>(GetClanIdsQuery, new { IsTracking = isTracking });
+            return await _dbAccess.QueryAsync<long>(
+                GetClanIdsQuery,
+                new
+                {
+                    IsTracking = isTracking,
+                    OlderThan = olderThan
+                });
         }
 
-        private const string GetClanModelQuery = 
+        private const string GetClanModelQuery =
             $"""
             SELECT * FROM Clans WHERE {nameof(DestinyClanDbModel.ClanId)} = @{nameof(DestinyClanDbModel.ClanId)}
             """;
@@ -194,7 +203,8 @@ namespace Atheon.Services.Db.Sqlite
                 {nameof(DestinyProfileDbModel.Records)},
                 {nameof(DestinyProfileDbModel.Progressions)},
                 {nameof(DestinyProfileDbModel.ResponseMintedTimestamp)},
-                {nameof(DestinyProfileDbModel.SecondaryComponentsMintedTimestamp)}
+                {nameof(DestinyProfileDbModel.SecondaryComponentsMintedTimestamp)},
+                {nameof(DestinyProfileDbModel.LastUpdated)}
             )
             VALUES 
             (
@@ -208,7 +218,8 @@ namespace Atheon.Services.Db.Sqlite
                 @{nameof(DestinyProfileDbModel.Records)},
                 @{nameof(DestinyProfileDbModel.Progressions)},
                 @{nameof(DestinyProfileDbModel.ResponseMintedTimestamp)},
-                @{nameof(DestinyProfileDbModel.SecondaryComponentsMintedTimestamp)}
+                @{nameof(DestinyProfileDbModel.SecondaryComponentsMintedTimestamp)},
+                @{nameof(DestinyProfileDbModel.LastUpdated)}
             )
             ON CONFLICT ({nameof(DestinyProfileDbModel.MembershipId)}) DO UPDATE SET 
                 {nameof(DestinyProfileDbModel.MembershipType)} = @{nameof(DestinyProfileDbModel.MembershipType)},
@@ -220,7 +231,8 @@ namespace Atheon.Services.Db.Sqlite
                 {nameof(DestinyProfileDbModel.Records)} = @{nameof(DestinyProfileDbModel.Records)},
                 {nameof(DestinyProfileDbModel.Progressions)} = @{nameof(DestinyProfileDbModel.Progressions)},
                 {nameof(DestinyProfileDbModel.ResponseMintedTimestamp)} = @{nameof(DestinyProfileDbModel.ResponseMintedTimestamp)},
-                {nameof(DestinyProfileDbModel.SecondaryComponentsMintedTimestamp)} = @{nameof(DestinyProfileDbModel.SecondaryComponentsMintedTimestamp)}
+                {nameof(DestinyProfileDbModel.SecondaryComponentsMintedTimestamp)} = @{nameof(DestinyProfileDbModel.SecondaryComponentsMintedTimestamp)},
+                {nameof(DestinyProfileDbModel.LastUpdated)} = @{nameof(DestinyProfileDbModel.LastUpdated)}
             """;
         public async Task UpsertDestinyProfileAsync(DestinyProfileDbModel profileDbModel)
         {

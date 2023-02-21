@@ -10,6 +10,7 @@ using Atheon.Services.Scanners.DestinyClanMemberScanner;
 using Atheon.Services.Scanners.DestinyClanScanner;
 using Atheon.Services.Scanners.ProfileUpdaters;
 using Serilog;
+using Serilog.Exceptions;
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
@@ -43,8 +44,9 @@ void ConfigureServices(WebApplicationBuilder applicationBuilder)
     {
         configuration
             .ReadFrom.Configuration(context.Configuration)
-            .ReadFrom.Services(services.GetService<IServiceProvider>())
+            .ReadFrom.Services(services)
             .Enrich.FromLogContext()
+            .Enrich.WithExceptionDetails()
             .WriteTo.Console();
     });
 

@@ -146,15 +146,19 @@ public class DestinyInitialClanScanner : EntityScannerBase<DestinyClanScannerInp
         clanData.LastScan = DateTime.UtcNow;
 
         await _destinyDb.UpsertClanModelAsync(clanData);
-        _commonEvents.ClanBroadcasts.Publish(new ClanBroadcastDbModel()
+        var guildSettings = await _destinyDb.GetAllGuildSettingsForClanAsync(clanData.ClanId);
+
+        foreach (var guildSetting in guildSettings)
         {
-            ClanId = clanData.ClanId,
-            Date = DateTime.UtcNow,
-            GuildId = 0,
-            Type = ClanBroadcastType.ClanScanFinished,
-            WasAnnounced = false
-        });
+            _commonEvents.ClanBroadcasts.Publish(new ClanBroadcastDbModel()
+            {
+                ClanId = clanData.ClanId,
+                Date = DateTime.UtcNow,
+                GuildId = guildSetting.GuildId,
+                Type = ClanBroadcastType.ClanScanFinished,
+                WasAnnounced = false
+            });
+        }
         return true;
     }
-
 }

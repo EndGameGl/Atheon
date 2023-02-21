@@ -12,7 +12,7 @@ public interface IDestinyDb
     Task DeleteGuildSettingsAsync(ulong guildId);
     Task<List<DiscordGuildSettingsDbModel>> GetAllGuildSettingsForClanAsync(long clanId);
 
-    Task<List<long>> GetClanIdsAsync(bool isTracking);
+    Task<List<long>> GetClanIdsAsync(bool isTracking, DateTime oldenThan);
     Task<DestinyClanDbModel?> GetClanModelAsync(long clanId);
     Task UpsertClanModelAsync(DestinyClanDbModel clanDbModel);
 
