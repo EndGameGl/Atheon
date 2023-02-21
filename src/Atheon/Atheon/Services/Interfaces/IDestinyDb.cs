@@ -19,9 +19,13 @@ public interface IDestinyDb
 
     Task<DestinyProfileDbModel?> GetDestinyProfileAsync(long membershipId);
     Task UpsertDestinyProfileAsync(DestinyProfileDbModel profileDbModel);
+    Task<string?> GetProfileDisplayNameAsync(long membershipId);
 
     Task<List<DestinyProfileDbModel>> GetProfilesWithCollectibleAsync(uint collectibleHash);
 
     Task TryInsertClanBroadcastAsync(ClanBroadcastDbModel clanBroadcast);
     Task TryInsertProfileBroadcastAsync(DestinyUserProfileBroadcastDbModel profileBroadcast);
+
+    Task MarkClanBroadcastSentAsync(ClanBroadcastDbModel clanBroadcast);
+    Task MarkUserBroadcastSentAsync(DestinyUserProfileBroadcastDbModel profileBroadcast);
 }

@@ -309,5 +309,25 @@ namespace Atheon.Services.Db.Sqlite
         {
             await _dbAccess.ExecuteAsync(TryInsertProfileBroadcastQuery, profileBroadcast);
         }
+
+        private const string GetProfileDisplayNameQuery =
+            $"""
+            SELECT Name FROM DestinyProfiles WHERE MembershipId = @MembershipId
+            """;
+        public async Task<string?> GetProfileDisplayNameAsync(long membershipId)
+        {
+            return await _dbAccess.QueryFirstOrDefaultAsync<string?>(GetProfileDisplayNameQuery, new { MembershipId = membershipId });
+        }
+
+
+        public async Task MarkClanBroadcastSentAsync(ClanBroadcastDbModel clanBroadcast)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task MarkUserBroadcastSentAsync(DestinyUserProfileBroadcastDbModel profileBroadcast)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

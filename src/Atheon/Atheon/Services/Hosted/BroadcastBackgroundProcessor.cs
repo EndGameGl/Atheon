@@ -1,4 +1,5 @@
-﻿using Atheon.Models.Database.Destiny.Broadcasts;
+﻿using Atheon.Models.Database.Destiny;
+using Atheon.Models.Database.Destiny.Broadcasts;
 using Atheon.Services.BungieApi;
 using Atheon.Services.DiscordHandlers.EmbedBuilders;
 using Atheon.Services.EventBus;
@@ -118,16 +119,14 @@ namespace Atheon.Services.Hosted
             var amountOfBroadcasts = broadcasts.Count();
             if (amountOfBroadcasts == 1)
             {
-                await SendUserBroadcast(broadcasts.First(), cancellationToken);
+                await SendUserBroadcast(broadcasts.First(), client, bungieClient);
                 return;
             }
 
             var userNamesKeyedByMembershipId = new Dictionary<long, string>(amountOfBroadcasts);
             foreach (var broadcast in broadcasts)
             {
-                var userName = await _dbContextCaller.GetDestinyUserDisplayNameAsync(
-                    broadcast.MembershipId,
-                    cancellationToken);
+                var userName = await _destinyDb.GetProfileDisplayNameAsync(broadcast.MembershipId);
 
                 if (string.IsNullOrEmpty(userName))
                     continue;
@@ -139,11 +138,11 @@ namespace Atheon.Services.Hosted
                 .DistinctBy(x => x.ClanId)
                 .Select(x => x.ClanId);
 
-            var clansData = new List<ClanDbModel>();
+            var clansData = new List<DestinyClanDbModel>();
 
             foreach (var clanId in clanIds)
             {
-                var clanData = await _dbContextCaller.GetClanAsync(clanId, cancellationToken);
+                var clanData = await _destinyDb.GetClanModelAsync(clanId);
                 if (clanData is null)
                     return;
 
@@ -158,21 +157,19 @@ namespace Atheon.Services.Hosted
 
                 foreach (var broadcast in broadcasts)
                 {
-                    await _dbContextCaller.MarkUserBroadcastSent(broadcast, cancellationToken);
+                    await _destinyDb.MarkUserBroadcastSentAsync(broadcast);
                     _logger.LogWarning("Failed to send broadcast due to guild being null {@Broadcast}", broadcast);
                 }
                 return;
             }
 
-            var channelId = await _dbContextCaller.GetGuildBroadcastChannelAsync(guildId,
-                cancellationToken);
+            var channelId = await GetGuildProfileBroadcastChannel(broadcasts.First());
 
             if (channelId is null)
             {
-
                 foreach (var broadcast in broadcasts)
                 {
-                    await _dbContextCaller.MarkUserBroadcastSent(broadcast, cancellationToken);
+                    await _destinyDb.MarkUserBroadcastSentAsync(broadcast);
                     _logger.LogWarning("Failed to send broadcast due to channelId being {@Broadcast}", broadcast);
                 }
                 return;
@@ -193,17 +190,99 @@ namespace Atheon.Services.Hosted
                 await channel.SendMessageAsync(embed: embed);
 
                 foreach (var broadcast in broadcasts)
-                    await _dbContextCaller.MarkUserBroadcastSent(broadcast, cancellationToken);
+                    await _destinyDb.MarkUserBroadcastSentAsync(broadcast);
             }
             else
             {
                 foreach (var broadcast in broadcasts)
                 {
-                    await _dbContextCaller.MarkUserBroadcastSent(broadcast, cancellationToken);
+                    await _destinyDb.MarkUserBroadcastSentAsync(broadcast);
                     _logger.LogWarning("Failed to send broadcast due to channel being null {@Broadcast}", broadcast);
                 }
                 return;
             }
+        }
+
+        private async Task SendUserBroadcast(
+            DestinyUserProfileBroadcastDbModel destinyUserBroadcast,
+            DiscordShardedClient client,
+            IBungieClient bungieClient)
+        {
+            var userName = await _destinyDb.GetProfileDisplayNameAsync(destinyUserBroadcast.MembershipId);
+
+            if (string.IsNullOrEmpty(userName))
+            {
+                await _destinyDb.MarkUserBroadcastSentAsync(destinyUserBroadcast);
+                _logger.LogWarning("Failed to send broadcast due to username being null {@Broadcast}", destinyUserBroadcast);
+                return;
+            }
+
+            var clanData = await _destinyDb.GetClanModelAsync(destinyUserBroadcast.ClanId);
+            if (clanData is null)
+            {
+                await _destinyDb.MarkUserBroadcastSentAsync(destinyUserBroadcast);
+                _logger.LogWarning("Failed to send broadcast due to clan data not being found {@Broadcast}", destinyUserBroadcast);
+                return;
+            }
+
+            var guild = client.GetGuild(destinyUserBroadcast.GuildId);
+            if (guild is null)
+            {
+                await _destinyDb.MarkUserBroadcastSentAsync(destinyUserBroadcast);
+                _logger.LogWarning("Failed to send broadcast due to guild being null {@Broadcast}", destinyUserBroadcast);
+                return;
+            }
+
+            var channelId = await GetGuildProfileBroadcastChannel(destinyUserBroadcast);
+
+            if (channelId is null)
+            {
+                await _destinyDb.MarkUserBroadcastSentAsync(destinyUserBroadcast);
+                _logger.LogWarning("Failed to send broadcast due to channelId being null {@Broadcast}", destinyUserBroadcast);
+                return;
+            }
+
+            var channel = guild.GetTextChannel(channelId.Value);
+
+            if (channel is not null)
+            {
+                await channel.SendMessageAsync(
+                    embed: Embeds.Broadcasts.BuildDestinyUserBroadcast(
+                        destinyUserBroadcast,
+                        clanData,
+                        bungieClient,
+                        userName));
+
+                await _destinyDb.MarkUserBroadcastSentAsync(destinyUserBroadcast);
+            }
+            else
+            {
+                await _destinyDb.MarkUserBroadcastSentAsync(destinyUserBroadcast);
+                _logger.LogWarning("Failed to send broadcast due to channel being null {@Broadcast}", destinyUserBroadcast);
+                return;
+            }
+        }
+
+        private async Task<ulong?> GetGuildProfileBroadcastChannel(DestinyUserProfileBroadcastDbModel destinyUserBroadcast)
+        {
+            var settings = await _destinyDb.GetGuildSettingsAsync(destinyUserBroadcast.GuildId);
+
+            if (settings is null)
+                return null;
+
+            if (destinyUserBroadcast.Type is ProfileBroadcastType.Title or ProfileBroadcastType.GildedTitle or ProfileBroadcastType.Triumph &&
+                settings.TrackedRecords.OverrideReportChannel is not null)
+            {
+                return settings.TrackedRecords.OverrideReportChannel;
+            }
+
+            if (destinyUserBroadcast.Type is ProfileBroadcastType.Collectible &&
+                settings.TrackedCollectibles.OverrideReportChannel is not null)
+            {
+                return settings.TrackedCollectibles.OverrideReportChannel;
+            }
+
+            return settings.DefaultReportChannel;
         }
 
         private IEnumerable<T> TryDequeue<T>(ConcurrentQueue<T> source)
