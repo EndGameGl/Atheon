@@ -79,6 +79,7 @@ void ConfigureServices(WebApplicationBuilder applicationBuilder)
 
     applicationBuilder.Services.AddSingleton<IBungieClientProvider, BungieClientProvider>();
     applicationBuilder.Services.AddSingleton<BungieNetApiCallHandler>();
+    applicationBuilder.Services.AddSingleton<BroadcastSaver>();
 
     applicationBuilder.Services.AddSingleton<DestinyInitialClanScanner>();
     applicationBuilder.Services.AddSingleton<DestinyClanScanner>();

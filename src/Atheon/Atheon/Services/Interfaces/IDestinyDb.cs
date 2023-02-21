@@ -1,4 +1,5 @@
 ﻿using Atheon.Models.Database.Destiny;
+using Atheon.Models.Database.Destiny.Broadcasts;
 using Atheon.Models.Database.Destiny.Guilds;
 
 namespace Atheon.Services.Interfaces;
@@ -20,4 +21,7 @@ public interface IDestinyDb
     Task UpsertDestinyProfileAsync(DestinyProfileDbModel profileDbModel);
 
     Task<List<DestinyProfileDbModel>> GetProfilesWithCollectibleAsync(uint collectibleHash);
+
+    Task TryInsertClanBroadcastAsync(ClanBroadcastDbModel clanBroadcast);
+    Task TryInsertProfileBroadcastAsync(DestinyUserProfileBroadcastDbModel profileBroadcast);
 }

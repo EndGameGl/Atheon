@@ -144,7 +144,7 @@ public class DestinyInitialClanScanner : EntityScannerBase<DestinyClanScannerInp
     {
         var clanData = DestinyClanDbModel.CreateFromApiResponse(context.ClanData);
         clanData.LastScan = DateTime.UtcNow;
-
+        clanData.IsTracking = true;
         await _destinyDb.UpsertClanModelAsync(clanData);
         var guildSettings = await _destinyDb.GetAllGuildSettingsForClanAsync(clanData.ClanId);
 

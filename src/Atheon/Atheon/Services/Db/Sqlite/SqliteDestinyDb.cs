@@ -1,4 +1,5 @@
 ﻿using Atheon.Models.Database.Destiny;
+using Atheon.Models.Database.Destiny.Broadcasts;
 using Atheon.Models.Database.Destiny.Guilds;
 using Atheon.Services.Interfaces;
 
@@ -248,6 +249,65 @@ namespace Atheon.Services.Db.Sqlite
         public async Task<List<DestinyProfileDbModel>> GetProfilesWithCollectibleAsync(uint collectibleHash)
         {
             return await _dbAccess.QueryAsync<DestinyProfileDbModel>(GetProfilesWithCollectibleQuery, new { CollectibleHash = collectibleHash });
+        }
+
+        private const string TryInsertClanBroadcastQuery =
+            $"""
+            INSERT INTO DestinyClanBroadcasts
+            (
+                {nameof(ClanBroadcastDbModel.GuildId)},
+                {nameof(ClanBroadcastDbModel.ClanId)},
+                {nameof(ClanBroadcastDbModel.WasAnnounced)},
+                {nameof(ClanBroadcastDbModel.Date)},
+                {nameof(ClanBroadcastDbModel.Type)},
+                {nameof(ClanBroadcastDbModel.OldValue)},
+                {nameof(ClanBroadcastDbModel.NewValue)}
+            )
+            VALUES 
+            (
+                @{nameof(ClanBroadcastDbModel.GuildId)},
+                @{nameof(ClanBroadcastDbModel.ClanId)},
+                @{nameof(ClanBroadcastDbModel.WasAnnounced)},
+                @{nameof(ClanBroadcastDbModel.Date)},
+                @{nameof(ClanBroadcastDbModel.Type)},
+                @{nameof(ClanBroadcastDbModel.OldValue)},
+                @{nameof(ClanBroadcastDbModel.NewValue)}
+            )
+            """;
+        public async Task TryInsertClanBroadcastAsync(ClanBroadcastDbModel clanBroadcast)
+        {
+            await _dbAccess.ExecuteAsync(TryInsertClanBroadcastQuery, clanBroadcast);
+        }
+
+        private const string TryInsertProfileBroadcastQuery =
+            $"""
+            INSERT INTO DestinyClanBroadcasts
+            (
+                {nameof(DestinyUserProfileBroadcastDbModel.GuildId)},
+                {nameof(DestinyUserProfileBroadcastDbModel.ClanId)},
+                {nameof(DestinyUserProfileBroadcastDbModel.WasAnnounced)},
+                {nameof(DestinyUserProfileBroadcastDbModel.Date)},
+                {nameof(DestinyUserProfileBroadcastDbModel.Type)},
+                {nameof(DestinyUserProfileBroadcastDbModel.MembershipId)},
+                {nameof(DestinyUserProfileBroadcastDbModel.DefinitionHash)},
+                {nameof(DestinyUserProfileBroadcastDbModel.AdditionalData)}
+            )
+            VALUES 
+            (
+                @{nameof(DestinyUserProfileBroadcastDbModel.GuildId)},
+                @{nameof(DestinyUserProfileBroadcastDbModel.ClanId)},
+                @{nameof(DestinyUserProfileBroadcastDbModel.WasAnnounced)},
+                @{nameof(DestinyUserProfileBroadcastDbModel.Date)},
+                @{nameof(DestinyUserProfileBroadcastDbModel.Type)},
+                @{nameof(DestinyUserProfileBroadcastDbModel.MembershipId)},
+                @{nameof(DestinyUserProfileBroadcastDbModel.DefinitionHash)},
+                @{nameof(DestinyUserProfileBroadcastDbModel.AdditionalData)}
+            )
+            ON CONFLICT DO NOTHING;
+            """;
+        public async Task TryInsertProfileBroadcastAsync(DestinyUserProfileBroadcastDbModel profileBroadcast)
+        {
+            await _dbAccess.ExecuteAsync(TryInsertProfileBroadcastQuery, profileBroadcast);
         }
     }
 }

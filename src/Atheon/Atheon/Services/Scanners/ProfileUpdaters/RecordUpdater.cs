@@ -1,17 +1,25 @@
 ﻿using Atheon.Extensions;
 using Atheon.Models.Database.Destiny;
+using Atheon.Models.Database.Destiny.Broadcasts;
 using Atheon.Models.Database.Destiny.Profiles;
 using Atheon.Services.Interfaces;
+using DotNetBungieAPI.Models.Destiny;
 using DotNetBungieAPI.Models.Destiny.Components;
 using DotNetBungieAPI.Models.Destiny.Quests;
 using DotNetBungieAPI.Models.Destiny.Responses;
-using DotNetBungieAPI.Models.Extensions;
 using DotNetBungieAPI.Service.Abstractions;
 
 namespace Atheon.Services.Scanners.ProfileUpdaters
 {
     public class RecordUpdater : IProfileUpdater
     {
+        private readonly ICommonEvents _commonEvents;
+
+        public RecordUpdater(ICommonEvents commonEvents)
+        {
+            _commonEvents = commonEvents;
+        }
+
         public bool ReliesOnSecondaryComponents => true;
 
         public void Update(
@@ -20,7 +28,44 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
             DestinyProfileResponse profileResponse,
             List<DiscordGuildSettingsDbModel> guildSettings)
         {
+            foreach (var (recordHash, recordComponent) in profileResponse.ProfileRecords.Data.Records)
+            {
+                if (dbProfile.Records.TryGetValue(recordHash, out var dbRecord))
+                {
+                    if (dbRecord.State.HasFlag(DestinyRecordState.ObjectiveNotCompleted) &&
+                        !recordComponent.State.HasFlag(DestinyRecordState.ObjectiveNotCompleted))
+                    {
+                        //_commonEvents.ProfileBroadcasts.Publish(new DestinyUserProfileBroadcastDbModel()
+                        //{
+                             
+                        //});
+                    }
+                    UpdateRecordDataSilent(dbRecord, recordComponent);
+                }
+                else
+                {
+                    dbProfile.Records.Add(recordHash, new DestinyRecordDbModel(recordComponent));
+                }
+            }
 
+            if (profileResponse.CharacterRecords.Data.Count == 0)
+                return;
+
+            var firstCharacterRecords = profileResponse.CharacterRecords.Data.First();
+
+            foreach (var (recordHash, _) in firstCharacterRecords.Value.Records)
+            {
+                var optimalRecord = profileResponse.CharacterRecords.Data.GetOptimalRecordAcrossCharacters(recordHash);
+
+                if (dbProfile.Records.TryGetValue(recordHash, out var dbRecord))
+                {
+                    UpdateRecordDataSilent(dbRecord, optimalRecord);
+                }
+                else
+                {
+                    dbProfile.Records.Add(recordHash, new DestinyRecordDbModel(optimalRecord));
+                }
+            }
         }
 
         public void UpdateSilent(

@@ -93,5 +93,11 @@ public static partial class Embeds
                 """;
             eb.WithDescription(message);
         }
+
+        public static Embed Profile(
+            DestinyUserProfileBroadcastDbModel userBroadcast)
+        {
+
+        }
     }
 }
