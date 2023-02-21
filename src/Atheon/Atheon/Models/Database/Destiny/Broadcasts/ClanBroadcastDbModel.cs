@@ -28,4 +28,46 @@ public class ClanBroadcastDbModel : IBroadcast
 
     [AutoColumn(nameof(NewValue), sqliteType: DatabaseOptions.SQLiteTypes.TEXT.DEFAULT_VALUE)]
     public string NewValue { get; set; }
+
+    public static ClanBroadcastDbModel ClanNameChanged(ulong guildId, long clanId, string oldName, string newName)
+    {
+        return new ClanBroadcastDbModel()
+        {
+            GuildId = guildId,
+            ClanId = clanId,
+            Date = DateTime.UtcNow,
+            Type = ClanBroadcastType.ClanName,
+            WasAnnounced = false,
+            OldValue = oldName,
+            NewValue = newName
+        };
+    }
+
+    public static ClanBroadcastDbModel ClanLevelChanged(ulong guildId, long clanId, int oldLevel, int newLevel)
+    {
+        return new ClanBroadcastDbModel()
+        {
+            GuildId = guildId,
+            ClanId = clanId,
+            Date = DateTime.UtcNow,
+            Type = ClanBroadcastType.ClanLevel,
+            WasAnnounced = false,
+            OldValue = oldLevel.ToString(),
+            NewValue = newLevel.ToString()
+        };
+    }
+
+    public static ClanBroadcastDbModel ClanCallSignChanged(ulong guildId, long clanId, string oldCallSign, string newCallSign)
+    {
+        return new ClanBroadcastDbModel()
+        {
+            GuildId = guildId,
+            ClanId = clanId,
+            Date = DateTime.UtcNow,
+            Type = ClanBroadcastType.ClanCallsign,
+            WasAnnounced = false,
+            OldValue = oldCallSign,
+            NewValue = newCallSign
+        };
+    }
 }

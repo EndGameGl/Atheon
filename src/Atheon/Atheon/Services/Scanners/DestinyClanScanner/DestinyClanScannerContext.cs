@@ -1,4 +1,5 @@
-﻿using DotNetBungieAPI.Models.GroupsV2;
+﻿using Atheon.Models.Database.Destiny;
+using DotNetBungieAPI.Models.GroupsV2;
 using DotNetBungieAPI.Service.Abstractions;
 using System.Collections.ObjectModel;
 
@@ -16,6 +17,10 @@ namespace Atheon.Services.Scanners.DestinyClanScanner
 
         public int MembersOnline { get; set; }
 
-        public List<GroupMember> MembersToScan { get; set; }
+        public List<GroupMember>? MembersToScan { get; set; }
+
+        public List<DiscordGuildSettingsDbModel>? LinkedGuildSettings { get; set; }
+
+        public DestinyClanDbModel? DestinyClanDbModel { get; set; }
     }
 }

@@ -101,6 +101,16 @@ namespace Atheon.Services.Db.Sqlite
             return await _dbAccess.QueryFirstOrDefaultAsync<DiscordGuildSettingsDbModel?>(GetGuildSettingsQuery, new { GuildId = guildId });
         }
 
+        private const string GetAllGuildSettingsForClanQuery =
+            """
+            SELECT * FROM Guilds 
+            WHERE EXISTS (SELECT 1 FROM json_each(Clans) WHERE value = @ClanId);
+            """;
+        public async Task<List<DiscordGuildSettingsDbModel>> GetAllGuildSettingsForClanAsync(long clanId)
+        {
+            return await _dbAccess.QueryAsync<DiscordGuildSettingsDbModel>(GetAllGuildSettingsForClanQuery, new { ClanId = clanId });
+        }
+
         private const string GetClanIdsQuery =
             $"""
             SELECT ({nameof(DestinyClanDbModel.ClanId)}) FROM Clans WHERE {nameof(DestinyClanDbModel.IsTracking)} = @{nameof(DestinyClanDbModel.IsTracking)};
