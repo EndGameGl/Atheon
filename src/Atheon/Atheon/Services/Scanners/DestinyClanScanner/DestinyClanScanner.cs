@@ -1,13 +1,10 @@
 ﻿using Atheon.Attributes;
 using Atheon.Models.Database.Destiny.Broadcasts;
-using Atheon.Models.Database.Destiny;
 using Atheon.Services.BungieApi;
-using Atheon.Services.EventBus;
 using Atheon.Services.Interfaces;
 using Atheon.Services.Scanners.Entities;
 using DotNetBungieAPI.Models;
 using Polly;
-using System.Xml.Serialization;
 using DotNetBungieAPI.HashReferences;
 
 namespace Atheon.Services.Scanners.DestinyClanScanner;
