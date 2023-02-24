@@ -5,7 +5,6 @@ using Atheon.Services.EventBus;
 using Atheon.Services.Interfaces;
 using Discord;
 using Discord.Interactions;
-using Discord.WebSocket;
 using DotNetBungieAPI.Models.Destiny.Definitions.Collectibles;
 
 namespace Atheon.Services.DiscordHandlers.InteractionHandlers;

@@ -196,8 +196,8 @@ namespace Atheon.Services.Db.Sqlite
             (
                 {nameof(DestinyProfileDbModel.MembershipId)},
                 {nameof(DestinyProfileDbModel.MembershipType)},
-                {nameof(DestinyProfileDbModel.ClanId)},
                 {nameof(DestinyProfileDbModel.Name)},
+                {nameof(DestinyProfileDbModel.ClanId)},
                 {nameof(DestinyProfileDbModel.DateLastPlayed)},
                 {nameof(DestinyProfileDbModel.MinutesPlayedTotal)},
                 {nameof(DestinyProfileDbModel.Collectibles)},
@@ -320,14 +320,38 @@ namespace Atheon.Services.Db.Sqlite
         }
 
 
+        private const string MarkClanBroadcastSentQuery =
+            $"""
+            UPDATE DestinyClanBroadcasts
+            SET 
+                {nameof(ClanBroadcastDbModel.WasAnnounced)} = true
+            WHERE 
+                {nameof(ClanBroadcastDbModel.Type)} = @{nameof(ClanBroadcastDbModel.Type)},
+                {nameof(ClanBroadcastDbModel.ClanId)} = @{nameof(ClanBroadcastDbModel.ClanId)},
+                {nameof(ClanBroadcastDbModel.GuildId)} = @{nameof(ClanBroadcastDbModel.GuildId)},
+                {nameof(ClanBroadcastDbModel.Date)} = @{nameof(ClanBroadcastDbModel.Date)},
+                {nameof(ClanBroadcastDbModel.NewValue)} = @{nameof(ClanBroadcastDbModel.NewValue)}
+            """;
         public async Task MarkClanBroadcastSentAsync(ClanBroadcastDbModel clanBroadcast)
         {
-            throw new NotImplementedException();
+            await _dbAccess.ExecuteAsync(MarkClanBroadcastSentQuery, clanBroadcast);
         }
 
-        public Task MarkUserBroadcastSentAsync(DestinyUserProfileBroadcastDbModel profileBroadcast)
+        private const string MarkUserBroadcastSentQuery =
+            $"""
+            UPDATE DestinyUserBroadcasts
+            SET 
+                {nameof(DestinyUserProfileBroadcastDbModel.WasAnnounced)} = true
+            WHERE 
+                {nameof(DestinyUserProfileBroadcastDbModel.Type)} = @{nameof(DestinyUserProfileBroadcastDbModel.Type)},
+                {nameof(DestinyUserProfileBroadcastDbModel.ClanId)} = @{nameof(DestinyUserProfileBroadcastDbModel.ClanId)},
+                {nameof(DestinyUserProfileBroadcastDbModel.GuildId)} = @{nameof(DestinyUserProfileBroadcastDbModel.GuildId)},
+                {nameof(DestinyUserProfileBroadcastDbModel.DefinitionHash)} = @{nameof(DestinyUserProfileBroadcastDbModel.DefinitionHash)},
+                {nameof(DestinyUserProfileBroadcastDbModel.MembershipId)} = @{nameof(DestinyUserProfileBroadcastDbModel.MembershipId)}
+            """;
+        public async Task MarkUserBroadcastSentAsync(DestinyUserProfileBroadcastDbModel profileBroadcast)
         {
-            throw new NotImplementedException();
+            await _dbAccess.ExecuteAsync(MarkUserBroadcastSentQuery, profileBroadcast);
         }
     }
 }

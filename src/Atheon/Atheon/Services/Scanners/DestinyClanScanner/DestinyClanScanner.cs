@@ -206,6 +206,7 @@ public class DestinyClanScanner : EntityScannerBase<DestinyClanScannerInput, Des
         if (context.DestinyClanDbModel is null)
             return true;
 
+        context.DestinyClanDbModel.MembersOnline = context.MembersOnline;
         context.DestinyClanDbModel.LastScan = DateTime.UtcNow;
         await _destinyDb.UpsertClanModelAsync(context.DestinyClanDbModel);
         return true;

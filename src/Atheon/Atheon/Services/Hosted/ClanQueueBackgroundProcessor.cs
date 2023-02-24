@@ -116,7 +116,9 @@ public class ClanQueueBackgroundProcessor : PeriodicBackgroundService, IClanQueu
 
     private async Task<long> StartClanScan(long clanId)
     {
+        _logger.LogInformation("Started scan for clan {ClanId}", clanId);
         await _destinyClanScanner.Scan(new DestinyClanScannerInput() { ClanId = clanId }, new DestinyClanScannerContext(), default);
+        _logger.LogInformation("Finished scan for clan {ClanId}", clanId);
         return clanId;
     }
 

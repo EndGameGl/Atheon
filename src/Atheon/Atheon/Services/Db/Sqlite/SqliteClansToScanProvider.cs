@@ -1,7 +1,7 @@
 ﻿using Atheon.Models.Collections;
 using Atheon.Services.Interfaces;
 
-namespace Atheon.Services;
+namespace Atheon.Services.Db.Sqlite;
 
 public class SqliteClansToScanProvider : IClansToScanProvider
 {
@@ -14,7 +14,7 @@ public class SqliteClansToScanProvider : IClansToScanProvider
         IDestinyDb destinyDb)
     {
         _destinyDb = destinyDb;
-        _clanIds = new UniqueConcurrentQueue<long>(); 
+        _clanIds = new UniqueConcurrentQueue<long>();
         EmptyList = Array.Empty<long>().ToList();
     }
 
