@@ -168,6 +168,14 @@ public class DestinyClanScanner : EntityScannerBase<DestinyClanScannerInput, Des
         DestinyClanScannerContext context,
         CancellationToken cancellationToken)
     {
+        if (context.DestinyClanDbModel.ShouldRescan is true)
+        {
+            context.MembersToScan = context.Members.ToList();
+            await _userQueue.EnqueueAndWaitForSilentUserScans(context, cancellationToken);
+            context.DestinyClanDbModel.ShouldRescan = false;
+            return true;
+        }
+
         if (!context.DestinyClanDbModel.LastScan.HasValue ||
             (DateTime.UtcNow - context.DestinyClanDbModel.LastScan.Value).TotalMinutes > 10)
         {

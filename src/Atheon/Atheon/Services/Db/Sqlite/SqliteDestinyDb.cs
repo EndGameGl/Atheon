@@ -151,7 +151,8 @@ namespace Atheon.Services.Db.Sqlite
                 {nameof(DestinyClanDbModel.MembersOnline)},
                 {nameof(DestinyClanDbModel.IsTracking)},
                 {nameof(DestinyClanDbModel.JoinedOn)},
-                {nameof(DestinyClanDbModel.LastScan)}
+                {nameof(DestinyClanDbModel.LastScan)},
+                {nameof(DestinyClanDbModel.ShouldRescan)}
             )
             VALUES 
             (   
@@ -163,7 +164,8 @@ namespace Atheon.Services.Db.Sqlite
                 @{nameof(DestinyClanDbModel.MembersOnline)},
                 @{nameof(DestinyClanDbModel.IsTracking)},
                 @{nameof(DestinyClanDbModel.JoinedOn)},
-                @{nameof(DestinyClanDbModel.LastScan)}
+                @{nameof(DestinyClanDbModel.LastScan)},
+                @{nameof(DestinyClanDbModel.ShouldRescan)}
             )
             ON CONFLICT ({nameof(DestinyClanDbModel.ClanId)}) DO UPDATE SET 
                 {nameof(DestinyClanDbModel.ClanName)} = @{nameof(DestinyClanDbModel.ClanName)},
@@ -173,7 +175,8 @@ namespace Atheon.Services.Db.Sqlite
                 {nameof(DestinyClanDbModel.MembersOnline)} = @{nameof(DestinyClanDbModel.MembersOnline)},
                 {nameof(DestinyClanDbModel.IsTracking)} = @{nameof(DestinyClanDbModel.IsTracking)},
                 {nameof(DestinyClanDbModel.JoinedOn)} = @{nameof(DestinyClanDbModel.JoinedOn)},
-                {nameof(DestinyClanDbModel.LastScan)} = @{nameof(DestinyClanDbModel.LastScan)}
+                {nameof(DestinyClanDbModel.LastScan)} = @{nameof(DestinyClanDbModel.LastScan)},
+                {nameof(DestinyClanDbModel.ShouldRescan)} = @{nameof(DestinyClanDbModel.ShouldRescan)}
             """;
         public async Task UpsertClanModelAsync(DestinyClanDbModel clanDbModel)
         {
