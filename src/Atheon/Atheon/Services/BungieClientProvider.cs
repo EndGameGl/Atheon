@@ -39,24 +39,24 @@ public class BungieClientProvider : IBungieClientProvider
 
         services.AddLogging(x => x.AddSerilog());
 
-        var client = BungieApiBuilder.GetApiClient((config) =>
-         {
-             config.ClientConfiguration.ApiKey = apiKey;
-             config.ClientConfiguration.UsedLocales.AddRange(new[] { BungieLocales.EN });
-             config.DefinitionProvider.UseSqliteDefinitionProvider(provider =>
-             {
-                 provider.ManifestFolderPath = manifestPath;
-                 provider.DeleteOldManifestDataAfterUpdates = true;
-                 provider.AutoUpdateManifestOnStartup = true;
-             });
-         },
-         services);
+        services.UseBungieApiClient((config) =>
+        {
+            config.ClientConfiguration.ApiKey = apiKey;
+            config.ClientConfiguration.UsedLocales.AddRange(new[] { BungieLocales.EN });
+            config.DefinitionProvider.UseSqliteDefinitionProvider(provider =>
+            {
+                provider.ManifestFolderPath = manifestPath;
+                provider.DeleteOldManifestDataAfterUpdates = true;
+                provider.AutoUpdateManifestOnStartup = true;
+            });
+        });
 
         var serviceProvider = services.BuildServiceProvider();
 
         _bungieClientConfiguration = serviceProvider.GetRequiredService<IBungieClientConfiguration>();
         _providerConfiguration = serviceProvider.GetRequiredService<SqliteDefinitionProviderConfiguration>();
 
+        var client = serviceProvider.GetRequiredService<IBungieClient>();
         await client.DefinitionProvider.Initialize();
         await client.DefinitionProvider.ReadToRepository(client.Repository);
 

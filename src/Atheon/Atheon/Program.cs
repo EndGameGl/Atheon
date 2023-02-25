@@ -12,10 +12,13 @@ using Atheon.Services.Scanners.ProfileUpdaters;
 using Serilog;
 using Serilog.Exceptions;
 
+
+
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .Enrich.FromLogContext()
     .WriteTo.Console()
+    .WriteTo.File("Logs/log.txt", shared: true)
     .CreateLogger();
 
 try
@@ -32,7 +35,11 @@ try
 }
 catch (Exception exception)
 {
+    Console.WriteLine(exception.Message);
     Log.Logger.Error(exception, "Failed to start app");
+    await Task.Delay(2000);
+    Console.WriteLine("Press any key to exit app...");
+    Console.ReadKey();
 }
 
 void ConfigureServices(WebApplicationBuilder applicationBuilder)
