@@ -26,6 +26,7 @@ public interface IDestinyDb
     Task DeleteDestinyProfileAsync(long membershipId);
 
     Task<List<DestinyProfileLite>> GetProfilesCollectibleStatusAsync(uint collectibleHash, bool hasItem);
+    Task<List<DestinyProfileLite>> GetProfilesRecordStatusAsync(uint recordHash, bool hasCompletedRecord);
 
     Task TryInsertClanBroadcastAsync(ClanBroadcastDbModel clanBroadcast);
     Task TryInsertProfileBroadcastAsync(DestinyUserProfileBroadcastDbModel profileBroadcast);

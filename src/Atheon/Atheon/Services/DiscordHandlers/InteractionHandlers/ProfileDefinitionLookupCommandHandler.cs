@@ -4,6 +4,7 @@ using Atheon.Services.Interfaces;
 using Discord;
 using Discord.Interactions;
 using DotNetBungieAPI.Models.Destiny.Definitions.Collectibles;
+using DotNetBungieAPI.Models.Destiny.Definitions.Records;
 using System.Text;
 
 namespace Atheon.Services.DiscordHandlers.InteractionHandlers;
@@ -52,9 +53,45 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
         await Context.Interaction.RespondAsync(
             embed: EmbedBuilders.Embeds.GetGenericEmbed(
                     $"{users.Count} users {(hasItem ? "have" : "miss")} {colDef.DisplayProperties.Name}",
-                    Color.Red,
+                    Color.Green,
                     description: sb.ToString())
                 .WithThumbnailUrl(colDef.DisplayProperties.Icon.AbsolutePath)
+                .Build(),
+            ephemeral: true);
+    }
+
+    [SlashCommand("triumph-check", "Checks who completed triumph")]
+    public async Task GetUsersWithRecord(
+        [Autocomplete(typeof(DestinyRecordDefinitionAutocompleter))][Summary(description: "Record")] string recordHash,
+        [Summary(description: "Whether user has completed triumph or not")] bool hasCompletedTriumph)
+    {
+        var itemHash = uint.Parse(recordHash);
+        var users = await _destinyDb.GetProfilesRecordStatusAsync(itemHash, hasCompletedTriumph);
+
+        var bungieClient = await _bungieClientProvider.GetClientAsync();
+
+        bungieClient.TryGetDefinition<DestinyRecordDefinition>(itemHash, DotNetBungieAPI.Models.BungieLocales.EN, out var recordDef);
+
+        var sb = new StringBuilder();
+        foreach (var user in users)
+        {
+            var userDisplayString = $"> {user.Name}\n";
+            if ((sb.Length + userDisplayString.Length) <= 2048)
+            {
+                sb.Append(userDisplayString);
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        await Context.Interaction.RespondAsync(
+            embed: EmbedBuilders.Embeds.GetGenericEmbed(
+                    $"{users.Count} users have{(hasCompletedTriumph ? " " : " not ")}completed {recordDef.DisplayProperties.Name}",
+                    Color.Green,
+                    description: sb.ToString())
+                .WithThumbnailUrl(recordDef.DisplayProperties.Icon.AbsolutePath)
                 .Build(),
             ephemeral: true);
     }

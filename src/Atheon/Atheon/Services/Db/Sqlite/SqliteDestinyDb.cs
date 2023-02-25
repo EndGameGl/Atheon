@@ -394,5 +394,31 @@ namespace Atheon.Services.Db.Sqlite
         {
             await _dbAccess.ExecuteAsync(DeleteDestinyProfileQuery, new { MembershipId = membershipId });
         }
+
+        private const string GetProfilesRecordStatusCompletedQuery =
+            """
+            SELECT 
+            	MembershipId,
+            	Name
+            FROM DestinyProfiles
+            WHERE EXISTS (SELECT 1 FROM json_each(Records) WHERE CAST(key as INTEGER) = @RecordHash AND json_extract(value, '$.state') NOT IN (4))
+            """;
+
+        private const string GetProfilesRecordStatusNotCompletedQuery =
+            """
+            SELECT 
+            	MembershipId,
+            	Name
+            FROM DestinyProfiles
+            WHERE EXISTS (SELECT 1 FROM json_each(Records) WHERE CAST(key as INTEGER) = @RecordHash AND json_extract(value, '$.state') IN (4))
+            """;
+        public async Task<List<DestinyProfileLite>> GetProfilesRecordStatusAsync(uint recordHash, bool hasCompletedRecord)
+        {
+            if (hasCompletedRecord)
+            {
+                return await _dbAccess.QueryAsync<DestinyProfileLite>(GetProfilesRecordStatusCompletedQuery, new { RecordHash = recordHash });
+            }
+            return await _dbAccess.QueryAsync<DestinyProfileLite>(GetProfilesRecordStatusNotCompletedQuery, new { RecordHash = recordHash });
+        }
     }
 }

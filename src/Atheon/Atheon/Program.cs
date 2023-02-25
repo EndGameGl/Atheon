@@ -13,7 +13,6 @@ using Serilog;
 using Serilog.Exceptions;
 
 
-
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .Enrich.FromLogContext()
