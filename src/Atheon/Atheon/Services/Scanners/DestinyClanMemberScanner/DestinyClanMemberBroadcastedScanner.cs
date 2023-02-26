@@ -142,8 +142,10 @@ public class DestinyClanMemberBroadcastedScanner : EntityScannerBase<DestinyClan
         {
             profile = DestinyProfileDbModel.CreateFromApiResponse(
                 input.GroupMember.GroupId,
-            context.DestinyProfileResponse!,
+                context.DestinyProfileResponse!,
                 input.BungieClient);
+            profile.ClanId = input.ClanScannerContext.ClanId;
+            profile.LastUpdated = DateTime.UtcNow;
             await _destinyDb.UpsertDestinyProfileAsync(profile);
             return false;
         }

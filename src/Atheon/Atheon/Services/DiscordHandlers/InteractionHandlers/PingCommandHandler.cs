@@ -5,7 +5,6 @@ using Atheon.Services.EventBus;
 using Atheon.Services.Interfaces;
 using Discord;
 using Discord.Interactions;
-using Discord.WebSocket;
 using DotNetBungieAPI.Models.Destiny.Definitions.Collectibles;
 
 namespace Atheon.Services.DiscordHandlers.InteractionHandlers;
@@ -30,50 +29,5 @@ public class PingCommandHandler : SlashCommandHandlerBase
         _bungieClientProvider = bungieClientProvider;
     }
 
-    [SlashCommand("ping", "pongs back")]
-    public async Task PingPongAsync()
-    {
-        await Context.Interaction.RespondAsync("pong");
-    }
-
-    [SlashCommand("test-clan-broadcast", "sends test broadcast")]
-    public async Task TestClanBroadcastAsync()
-    {
-        _clanBroadcastsChannel.Publish(new ClanBroadcastDbModel()
-        {
-            ClanId = 4394229,
-            Date = DateTime.UtcNow,
-            GuildId = 886500502060302357,
-            Type = ClanBroadcastType.ClanScanFinished,
-            WasAnnounced = false
-        });
-        await Context.Interaction.RespondAsync("hi", ephemeral: true);
-    }
-
-    [SlashCommand("test-clan-scan", "starts clan scan")]
-    public async Task StartClanScan(
-        [Summary(description: "Clan id")] long clanId)
-    {
-        _clanQueue.EnqueueFirstTimeScan(clanId);
-        await Context.Interaction.RespondAsync("enqueued clan", ephemeral: true);
-    }
-
-    [SlashCommand("item-check", "Checks who has items")]
-    public async Task GetUsersWithItem(
-        [Autocomplete(typeof(DestinyCollectibleDefinitionAutocompleter))] [Summary(description: "Collectible")] string collectibleHash)
-    {
-        var itemHash = uint.Parse(collectibleHash);
-        var users = await _destinyDb.GetProfilesWithCollectibleAsync(itemHash);
-
-        var bungieClient = await _bungieClientProvider.GetClientAsync();
-
-        bungieClient.TryGetDefinition<DestinyCollectibleDefinition>(itemHash, DotNetBungieAPI.Models.BungieLocales.EN, out var colDef);
-
-        await Context.Interaction.RespondAsync(
-            embed: EmbedBuilders.Embeds.GetGenericEmbed(
-                $"Users who have {colDef.DisplayProperties.Name}",
-                Color.Red,
-                description: "> " + string.Join("\n> ", users.Select(x => x.Name))).Build(),
-            ephemeral: true);
-    }
+    
 }

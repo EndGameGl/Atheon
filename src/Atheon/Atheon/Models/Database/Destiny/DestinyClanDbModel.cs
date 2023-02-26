@@ -36,6 +36,9 @@ public class DestinyClanDbModel
     [AutoColumn(nameof(LastScan), sqliteType: DatabaseOptions.SQLiteTypes.NUMERIC.DATETIME)]
     public DateTime? LastScan { get; set; }
 
+    [AutoColumn(nameof(ShouldRescan), sqliteType: DatabaseOptions.SQLiteTypes.NUMERIC.BOOLEAN)]
+    public bool? ShouldRescan { get; set; }
+
     public static DestinyClanDbModel CreateFromApiResponse(GroupResponse groupResponse)
     {
         var model = new DestinyClanDbModel()

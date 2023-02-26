@@ -1,6 +1,8 @@
 ﻿using Atheon.Models.Database.Destiny;
 using Atheon.Models.Database.Destiny.Broadcasts;
+using Atheon.Models.Database.Destiny.Clans;
 using Atheon.Models.Database.Destiny.Guilds;
+using Atheon.Models.Database.Destiny.Profiles;
 using Atheon.Services.Interfaces;
 
 namespace Atheon.Services.Db.Sqlite
@@ -151,7 +153,8 @@ namespace Atheon.Services.Db.Sqlite
                 {nameof(DestinyClanDbModel.MembersOnline)},
                 {nameof(DestinyClanDbModel.IsTracking)},
                 {nameof(DestinyClanDbModel.JoinedOn)},
-                {nameof(DestinyClanDbModel.LastScan)}
+                {nameof(DestinyClanDbModel.LastScan)},
+                {nameof(DestinyClanDbModel.ShouldRescan)}
             )
             VALUES 
             (   
@@ -163,7 +166,8 @@ namespace Atheon.Services.Db.Sqlite
                 @{nameof(DestinyClanDbModel.MembersOnline)},
                 @{nameof(DestinyClanDbModel.IsTracking)},
                 @{nameof(DestinyClanDbModel.JoinedOn)},
-                @{nameof(DestinyClanDbModel.LastScan)}
+                @{nameof(DestinyClanDbModel.LastScan)},
+                @{nameof(DestinyClanDbModel.ShouldRescan)}
             )
             ON CONFLICT ({nameof(DestinyClanDbModel.ClanId)}) DO UPDATE SET 
                 {nameof(DestinyClanDbModel.ClanName)} = @{nameof(DestinyClanDbModel.ClanName)},
@@ -173,7 +177,8 @@ namespace Atheon.Services.Db.Sqlite
                 {nameof(DestinyClanDbModel.MembersOnline)} = @{nameof(DestinyClanDbModel.MembersOnline)},
                 {nameof(DestinyClanDbModel.IsTracking)} = @{nameof(DestinyClanDbModel.IsTracking)},
                 {nameof(DestinyClanDbModel.JoinedOn)} = @{nameof(DestinyClanDbModel.JoinedOn)},
-                {nameof(DestinyClanDbModel.LastScan)} = @{nameof(DestinyClanDbModel.LastScan)}
+                {nameof(DestinyClanDbModel.LastScan)} = @{nameof(DestinyClanDbModel.LastScan)},
+                {nameof(DestinyClanDbModel.ShouldRescan)} = @{nameof(DestinyClanDbModel.ShouldRescan)}
             """;
         public async Task UpsertClanModelAsync(DestinyClanDbModel clanDbModel)
         {
@@ -196,8 +201,8 @@ namespace Atheon.Services.Db.Sqlite
             (
                 {nameof(DestinyProfileDbModel.MembershipId)},
                 {nameof(DestinyProfileDbModel.MembershipType)},
-                {nameof(DestinyProfileDbModel.ClanId)},
                 {nameof(DestinyProfileDbModel.Name)},
+                {nameof(DestinyProfileDbModel.ClanId)},
                 {nameof(DestinyProfileDbModel.DateLastPlayed)},
                 {nameof(DestinyProfileDbModel.MinutesPlayedTotal)},
                 {nameof(DestinyProfileDbModel.Collectibles)},
@@ -242,13 +247,29 @@ namespace Atheon.Services.Db.Sqlite
 
         private const string GetProfilesWithCollectibleQuery =
             $"""
-            SELECT *
+            SELECT 
+                MembershipId,
+                Name
             FROM DestinyProfiles
             WHERE EXISTS (SELECT 1 FROM json_each(Collectibles) WHERE value = @CollectibleHash)
             """;
-        public async Task<List<DestinyProfileDbModel>> GetProfilesWithCollectibleAsync(uint collectibleHash)
+
+        private const string GetProfilesWithoutCollectibleQuery =
+            $"""
+            SELECT 
+                MembershipId,
+                Name
+            FROM DestinyProfiles
+            WHERE NOT EXISTS (SELECT 1 FROM json_each(Collectibles) WHERE value = @CollectibleHash)
+            """;
+        public async Task<List<DestinyProfileLite>> GetProfilesCollectibleStatusAsync(uint collectibleHash, bool hasItem)
         {
-            return await _dbAccess.QueryAsync<DestinyProfileDbModel>(GetProfilesWithCollectibleQuery, new { CollectibleHash = collectibleHash });
+            if (hasItem)
+            {
+                return await _dbAccess.QueryAsync<DestinyProfileLite>(GetProfilesWithCollectibleQuery, new { CollectibleHash = collectibleHash });
+            }
+
+            return await _dbAccess.QueryAsync<DestinyProfileLite>(GetProfilesWithoutCollectibleQuery, new { CollectibleHash = collectibleHash });
         }
 
         private const string TryInsertClanBroadcastQuery =
@@ -281,7 +302,7 @@ namespace Atheon.Services.Db.Sqlite
 
         private const string TryInsertProfileBroadcastQuery =
             $"""
-            INSERT INTO DestinyClanBroadcasts
+            INSERT INTO DestinyUserBroadcasts
             (
                 {nameof(DestinyUserProfileBroadcastDbModel.GuildId)},
                 {nameof(DestinyUserProfileBroadcastDbModel.ClanId)},
@@ -320,14 +341,84 @@ namespace Atheon.Services.Db.Sqlite
         }
 
 
+        private const string MarkClanBroadcastSentQuery =
+            $"""
+            UPDATE DestinyClanBroadcasts
+            SET 
+                {nameof(ClanBroadcastDbModel.WasAnnounced)} = true
+            WHERE 
+                {nameof(ClanBroadcastDbModel.Type)} = @{nameof(ClanBroadcastDbModel.Type)} AND
+                {nameof(ClanBroadcastDbModel.ClanId)} = @{nameof(ClanBroadcastDbModel.ClanId)} AND
+                {nameof(ClanBroadcastDbModel.GuildId)} = @{nameof(ClanBroadcastDbModel.GuildId)} AND
+                {nameof(ClanBroadcastDbModel.Date)} = @{nameof(ClanBroadcastDbModel.Date)} AND
+                {nameof(ClanBroadcastDbModel.NewValue)} = @{nameof(ClanBroadcastDbModel.NewValue)};
+            """;
         public async Task MarkClanBroadcastSentAsync(ClanBroadcastDbModel clanBroadcast)
         {
-            throw new NotImplementedException();
+            await _dbAccess.ExecuteAsync(MarkClanBroadcastSentQuery, clanBroadcast);
         }
 
-        public Task MarkUserBroadcastSentAsync(DestinyUserProfileBroadcastDbModel profileBroadcast)
+        private const string MarkUserBroadcastSentQuery =
+            $"""
+            UPDATE DestinyUserBroadcasts
+            SET 
+                {nameof(DestinyUserProfileBroadcastDbModel.WasAnnounced)} = true
+            WHERE 
+                {nameof(DestinyUserProfileBroadcastDbModel.Type)} = @{nameof(DestinyUserProfileBroadcastDbModel.Type)} AND
+                {nameof(DestinyUserProfileBroadcastDbModel.ClanId)} = @{nameof(DestinyUserProfileBroadcastDbModel.ClanId)} AND
+                {nameof(DestinyUserProfileBroadcastDbModel.GuildId)} = @{nameof(DestinyUserProfileBroadcastDbModel.GuildId)} AND
+                {nameof(DestinyUserProfileBroadcastDbModel.DefinitionHash)} = @{nameof(DestinyUserProfileBroadcastDbModel.DefinitionHash)} AND
+                {nameof(DestinyUserProfileBroadcastDbModel.MembershipId)} = @{nameof(DestinyUserProfileBroadcastDbModel.MembershipId)};
+            """;
+        public async Task MarkUserBroadcastSentAsync(DestinyUserProfileBroadcastDbModel profileBroadcast)
         {
-            throw new NotImplementedException();
+            await _dbAccess.ExecuteAsync(MarkUserBroadcastSentQuery, profileBroadcast);
+        }
+
+        private const string GetClanMemberReferencesQuery =
+            """
+            SELECT MembershipId 
+            FROM DestinyProfiles
+            WHERE ClanId = @ClanId;
+            """;
+        public async Task<List<ClanMemberReference>> GetClanMemberReferencesAsync(long clanId)
+        {
+            return await _dbAccess.QueryAsync<ClanMemberReference>(GetClanMemberReferencesQuery, new { ClanId = clanId });
+        }
+
+        private const string DeleteDestinyProfileQuery =
+            $"""
+            DELETE FROM DestinyProfiles WHERE {nameof(DestinyProfileDbModel.MembershipId)} = @MembershipId;
+            """;
+        public async Task DeleteDestinyProfileAsync(long membershipId)
+        {
+            await _dbAccess.ExecuteAsync(DeleteDestinyProfileQuery, new { MembershipId = membershipId });
+        }
+
+        private const string GetProfilesRecordStatusCompletedQuery =
+            """
+            SELECT 
+            	MembershipId,
+            	Name
+            FROM DestinyProfiles
+            WHERE EXISTS (SELECT 1 FROM json_each(Records) WHERE CAST(key as INTEGER) = @RecordHash AND json_extract(value, '$.state') NOT IN (4))
+            """;
+
+        private const string GetProfilesRecordStatusNotCompletedQuery =
+            """
+            SELECT 
+            	MembershipId,
+            	Name
+            FROM DestinyProfiles
+            WHERE EXISTS (SELECT 1 FROM json_each(Records) WHERE CAST(key as INTEGER) = @RecordHash AND json_extract(value, '$.state') IN (4))
+            """;
+        public async Task<List<DestinyProfileLite>> GetProfilesRecordStatusAsync(uint recordHash, bool hasCompletedRecord)
+        {
+            if (hasCompletedRecord)
+            {
+                return await _dbAccess.QueryAsync<DestinyProfileLite>(GetProfilesRecordStatusCompletedQuery, new { RecordHash = recordHash });
+            }
+            return await _dbAccess.QueryAsync<DestinyProfileLite>(GetProfilesRecordStatusNotCompletedQuery, new { RecordHash = recordHash });
         }
     }
 }

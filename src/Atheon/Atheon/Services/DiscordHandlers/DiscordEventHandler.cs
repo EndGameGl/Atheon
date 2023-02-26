@@ -35,8 +35,7 @@ public class DiscordEventHandler : IDiscordEventHandler
             // This does some magic and finds all references of [SlashCommand("name", "description")] in the project and links them to the interaction service.
             await _interactionService.AddModulesAsync(Assembly.GetEntryAssembly(), _serviceProvider);
 
-            // This registers all the above found SlashCommands to this specific guild, for testing.
-            await _interactionService.RegisterCommandsToGuildAsync(1077105046044545024, false);
+            await _interactionService.RegisterCommandsGloballyAsync();
         }
         catch (Exception ex)
         {

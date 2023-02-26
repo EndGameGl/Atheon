@@ -7,7 +7,6 @@ using System.Text.Json;
 using Atheon.Services.BungieApi;
 using Atheon.Services.Interfaces;
 using Atheon.Models.Database.Destiny;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Atheon.Services.Scanners.DestinyClanMemberScanner;
 
@@ -145,6 +144,8 @@ public class DestinyClanMemberSilentScanner : EntityScannerBase<DestinyClanMembe
                 input.GroupMember.GroupId, 
                 context.DestinyProfileResponse!, 
                 input.BungieClient);
+            profile.ClanId = input.ClanScannerContext.ClanId;
+            profile.LastUpdated = DateTime.UtcNow;
             await _destinyDb.UpsertDestinyProfileAsync(profile);
             return false;
         }

@@ -162,12 +162,40 @@ public class DestinyClanScanner : EntityScannerBase<DestinyClanScannerInput, Des
         return true;
     }
 
-    [ScanStep(nameof(UpdateClanMembers), 5)]
+    [ScanStep(nameof(RemoveUsersThatAreNotInClanAnymore), 5)]
+    public async ValueTask<bool> RemoveUsersThatAreNotInClanAnymore(
+        DestinyClanScannerInput input,
+        DestinyClanScannerContext context,
+        CancellationToken cancellationToken)
+    {
+        var memberReferences = await _destinyDb.GetClanMemberReferencesAsync(input.ClanId);
+
+        foreach (var memberReference in memberReferences)
+        {
+            var foundMember = context.Members.FirstOrDefault(x => x.DestinyUserInfo.MembershipId == memberReference.MembershipId);
+            if (foundMember is null)
+            {              
+                await _destinyDb.DeleteDestinyProfileAsync(memberReference.MembershipId);
+            }
+        }
+
+        return true;
+    }
+
+    [ScanStep(nameof(UpdateClanMembers), 6)]
     public async ValueTask<bool> UpdateClanMembers(
         DestinyClanScannerInput input,
         DestinyClanScannerContext context,
         CancellationToken cancellationToken)
     {
+        if (context.DestinyClanDbModel.ShouldRescan is true)
+        {
+            context.MembersToScan = context.Members.ToList();
+            await _userQueue.EnqueueAndWaitForSilentUserScans(context, cancellationToken);
+            context.DestinyClanDbModel.ShouldRescan = false;
+            return true;
+        }
+
         if (!context.DestinyClanDbModel.LastScan.HasValue ||
             (DateTime.UtcNow - context.DestinyClanDbModel.LastScan.Value).TotalMinutes > 10)
         {
@@ -182,7 +210,7 @@ public class DestinyClanScanner : EntityScannerBase<DestinyClanScannerInput, Des
         return true;
     }
 
-    [ScanStep(nameof(UpdateClanData), 6)]
+    [ScanStep(nameof(UpdateClanData), 7)]
     public async ValueTask<bool> UpdateClanData(
         DestinyClanScannerInput input,
         DestinyClanScannerContext context,
@@ -197,7 +225,7 @@ public class DestinyClanScanner : EntityScannerBase<DestinyClanScannerInput, Des
         return true;
     }
 
-    [ScanStep(nameof(UpdateOrInsertClanDataInDb), 7, true)]
+    [ScanStep(nameof(UpdateOrInsertClanDataInDb), 8, true)]
     public async ValueTask<bool> UpdateOrInsertClanDataInDb(
        DestinyClanScannerInput input,
        DestinyClanScannerContext context,
@@ -206,6 +234,7 @@ public class DestinyClanScanner : EntityScannerBase<DestinyClanScannerInput, Des
         if (context.DestinyClanDbModel is null)
             return true;
 
+        context.DestinyClanDbModel.MembersOnline = context.MembersOnline;
         context.DestinyClanDbModel.LastScan = DateTime.UtcNow;
         await _destinyDb.UpsertClanModelAsync(context.DestinyClanDbModel);
         return true;

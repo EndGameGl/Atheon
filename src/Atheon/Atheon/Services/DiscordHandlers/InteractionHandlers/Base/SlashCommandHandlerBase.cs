@@ -5,6 +5,8 @@ namespace Atheon.Services.DiscordHandlers.InteractionHandlers.Base
 {
     public abstract class SlashCommandHandlerBase : InteractionModuleBase<ShardedInteractionContext<SocketSlashCommand>>
     {
+        protected ulong GuildId => Context.Guild.Id;
+
         private readonly ILogger _logger;
 
         public SlashCommandHandlerBase(ILogger logger)
