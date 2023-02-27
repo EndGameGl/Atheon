@@ -68,6 +68,7 @@ public class SqliteDbBootstrap : IDbBootstrap
         RegisterJsonHandler<HashSet<uint>>();
         RegisterJsonHandler<Dictionary<uint, DestinyRecordDbModel>>();
         RegisterJsonHandler<Dictionary<uint, DestinyProgressionDbModel>>();
+        RegisterJsonHandler<Dictionary<string, string>>();
     }
 
     public async Task InitialiseDb(CancellationToken cancellationToken = default)

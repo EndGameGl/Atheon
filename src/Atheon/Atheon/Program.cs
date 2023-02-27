@@ -9,9 +9,11 @@ using Atheon.Services.Interfaces;
 using Atheon.Services.Scanners.DestinyClanMemberScanner;
 using Atheon.Services.Scanners.DestinyClanScanner;
 using Atheon.Services.Scanners.ProfileUpdaters;
+using DotNetBungieAPI.HashReferences;
+using DotNetBungieAPI.Models.Destiny.Definitions.Collectibles;
 using Serilog;
 using Serilog.Exceptions;
-
+using System.Text.Json;
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
@@ -86,6 +88,7 @@ void ConfigureServices(WebApplicationBuilder applicationBuilder)
     applicationBuilder.Services.AddSingleton<IBungieClientProvider, BungieClientProvider>();
     applicationBuilder.Services.AddSingleton<BungieNetApiCallHandler>();
     applicationBuilder.Services.AddSingleton<BroadcastSaver>();
+    applicationBuilder.Services.AddSingleton<DestinyDefinitionDataService>();
 
     applicationBuilder.Services.AddSingleton<DestinyInitialClanScanner>();
     applicationBuilder.Services.AddSingleton<DestinyClanScanner>();
