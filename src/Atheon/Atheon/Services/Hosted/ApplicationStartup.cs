@@ -1,5 +1,6 @@
 ﻿using Atheon.Extensions;
 using Atheon.Services.Interfaces;
+using Discord;
 
 namespace Atheon.Services.Hosted
 {
@@ -61,15 +62,54 @@ namespace Atheon.Services.Hosted
 
             await RunInitialWarnings();
 
-            var client = await _bungieClientProvider.GetClientAsync();
 
-            await client.DefinitionProvider.Initialize();
+            var client = await TryExecuteValue(async () => await _bungieClientProvider.GetClientAsync());
 
-            await _discordClientProvider.ConnectAsync();
+            await TryExecute(async () =>
+            {
+                if (client is null)
+                    return;
+                await client.DefinitionProvider.Initialize();
+            });
+            await TryExecute(async () =>
+            {
+                await _discordClientProvider.ConnectAsync();
+            });
 
-            await _dbDataValidator.ValidateDbData();
+            await TryExecute(async () =>
+            {
+                await _dbDataValidator.ValidateDbData();
+            });
 
-            _discordEventHandler.SubscribeToEvents();
+            await TryExecute(async () =>
+            {
+                _discordEventHandler.SubscribeToEvents();
+            });
+        }
+
+        private async Task TryExecute(Func<Task> taskToExecute)
+        {
+            try
+            {
+                await taskToExecute();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to run task on startup");
+            }
+        }
+
+        private async Task<T?> TryExecuteValue<T>(Func<Task<T>> taskToExecute)
+        {
+            try
+            {
+                return await taskToExecute();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to run task on startup");
+                return default;
+            }
         }
     }
 }
