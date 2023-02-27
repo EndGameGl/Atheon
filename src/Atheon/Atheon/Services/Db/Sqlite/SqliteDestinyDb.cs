@@ -3,6 +3,7 @@ using Atheon.Models.Database.Destiny.Broadcasts;
 using Atheon.Models.Database.Destiny.Clans;
 using Atheon.Models.Database.Destiny.Guilds;
 using Atheon.Models.Database.Destiny.Profiles;
+using Atheon.Models.Database.Destiny.Tracking;
 using Atheon.Services.Interfaces;
 
 namespace Atheon.Services.Db.Sqlite
@@ -419,6 +420,70 @@ namespace Atheon.Services.Db.Sqlite
                 return await _dbAccess.QueryAsync<DestinyProfileLite>(GetProfilesRecordStatusCompletedQuery, new { RecordHash = recordHash });
             }
             return await _dbAccess.QueryAsync<DestinyProfileLite>(GetProfilesRecordStatusNotCompletedQuery, new { RecordHash = recordHash });
+        }
+
+        private const string UpsertCuratedRecordDefinitionQuery =
+            $"""
+            INSERT INTO CuratedRecords
+            (
+                {nameof(CuratedRecord.Hash)},
+                {nameof(CuratedRecord.IsEnabled)},
+                {nameof(CuratedRecord.OverrideName)}
+            )
+            VALUES 
+            (
+                @{nameof(CuratedRecord.Hash)},
+                @{nameof(CuratedRecord.IsEnabled)},
+                @{nameof(CuratedRecord.OverrideName)}
+            )
+            ON CONFLICT ({nameof(CuratedRecord.Hash)}) DO UPDATE SET 
+                {nameof(CuratedRecord.IsEnabled)} = @{nameof(CuratedRecord.IsEnabled)},
+                {nameof(CuratedRecord.OverrideName)} = @{nameof(CuratedRecord.OverrideName)}
+            """;
+        public async Task UpsertCuratedRecordDefinitionAsync(CuratedRecord curatedRecord)
+        {
+            await _dbAccess.ExecuteAsync(UpsertCuratedRecordDefinitionQuery, curatedRecord);
+        }
+
+        private const string UpsertCuratedCollectibleDefinitionQuery =
+            $"""
+            INSERT INTO CuratedCollectibles
+            (
+                {nameof(CuratedCollectible.Hash)},
+                {nameof(CuratedCollectible.IsEnabled)},
+                {nameof(CuratedCollectible.OverrideName)}
+            )
+            VALUES 
+            (
+                @{nameof(CuratedCollectible.Hash)},
+                @{nameof(CuratedCollectible.IsEnabled)},
+                @{nameof(CuratedCollectible.OverrideName)}
+            )
+            ON CONFLICT ({nameof(CuratedCollectible.Hash)}) DO UPDATE SET 
+                {nameof(CuratedCollectible.IsEnabled)} = @{nameof(CuratedCollectible.IsEnabled)},
+                {nameof(CuratedCollectible.OverrideName)} = @{nameof(CuratedCollectible.OverrideName)}
+            """;
+        public async Task UpsertCuratedCollectibleDefinitionAsync(CuratedCollectible curatedCollectible)
+        {
+            await _dbAccess.ExecuteAsync(UpsertCuratedCollectibleDefinitionQuery, curatedCollectible);
+        }
+
+        private const string GetCuratedRecordsQuery =
+            $"""
+            SELECT * FROM CuratedRecords;
+            """;
+        public async Task<List<CuratedRecord>> GetCuratedRecordsAsync()
+        {
+            return await _dbAccess.QueryAsync<CuratedRecord>(GetCuratedRecordsQuery);
+        }
+
+        private const string GetCuratedCollectiblesQuery =
+            $"""
+            SELECT * FROM CuratedCollectibles;
+            """;
+        public async Task<List<CuratedCollectible>> GetCuratedCollectiblesAsync()
+        {
+            return await _dbAccess.QueryAsync<CuratedCollectible>(GetCuratedCollectiblesQuery);
         }
     }
 }

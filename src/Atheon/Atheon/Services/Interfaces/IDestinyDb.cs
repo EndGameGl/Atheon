@@ -3,6 +3,7 @@ using Atheon.Models.Database.Destiny.Broadcasts;
 using Atheon.Models.Database.Destiny.Clans;
 using Atheon.Models.Database.Destiny.Guilds;
 using Atheon.Models.Database.Destiny.Profiles;
+using Atheon.Models.Database.Destiny.Tracking;
 
 namespace Atheon.Services.Interfaces;
 
@@ -33,4 +34,10 @@ public interface IDestinyDb
 
     Task MarkClanBroadcastSentAsync(ClanBroadcastDbModel clanBroadcast);
     Task MarkUserBroadcastSentAsync(DestinyUserProfileBroadcastDbModel profileBroadcast);
+
+    Task UpsertCuratedRecordDefinitionAsync(CuratedRecord curatedRecord);
+    Task UpsertCuratedCollectibleDefinitionAsync(CuratedCollectible curatedCollectible);
+
+    Task<List<CuratedRecord>> GetCuratedRecordsAsync();
+    Task<List<CuratedCollectible>> GetCuratedCollectiblesAsync();
 }

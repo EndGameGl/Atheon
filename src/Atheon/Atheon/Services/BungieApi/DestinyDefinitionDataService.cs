@@ -6,6 +6,7 @@ using DotNetBungieAPI.Extensions;
 using DotNetBungieAPI.HashReferences;
 using IMemoryCache = Atheon.Services.Interfaces.IMemoryCache;
 using Atheon.Services.Caching;
+using Atheon.Models.Database.Destiny.Tracking;
 
 namespace Atheon.Services.BungieApi;
 
@@ -13,13 +14,40 @@ public class DestinyDefinitionDataService
 {
     private readonly IBungieClientProvider _bungieClientProvider;
     private readonly IMemoryCache _memoryCache;
+    private readonly IDestinyDb _destinyDb;
 
     public DestinyDefinitionDataService(
         IBungieClientProvider bungieClientProvider,
-        IMemoryCache memoryCache)
+        IMemoryCache memoryCache,
+        IDestinyDb destinyDb)
     {
         _bungieClientProvider = bungieClientProvider;
         _memoryCache = memoryCache;
+        _destinyDb = destinyDb;
+    }
+
+    public async Task<List<CuratedCollectible>?> GetCuratedCollectiblesCachedAsync()
+    {
+        return await _memoryCache.GetOrAddAsync(
+            $"{nameof(GetCuratedCollectiblesCachedAsync)}",
+            async () =>
+            {
+                return await _destinyDb.GetCuratedCollectiblesAsync();
+            },
+            TimeSpan.FromSeconds(30),
+            CacheExpirationType.Absolute);
+    }
+
+    public async Task<List<CuratedRecord>?> GetCuratedRecordsCachedAsync()
+    {
+        return await _memoryCache.GetOrAddAsync(
+            $"{nameof(GetCuratedRecordsCachedAsync)}",
+            async () =>
+            {
+                return await _destinyDb.GetCuratedRecordsAsync();
+            },
+            TimeSpan.FromSeconds(30),
+            CacheExpirationType.Absolute);
     }
 
     public async Task<List<(uint TitleRecordHash, uint? TitleGildRecordHash)>?> GetTitleHashesCachedAsync()

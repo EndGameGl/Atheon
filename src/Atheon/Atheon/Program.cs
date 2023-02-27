@@ -89,6 +89,7 @@ void ConfigureServices(WebApplicationBuilder applicationBuilder)
     applicationBuilder.Services.AddSingleton<BungieNetApiCallHandler>();
     applicationBuilder.Services.AddSingleton<BroadcastSaver>();
     applicationBuilder.Services.AddSingleton<DestinyDefinitionDataService>();
+    applicationBuilder.Services.AddSingleton<CuratedDefinitionInitialiser>();
 
     applicationBuilder.Services.AddSingleton<DestinyInitialClanScanner>();
     applicationBuilder.Services.AddSingleton<DestinyClanScanner>();

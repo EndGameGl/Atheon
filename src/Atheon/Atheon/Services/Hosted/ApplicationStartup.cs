@@ -13,6 +13,7 @@ namespace Atheon.Services.Hosted
         private readonly ILogger<ApplicationStartup> _logger;
         private readonly IDiscordEventHandler _discordEventHandler;
         private readonly IDbDataValidator _dbDataValidator;
+        private readonly CuratedDefinitionInitialiser _curatedDefinitionInitialiser;
 
         public ApplicationStartup(
             IDiscordClientProvider discordClientProvider,
@@ -21,7 +22,8 @@ namespace Atheon.Services.Hosted
             IBungieClientProvider bungieClientProvider,
             ILogger<ApplicationStartup> logger,
             IDiscordEventHandler discordEventHandler,
-            IDbDataValidator dbDataValidator)
+            IDbDataValidator dbDataValidator,
+            CuratedDefinitionInitialiser curatedDefinitionInitialiser)
         {
             _discordClientProvider = discordClientProvider;
             _dbBootstrap = dbBootstrap;
@@ -30,6 +32,7 @@ namespace Atheon.Services.Hosted
             _logger = logger;
             _discordEventHandler = discordEventHandler;
             _dbDataValidator = dbDataValidator;
+            _curatedDefinitionInitialiser = curatedDefinitionInitialiser;
         }
 
         private async Task RunInitialWarnings()
@@ -79,6 +82,7 @@ namespace Atheon.Services.Hosted
             await TryExecute(async () =>
             {
                 await _dbDataValidator.ValidateDbData();
+                await _curatedDefinitionInitialiser.Initialise();
             });
 
             await TryExecute(async () =>
