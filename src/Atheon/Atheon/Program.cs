@@ -102,6 +102,7 @@ void ConfigureServices(WebApplicationBuilder applicationBuilder)
 
     applicationBuilder.Services.AddHostedService<ApplicationStartup>();
 
+    applicationBuilder.Services.AddHostedServiceWithInterface<IBungieApiStatus, BungieLifecheckService>();
     applicationBuilder.Services.AddHostedServiceWithInterface<IUserQueue, UserQueueBackgroundProcessor>();
     applicationBuilder.Services.AddHostedServiceWithInterface<IClanQueue, ClanQueueBackgroundProcessor>();
     applicationBuilder.Services.AddHostedService<BroadcastBackgroundProcessor>();

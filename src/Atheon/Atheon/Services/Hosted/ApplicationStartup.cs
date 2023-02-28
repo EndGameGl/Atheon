@@ -73,6 +73,7 @@ namespace Atheon.Services.Hosted
                 if (client is null)
                     return;
                 await client.DefinitionProvider.Initialize();
+                await client.DefinitionProvider.ReadToRepository(client.Repository);
             });
             await TryExecute(async () =>
             {

@@ -57,8 +57,6 @@ public class BungieClientProvider : IBungieClientProvider
         _providerConfiguration = serviceProvider.GetRequiredService<SqliteDefinitionProviderConfiguration>();
 
         var client = serviceProvider.GetRequiredService<IBungieClient>();
-        await client.DefinitionProvider.Initialize();
-        await client.DefinitionProvider.ReadToRepository(client.Repository);
 
         IsReady = true;
 

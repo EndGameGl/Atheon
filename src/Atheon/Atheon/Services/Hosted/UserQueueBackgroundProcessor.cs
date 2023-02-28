@@ -12,6 +12,7 @@ public class UserQueueBackgroundProcessor : PeriodicBackgroundService, IUserQueu
     private readonly ILogger<UserQueueBackgroundProcessor> _logger;
     private readonly DestinyClanMemberBroadcastedScanner _memberScanner;
     private readonly DestinyClanMemberSilentScanner _silentMemberScanner;
+    private readonly IBungieApiStatus _bungieApiStatus;
     private readonly ConcurrentDictionary<long, ClanScanProgress> _scannedClans;
     private readonly ConcurrentQueue<ClanMemberScanEntry> _queue;
 
@@ -25,11 +26,13 @@ public class UserQueueBackgroundProcessor : PeriodicBackgroundService, IUserQueu
     public UserQueueBackgroundProcessor(
         ILogger<UserQueueBackgroundProcessor> logger,
         DestinyClanMemberBroadcastedScanner memberScanner,
-        DestinyClanMemberSilentScanner silentMemberScanner) : base(logger)
+        DestinyClanMemberSilentScanner silentMemberScanner,
+        IBungieApiStatus bungieApiStatus) : base(logger)
     {
         _logger = logger;
         _memberScanner = memberScanner;
         _silentMemberScanner = silentMemberScanner;
+        _bungieApiStatus = bungieApiStatus;
         _scannedClans = new ConcurrentDictionary<long, ClanScanProgress>();
         _queue = new ConcurrentQueue<ClanMemberScanEntry>();
         _ongoingScans = new ConcurrentDictionary<long, OngoingScan>();
@@ -47,6 +50,8 @@ public class UserQueueBackgroundProcessor : PeriodicBackgroundService, IUserQueu
         {
             ClearFinishedUserScans();
             ClearOutFinishedClans();
+            if (!_bungieApiStatus.IsLive)
+                return;
             StartNewScans();
         }
         catch (Exception exception)
