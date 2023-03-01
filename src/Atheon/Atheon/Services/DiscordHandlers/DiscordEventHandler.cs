@@ -1,4 +1,6 @@
 ﻿using Atheon.Models.Database.Destiny;
+using Atheon.Models.Destiny;
+using Atheon.Services.DiscordHandlers.TypeConverters;
 using Atheon.Services.Interfaces;
 using Discord.Interactions;
 using Discord.WebSocket;
@@ -32,10 +34,11 @@ public class DiscordEventHandler : IDiscordEventHandler
     {
         try
         {
+            _interactionService.AddTypeConverter<DestinyProfilePointer>(new DestinyProfilePointerTypeConverter());
             // This does some magic and finds all references of [SlashCommand("name", "description")] in the project and links them to the interaction service.
             await _interactionService.AddModulesAsync(Assembly.GetEntryAssembly(), _serviceProvider);
 
-            await _interactionService.RegisterCommandsGloballyAsync();
+            await _interactionService.RegisterCommandsGloballyAsync(deleteMissing: true);
         }
         catch (Exception ex)
         {

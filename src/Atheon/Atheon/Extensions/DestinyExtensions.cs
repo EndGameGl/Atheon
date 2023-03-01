@@ -112,4 +112,17 @@ public static class DestinyExtensions
 
         return (DateTime.UtcNow - clanMember.LastOnlineStatusChange.UnixTimeStampToDateTime()).TotalMinutes <= 15;
     }
+
+    public static string ToFriendlyType(this BungieMembershipType bungieMembershipType)
+    {
+        return bungieMembershipType switch
+        {
+            BungieMembershipType.TigerXbox => "Xbox",
+            BungieMembershipType.TigerPsn => "Playstation",
+            BungieMembershipType.TigerEgs => "Epic Games",
+            BungieMembershipType.TigerStadia => "Stadia",
+            BungieMembershipType.TigerSteam => "Steam",
+            _ => $"Unknown {(int)bungieMembershipType}"
+        };
+    }
 }

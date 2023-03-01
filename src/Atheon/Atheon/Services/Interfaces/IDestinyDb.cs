@@ -2,6 +2,7 @@
 using Atheon.Models.Database.Destiny.Broadcasts;
 using Atheon.Models.Database.Destiny.Clans;
 using Atheon.Models.Database.Destiny.Guilds;
+using Atheon.Models.Database.Destiny.Links;
 using Atheon.Models.Database.Destiny.Profiles;
 using Atheon.Models.Database.Destiny.Tracking;
 
@@ -15,6 +16,7 @@ public interface IDestinyDb
     Task UpsertGuildSettingsAsync(DiscordGuildSettingsDbModel guildSettings);
     Task DeleteGuildSettingsAsync(ulong guildId);
     Task<List<DiscordGuildSettingsDbModel>> GetAllGuildSettingsForClanAsync(long clanId);
+    Task<List<ClanReference>> GetClanReferencesFromGuildAsync(ulong guildId);
 
     Task<List<long>> GetClanIdsAsync(bool isTracking, DateTime oldenThan);
     Task<DestinyClanDbModel?> GetClanModelAsync(long clanId);
@@ -40,4 +42,7 @@ public interface IDestinyDb
 
     Task<List<CuratedRecord>> GetCuratedRecordsAsync();
     Task<List<CuratedCollectible>> GetCuratedCollectiblesAsync();
+
+    Task UpsertProfileLinkAsync(DiscordToDestinyProfileLink link);
+    Task RemoveProfileLinkAsync(ulong discordUserId);
 }

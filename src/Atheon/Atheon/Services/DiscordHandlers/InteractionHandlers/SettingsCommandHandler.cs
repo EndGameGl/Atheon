@@ -1,7 +1,10 @@
-﻿using Atheon.Services.DiscordHandlers.Autocompleters;
+﻿using Atheon.Models.Database.Destiny.Links;
+using Atheon.Models.Destiny;
+using Atheon.Services.DiscordHandlers.Autocompleters;
 using Atheon.Services.DiscordHandlers.EmbedBuilders;
 using Atheon.Services.DiscordHandlers.InteractionHandlers.Base;
 using Atheon.Services.Interfaces;
+using Discord;
 using Discord.Interactions;
 
 namespace Atheon.Services.DiscordHandlers.InteractionHandlers;
@@ -9,24 +12,21 @@ namespace Atheon.Services.DiscordHandlers.InteractionHandlers;
 [Group("settings", "Group of commands related to guild settings")]
 public class SettingsCommandHandler : SlashCommandHandlerBase
 {
-    private readonly IBungieClientProvider _bungieClientProvider;
     private readonly IDestinyDb _destinyDb;
     private readonly IClanQueue _clanQueue;
 
     public SettingsCommandHandler(
         ILogger<SettingsCommandHandler> logger,
-        IBungieClientProvider bungieClientProvider,
         IDestinyDb destinyDb,
         IClanQueue clanQueue) : base(logger)
     {
-        _bungieClientProvider = bungieClientProvider;
         _destinyDb = destinyDb;
         _clanQueue = clanQueue;
     }
 
-    [SlashCommand("clan", "Adds new clan to guild")]
+    [SlashCommand("clan-add", "Adds new clan to guild")]
     public async Task AddClanToGuildAsync(
-        [Autocomplete(typeof(DestinyClanByIdAutocompleter)), Summary("")] long clanId)
+        [Autocomplete(typeof(DestinyClanByIdAutocompleter)), Summary("Clan")] long clanId)
     {
         var settings = await _destinyDb.GetGuildSettingsAsync(GuildId);
 
@@ -57,5 +57,45 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
                 Discord.Color.Green,
                 "New clan will be ready when scan message pops up").Build());
         return;
+    }
+
+    [SlashCommand("clan-remove", "Removes selected clan from guild")]
+    public async Task RemoveClanFromGuildAsync(
+        [Autocomplete(typeof(DestinyClanFromGuildAutocompleter)), Summary("Clan")] long clanIdToRemove)
+    {
+        var guildSettings = await _destinyDb.GetGuildSettingsAsync(Context.Guild.Id);
+        if (guildSettings is null)
+            return;
+
+        guildSettings.Clans.Remove(clanIdToRemove);
+        var clanModel = await _destinyDb.GetClanModelAsync(clanIdToRemove);
+        if (clanModel is null) 
+            return;
+
+        clanModel.IsTracking = false;
+
+        await _destinyDb.UpsertClanModelAsync(clanModel);
+        await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
+
+        await Context.Interaction.RespondAsync(embed: Embeds.GetGenericEmbed($"Removed clan {clanIdToRemove}", Color.Green, "Success").Build());
+    }
+
+    [SlashCommand("link-user", "Links discord user to destiny profile")]
+    public async Task LinkUserAsync(
+        [Autocomplete(typeof(SearchDestinyUserByNameAutocompleter))][Summary("User")] DestinyProfilePointer user,
+        [Summary("link-to", "User to link to")] IUser? linkTo = null)
+    {
+        var userToLinkTo = linkTo is null ? Context.User : linkTo;
+
+        var link = new DiscordToDestinyProfileLink()
+        {
+            DiscordUserId = userToLinkTo.Id,
+            DestinyMembershipId = user.MembershipId,
+            BungieMembershipType = user.MembershipType
+        };
+
+        await _destinyDb.UpsertProfileLinkAsync(link);
+
+        await Context.Interaction.RespondAsync(embed: Embeds.GetGenericEmbed("User updated", Color.Green, $"{userToLinkTo.Mention} is now linked to {user.MembershipId}").Build());
     }
 }
