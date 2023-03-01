@@ -68,8 +68,8 @@ public class DestinyDefinitionDataService
 
         var hashes = new List<(uint TitleRecordHash, uint? TitleGildRecordHash)>();
 
-        AddTitleRecordHashesFromPresentationNode(client, hashes, DefinitionHashes.PresentationNodes.LegacySeals);
-        AddTitleRecordHashesFromPresentationNode(client, hashes, DefinitionHashes.PresentationNodes.Seals);
+        AddTitleRecordHashesFromPresentationNode(client, hashes, DefinitionHashes.PresentationNodes.LegacyTitles);
+        AddTitleRecordHashesFromPresentationNode(client, hashes, DefinitionHashes.PresentationNodes.Titles);
 
         if (hashes.Count > 0)
         {
