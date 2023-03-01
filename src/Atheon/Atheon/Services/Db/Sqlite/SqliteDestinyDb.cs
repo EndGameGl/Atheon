@@ -1,4 +1,5 @@
-﻿using Atheon.Models.Database.Destiny;
+﻿using Atheon.Models.Database.Administration;
+using Atheon.Models.Database.Destiny;
 using Atheon.Models.Database.Destiny.Broadcasts;
 using Atheon.Models.Database.Destiny.Clans;
 using Atheon.Models.Database.Destiny.Guilds;
@@ -533,5 +534,56 @@ public class SqliteDestinyDb : IDestinyDb
     public async Task<List<ClanReference>> GetClanReferencesFromGuildAsync(ulong guildId)
     {
         return await _dbAccess.QueryAsync<ClanReference>(GetClanReferencesFromGuildQuery, new { GuildId = guildId });
+    }
+
+    private const string AddServerAdministratorQuery =
+        $"""
+        INSERT INTO ServerBotAdministrators
+        (
+            {nameof(ServerBotAdministrator.DiscordGuildId)},
+            {nameof(ServerBotAdministrator.DiscordUserId)}
+        )
+        VALUES 
+        (
+            @{nameof(ServerBotAdministrator.DiscordGuildId)},
+            @{nameof(ServerBotAdministrator.DiscordUserId)}
+        )
+        ON CONFLICT (DiscordGuildId, DiscordUserId) DO NOTHING
+        """;
+    public async Task AddServerAdministratorAsync(ServerBotAdministrator serverBotAdministrator)
+    {
+        await _dbAccess.ExecuteAsync(AddServerAdministratorQuery, serverBotAdministrator);
+    }
+
+    private const string RemoveServerAdministratorQuery =
+        $"""
+        DELETE FROM ServerBotAdministrators
+        WHERE 
+            {nameof(ServerBotAdministrator.DiscordGuildId)} = @{nameof(ServerBotAdministrator.DiscordGuildId)} AND
+            {nameof(ServerBotAdministrator.DiscordUserId)} = @{nameof(ServerBotAdministrator.DiscordUserId)}
+        """;
+    public async Task RemoveServerAdministratorAsync(ServerBotAdministrator serverBotAdministrator)
+    {
+        await _dbAccess.ExecuteAsync(RemoveServerAdministratorQuery, serverBotAdministrator);
+    }
+
+    private const string IsServerAdministratorQuery =
+        $"""
+        SELECT 1 FROM ServerBotAdministrators
+        WHERE 
+            {nameof(ServerBotAdministrator.DiscordGuildId)} = @{nameof(ServerBotAdministrator.DiscordGuildId)} AND
+            {nameof(ServerBotAdministrator.DiscordUserId)} = @{nameof(ServerBotAdministrator.DiscordUserId)}
+        """;
+    public async Task<bool> IsServerAdministratorAsync(ulong guildId, ulong userId)
+    {
+        var result = await _dbAccess.QueryFirstOrDefaultAsync<bool?>(IsServerAdministratorQuery,
+            new
+            {
+                DiscordGuildId = guildId,
+                DiscordUserId = userId
+            });
+        if (!result.HasValue)
+            return false;
+        return result.Value;
     }
 }

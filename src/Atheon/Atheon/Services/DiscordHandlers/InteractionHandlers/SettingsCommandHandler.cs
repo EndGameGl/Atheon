@@ -1,8 +1,10 @@
-﻿using Atheon.Models.Database.Destiny.Links;
+﻿using Atheon.Models.Database.Administration;
+using Atheon.Models.Database.Destiny.Links;
 using Atheon.Models.Destiny;
 using Atheon.Services.DiscordHandlers.Autocompleters;
 using Atheon.Services.DiscordHandlers.EmbedBuilders;
 using Atheon.Services.DiscordHandlers.InteractionHandlers.Base;
+using Atheon.Services.DiscordHandlers.Preconditions;
 using Atheon.Services.Interfaces;
 using Discord;
 using Discord.Interactions;
@@ -24,6 +26,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
         _clanQueue = clanQueue;
     }
 
+    [AtheonBotAdminOrOwner]
     [SlashCommand("clan-add", "Adds new clan to guild")]
     public async Task AddClanToGuildAsync(
         [Autocomplete(typeof(DestinyClanByIdAutocompleter)), Summary("Clan")] long clanId)
@@ -59,6 +62,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
         return;
     }
 
+    [AtheonBotAdminOrOwner]
     [SlashCommand("clan-remove", "Removes selected clan from guild")]
     public async Task RemoveClanFromGuildAsync(
         [Autocomplete(typeof(DestinyClanFromGuildAutocompleter)), Summary("Clan")] long clanIdToRemove)
@@ -69,7 +73,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
 
         guildSettings.Clans.Remove(clanIdToRemove);
         var clanModel = await _destinyDb.GetClanModelAsync(clanIdToRemove);
-        if (clanModel is null) 
+        if (clanModel is null)
             return;
 
         clanModel.IsTracking = false;
@@ -80,6 +84,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
         await Context.Interaction.RespondAsync(embed: Embeds.GetGenericEmbed($"Removed clan {clanIdToRemove}", Color.Green, "Success").Build());
     }
 
+    [AtheonBotAdminOrOwner]
     [SlashCommand("link-user", "Links discord user to destiny profile")]
     public async Task LinkUserAsync(
         [Autocomplete(typeof(SearchDestinyUserByNameAutocompleter))][Summary("User")] DestinyProfilePointer user,
@@ -96,6 +101,46 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
 
         await _destinyDb.UpsertProfileLinkAsync(link);
 
-        await Context.Interaction.RespondAsync(embed: Embeds.GetGenericEmbed("User updated", Color.Green, $"{userToLinkTo.Mention} is now linked to {user.MembershipId}").Build());
+        await Context.Interaction.RespondAsync(embed: 
+            Embeds.GetGenericEmbed(
+                "User updated", 
+                Color.Green, 
+                $"{userToLinkTo.Mention} is now linked to {user.MembershipId}").Build());
+    }
+
+    [RequireOwner]
+    [SlashCommand("admin-add", "Links discord user to destiny profile")]
+    public async Task AddServerAdminAsync(
+        [Summary("user", "New server admin")] IUser user)
+    {
+        await _destinyDb.AddServerAdministratorAsync(new ServerBotAdministrator()
+        {
+            DiscordGuildId = Context.Guild.Id,
+            DiscordUserId = user.Id
+        });
+
+        await Context.Interaction.RespondAsync(embed:
+            Embeds.GetGenericEmbed(
+                "Admin added",
+                Color.Green,
+                $"{user.Mention} is now bot admin").Build());
+    }
+
+    [RequireOwner]
+    [SlashCommand("admin-remove", "Links discord user to destiny profile")]
+    public async Task RemoveServerAdminAsync(
+        [Summary("user", "Server admin to remove")] IUser user)
+    {
+        await _destinyDb.RemoveServerAdministratorAsync(new ServerBotAdministrator()
+        {
+            DiscordGuildId = Context.Guild.Id,
+            DiscordUserId = user.Id
+        });
+
+        await Context.Interaction.RespondAsync(embed:
+            Embeds.GetGenericEmbed(
+                "Admin removed",
+                Color.Green,
+                $"{user.Mention} is not bot admin anymore").Build());
     }
 }
