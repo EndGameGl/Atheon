@@ -36,7 +36,7 @@ public class SqliteDbAccess : IDbAccess
         try
         {
             using var connection = _dbConnectionFactory.GetDbConnection();
-            var result = await connection.QueryAsync<T>(new CommandDefinition(query, parameters: parameters, cancellationToken: cancellationToken));
+           var result = await connection.QueryAsync<T>(new CommandDefinition(query, parameters: parameters, cancellationToken: cancellationToken));
             return (result as List<T>)!;
         }
         catch (Exception ex)

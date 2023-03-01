@@ -1,16 +1,16 @@
 ﻿using Atheon.Models.Collections;
 using Atheon.Services.Interfaces;
 
-namespace Atheon.Services.Db.Sqlite;
+namespace Atheon.Services;
 
-public class SqliteClansToScanProvider : IClansToScanProvider
+public class ClansToScanProvider : IClansToScanProvider
 {
     private readonly IDestinyDb _destinyDb;
 
     private UniqueConcurrentQueue<long> _clanIds;
     private List<long> EmptyList;
 
-    public SqliteClansToScanProvider(
+    public ClansToScanProvider(
         IDestinyDb destinyDb)
     {
         _destinyDb = destinyDb;

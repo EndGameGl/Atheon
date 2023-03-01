@@ -78,7 +78,7 @@ void ConfigureServices(WebApplicationBuilder applicationBuilder)
                 applicationBuilder.Services.AddSingleton<ISettingsStorage, SqliteSettingsStorage>();
                 applicationBuilder.Services.AddSingleton<IDbAccess, SqliteDbAccess>();
                 applicationBuilder.Services.AddSingleton<IDbDataValidator, SqliteDbDataValidator>();
-                applicationBuilder.Services.AddSingleton<IClansToScanProvider, SqliteClansToScanProvider>();
+                applicationBuilder.Services.AddSingleton<IClansToScanProvider, ClansToScanProvider>();
 
                 applicationBuilder.Services.AddSingleton<IDestinyDb, SqliteDestinyDb>();
                 break;

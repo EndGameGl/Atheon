@@ -31,30 +31,49 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
     {
         var itemHash = uint.Parse(collectibleHash);
         var users = await _destinyDb.GetProfilesCollectibleStatusAsync(itemHash, hasItem);
+        var clanIds = users.Select(x => x.ClanId).Distinct().ToArray();
+        var clanReferences = await _destinyDb.GetClanReferencesFromIdsAsync(clanIds);
 
         var bungieClient = await _bungieClientProvider.GetClientAsync();
 
         bungieClient.TryGetDefinition<DestinyCollectibleDefinition>(itemHash, DotNetBungieAPI.Models.BungieLocales.EN, out var colDef);
 
-        var sb = new StringBuilder();
-        foreach (var user in users)
+        var embedBuilder = EmbedBuilders
+            .Embeds
+            .GetTemplateEmbed()
+            .WithTitle($"{users.Count} users {(hasItem ? "have" : "miss")} {colDef.DisplayProperties.Name}")
+            .WithColor(Color.Green);
+
+        for (int j = 0; j < clanReferences.Count; j++)
         {
-            var userDisplayString = $"> {user.Name}\n";
-            if ((sb.Length + userDisplayString.Length) <= 2048)
+            var reference = clanReferences[j];
+            var sb = new StringBuilder();
+            sb.Append("```");
+            var usersOfClan = users.Where(x => x.ClanId == reference.Id).ToList();
+
+            for (int i = 0; i < usersOfClan.Count; i++)
             {
-                sb.Append(userDisplayString);
+                var user = usersOfClan[i];
+                if (user.Name is "#")
+                    continue;
+                var userDisplayString = $"{user.Name}\n";
+                if ((sb.Length + userDisplayString.Length) <= 1005)
+                {
+                    sb.Append(userDisplayString);
+                }
+                else
+                {
+                    var left = usersOfClan.Count - i + 1;
+                    sb.Append($"And {left} more...");
+                    break;
+                }
             }
-            else
-            {
-                break;
-            }
+            sb.Append("```");
+            embedBuilder.AddField(reference.Name, sb.ToString(), j % 2 == 0);
         }
 
         await Context.Interaction.RespondAsync(
-            embed: EmbedBuilders.Embeds.GetGenericEmbed(
-                    $"{users.Count} users {(hasItem ? "have" : "miss")} {colDef.DisplayProperties.Name}",
-                    Color.Green,
-                    description: sb.ToString())
+            embed: embedBuilder
                 .WithThumbnailUrl(colDef.DisplayProperties.Icon.AbsolutePath)
                 .Build(),
             ephemeral: true);
@@ -73,15 +92,18 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
         bungieClient.TryGetDefinition<DestinyRecordDefinition>(itemHash, DotNetBungieAPI.Models.BungieLocales.EN, out var recordDef);
 
         var sb = new StringBuilder();
-        foreach (var user in users)
+        for (int i = 0; i < users.Count; i++)
         {
+            var user = users[i];
             var userDisplayString = $"> {user.Name}\n";
-            if ((sb.Length + userDisplayString.Length) <= 2048)
+            if ((sb.Length + userDisplayString.Length) <= 2032)
             {
                 sb.Append(userDisplayString);
             }
             else
             {
+                var left = users.Count - i + 1;
+                sb.Append($"And {left} more...");
                 break;
             }
         }

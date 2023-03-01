@@ -251,19 +251,21 @@ public class SqliteDestinyDb : IDestinyDb
     private const string GetProfilesWithCollectibleQuery =
         $"""
         SELECT 
-                MembershipId,
-                Name
-            FROM DestinyProfiles
+            MembershipId,
+            Name,
+            ClanId
+        FROM DestinyProfiles
         WHERE EXISTS (SELECT 1 FROM json_each(Collectibles) WHERE value = @CollectibleHash)
         """;
 
     private const string GetProfilesWithoutCollectibleQuery =
         $"""
         SELECT 
-                MembershipId,
-                Name
-            FROM DestinyProfiles
-            WHERE NOT EXISTS (SELECT 1 FROM json_each(Collectibles) WHERE value = @CollectibleHash)
+            MembershipId,
+            Name,
+            ClanId
+        FROM DestinyProfiles
+        WHERE NOT EXISTS (SELECT 1 FROM json_each(Collectibles) WHERE value = @CollectibleHash)
         """;
     public async Task<List<DestinyProfileLite>> GetProfilesCollectibleStatusAsync(uint collectibleHash, bool hasItem)
     {
@@ -400,21 +402,23 @@ public class SqliteDestinyDb : IDestinyDb
 
     private const string GetProfilesRecordStatusCompletedQuery =
         """
-            SELECT 
-            	MembershipId,
-            	Name
-            FROM DestinyProfiles
-            WHERE EXISTS (SELECT 1 FROM json_each(Records) WHERE CAST(key as INTEGER) = @RecordHash AND json_extract(value, '$.state') NOT IN (4))
-            """;
+        SELECT 
+            MembershipId,
+            Name,
+            ClanId
+        FROM DestinyProfiles
+        WHERE EXISTS (SELECT 1 FROM json_each(Records) WHERE CAST(key as INTEGER) = @RecordHash AND json_extract(value, '$.state') NOT IN (4))
+        """;
 
     private const string GetProfilesRecordStatusNotCompletedQuery =
         """
-            SELECT 
-            	MembershipId,
-            	Name
-            FROM DestinyProfiles
-            WHERE EXISTS (SELECT 1 FROM json_each(Records) WHERE CAST(key as INTEGER) = @RecordHash AND json_extract(value, '$.state') IN (4))
-            """;
+        SELECT 
+            MembershipId,
+            Name,
+            ClanId
+        FROM DestinyProfiles
+        WHERE EXISTS (SELECT 1 FROM json_each(Records) WHERE CAST(key as INTEGER) = @RecordHash AND json_extract(value, '$.state') IN (4))
+        """;
     public async Task<List<DestinyProfileLite>> GetProfilesRecordStatusAsync(uint recordHash, bool hasCompletedRecord)
     {
         if (hasCompletedRecord)
@@ -585,5 +589,18 @@ public class SqliteDestinyDb : IDestinyDb
         if (!result.HasValue)
             return false;
         return result.Value;
+    }
+
+    private const string GetClansFromIdsQuery =
+        """
+        SELECT 
+            ClanId as Id,
+            ClanName as Name
+        FROM Clans
+        WHERE ClanId IN @ClanIds;
+        """;
+    public async Task<List<ClanReference>> GetClanReferencesFromIdsAsync(long[] clanIds)
+    {
+        return await _dbAccess.QueryAsync<ClanReference>(GetClansFromIdsQuery, new { ClanIds = clanIds });
     }
 }
