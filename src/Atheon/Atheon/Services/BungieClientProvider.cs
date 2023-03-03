@@ -4,6 +4,7 @@ using DotNetBungieAPI;
 using DotNetBungieAPI.DefinitionProvider.Sqlite;
 using DotNetBungieAPI.Extensions;
 using DotNetBungieAPI.Models;
+using DotNetBungieAPI.Models.Destiny;
 using DotNetBungieAPI.Service.Abstractions;
 using Serilog;
 
@@ -48,6 +49,17 @@ public class BungieClientProvider : IBungieClientProvider
                 provider.ManifestFolderPath = manifestPath;
                 provider.DeleteOldManifestDataAfterUpdates = true;
                 provider.AutoUpdateManifestOnStartup = true;
+            });
+            config.DefinitionRepository.ConfigureDefaultRepository(repository =>
+            {
+                repository.IgnoreDefinitionType(DefinitionsEnum.DestinySackRewardItemListDefinition);
+                repository.IgnoreDefinitionType(DefinitionsEnum.DestinyTalentGridDefinition);
+                repository.IgnoreDefinitionType(DefinitionsEnum.DestinyTraitCategoryDefinition);
+                repository.IgnoreDefinitionType(DefinitionsEnum.DestinyAchievementDefinition);
+                repository.IgnoreDefinitionType(DefinitionsEnum.DestinyBondDefinition);
+                repository.IgnoreDefinitionType(DefinitionsEnum.DestinyUnlockDefinition);
+                repository.IgnoreDefinitionType(DefinitionsEnum.DestinyUnlockValueDefinition);
+                repository.IgnoreDefinitionType(DefinitionsEnum.DestinyRewardSourceDefinition);
             });
         });
 
