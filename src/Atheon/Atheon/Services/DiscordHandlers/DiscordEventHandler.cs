@@ -2,6 +2,7 @@
 using Atheon.Models.Destiny;
 using Atheon.Services.DiscordHandlers.TypeConverters;
 using Atheon.Services.Interfaces;
+using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using System.Diagnostics;
@@ -59,8 +60,9 @@ public class DiscordEventHandler : IDiscordEventHandler
 
         _interactionService = new InteractionService(_discordClient, new InteractionServiceConfig()
         {
-
         });
+
+        _discordClient.Log += OnDiscordLog;
 
         _discordClient.JoinedGuild += OnGuildJoin;
         _discordClient.LeftGuild += OnGuildLeft;
@@ -82,11 +84,11 @@ public class DiscordEventHandler : IDiscordEventHandler
         sw.Stop();
         if (!result.IsSuccess)
         {
-            _logger.LogError("[Discord] Failed to run command in {Time}ms due to {ErrorType}: {ErrorReason}", sw.ElapsedMilliseconds, result.Error, result.ErrorReason);
+            _logger.LogError("[Discord] Failed to run command in {Time} ms due to {ErrorType}: {ErrorReason}", sw.ElapsedMilliseconds, result.Error, result.ErrorReason);
         }
         else
         {
-            _logger.LogInformation("[Discord] Completed command in {Time}ms", sw.ElapsedMilliseconds);
+            _logger.LogInformation("[Discord] Completed command in {Time} ms", sw.ElapsedMilliseconds);
         }
     }
 
@@ -100,5 +102,30 @@ public class DiscordEventHandler : IDiscordEventHandler
     private async Task OnGuildLeft(SocketGuild socketGuild)
     {
         await _destinyDb.DeleteGuildSettingsAsync(socketGuild.Id);
+    }
+
+    private async Task OnDiscordLog(LogMessage logMessage)
+    {
+        switch (logMessage.Severity)
+        {
+            case LogSeverity.Critical:
+                _logger.LogCritical(logMessage.Exception, "[Discord] {Source}: {Message}", logMessage.Source, logMessage.Message);
+                break;
+            case LogSeverity.Error:
+                _logger.LogError(logMessage.Exception, "[Discord] {Source}: {Message}", logMessage.Source, logMessage.Message);
+                break;
+            case LogSeverity.Warning:
+                _logger.LogWarning("[Discord] {Source}: {Message}", logMessage.Source, logMessage.Message);
+                break;
+            case LogSeverity.Info:
+                _logger.LogInformation("[Discord] {Source}: {Message}", logMessage.Source, logMessage.Message);
+                break;
+            case LogSeverity.Verbose:
+                _logger.LogDebug("[Discord] {Source}: {Message}", logMessage.Source, logMessage.Message);
+                break;
+            case LogSeverity.Debug:
+                _logger.LogDebug("[Discord] {Source}: {Message}", logMessage.Source, logMessage.Message);
+                break;
+        }
     }
 }
