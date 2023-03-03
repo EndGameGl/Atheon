@@ -9,6 +9,8 @@ using DotNetBungieAPI.Models.Destiny.Definitions.Records;
 using DotNetBungieAPI.Models;
 using DotNetBungieAPI.Service.Abstractions;
 using System.Text;
+using System.Drawing;
+using Atheon.Extensions;
 
 namespace Atheon.Services.DiscordHandlers;
 
@@ -25,9 +27,13 @@ public class EmbedBuilderService
 
         embedBuilder.WithCurrentTimestamp();
         embedBuilder.WithFooter("Atheon", "https://www.bungie.net/common/destiny2_content/icons/6d091410227eef82138a162df73065b9.png");
-        if (color is null)
+        if (!color.HasValue)
         {
             embedBuilder.WithColor(Color.Green);
+        }
+        else
+        {
+            embedBuilder.WithColor(color.Value);
         }
 
         return embedBuilder;
@@ -42,6 +48,19 @@ public class EmbedBuilderService
 
         return embedBuilder;
     }
+
+    public Embed CreateErrorEmbed(Exception exception)
+    {
+        var embedBuilder = GetTemplateEmbed(Color.Red);
+
+        embedBuilder.WithTitle("Failed to execute command");
+        var message = $"`{exception.Message}\n{exception.Source}`\n```{exception.StackTrace}```";
+        embedBuilder.WithDescription(message.Length > 4000 ? $"{message.LimitTo(3995)}\n..." : message);
+
+        return embedBuilder.Build();
+    }
+
+    #region Clan embeds
 
     public Embed CreateClanBroadcastEmbed(
             ClanBroadcastDbModel clanBroadcast,
@@ -105,6 +124,10 @@ public class EmbedBuilderService
                 """;
         eb.WithDescription(message);
     }
+
+    #endregion
+
+    #region User embeds
 
     public Embed BuildDestinyUserBroadcast(
             DestinyUserProfileBroadcastDbModel destinyUserBroadcast,
@@ -498,4 +521,5 @@ public class EmbedBuilderService
             }
         }
     }
+    #endregion
 }
