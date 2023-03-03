@@ -1,4 +1,5 @@
-﻿using Atheon.Services.Hosted.Utilities;
+﻿using Atheon.Services.BungieApi;
+using Atheon.Services.Hosted.Utilities;
 using Atheon.Services.Interfaces;
 using DotNetBungieAPI.Models.Common;
 
@@ -8,6 +9,7 @@ public class BungieLifecheckService : PeriodicBackgroundService, IBungieApiStatu
 {
     private readonly ILogger<BungieLifecheckService> _logger;
     private readonly IBungieClientProvider _bungieClientProvider;
+    private readonly BungieNetApiCallHandler _bungieNetApiCallHandler;
 
     public bool IsLive { get; private set; }
     public event Func<bool, Task>? StatusChanged;
@@ -17,10 +19,12 @@ public class BungieLifecheckService : PeriodicBackgroundService, IBungieApiStatu
 
     public BungieLifecheckService(
         ILogger<BungieLifecheckService> logger,
-        IBungieClientProvider bungieClientProvider) : base(logger)
+        IBungieClientProvider bungieClientProvider,
+        BungieNetApiCallHandler bungieNetApiCallHandler) : base(logger)
     {
         _logger = logger;
         _bungieClientProvider = bungieClientProvider;
+        _bungieNetApiCallHandler = bungieNetApiCallHandler;
     }
 
     protected override Task BeforeExecutionAsync(CancellationToken stoppingToken)
@@ -38,7 +42,7 @@ public class BungieLifecheckService : PeriodicBackgroundService, IBungieApiStatu
 
             var client = await _bungieClientProvider.GetClientAsync();
 
-            var settings = await client.ApiAccess.Misc.GetCommonSettings();
+            var settings = await _bungieNetApiCallHandler.PerformRequestAndLog(async (handler) => await client.ApiAccess.Misc.GetCommonSettings());
 
             if (!settings.IsSuccessfulResponseCode)
             {
