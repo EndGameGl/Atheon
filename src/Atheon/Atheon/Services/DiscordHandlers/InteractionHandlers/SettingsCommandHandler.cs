@@ -40,6 +40,9 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
             if (settings.Clans.Contains(clanId))
             {
                 var embedTemplate = _embedBuilderService.CreateSimpleResponseEmbed("Add new clan failed", "Clan is already added to this discord guild");
+                var existingGuildClan = await _destinyDb.GetClanModelAsync(clanId)!;
+                existingGuildClan.IsTracking = true;
+                await _destinyDb.UpsertClanModelAsync(existingGuildClan);
                 await Context.Interaction.RespondAsync(embed: embedTemplate.Build());
                 return;
             }
