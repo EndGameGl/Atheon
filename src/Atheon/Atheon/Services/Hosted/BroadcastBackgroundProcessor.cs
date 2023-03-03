@@ -1,7 +1,7 @@
 ﻿using Atheon.Models.Database.Destiny;
 using Atheon.Models.Database.Destiny.Broadcasts;
 using Atheon.Services.BungieApi;
-using Atheon.Services.DiscordHandlers.EmbedBuilders;
+using Atheon.Services.DiscordHandlers;
 using Atheon.Services.EventBus;
 using Atheon.Services.Hosted.Utilities;
 using Atheon.Services.Interfaces;
@@ -19,6 +19,7 @@ namespace Atheon.Services.Hosted
         private readonly IDiscordClientProvider _discordClientProvider;
         private readonly IDestinyDb _destinyDb;
         private readonly IBungieClientProvider _bungieClientProvider;
+        private readonly EmbedBuilderService _embedBuilderService;
         private ConcurrentQueue<ClanBroadcastDbModel> _clanBroadcasts = new();
         private ConcurrentQueue<DestinyUserProfileBroadcastDbModel> _userBroadcasts = new();
 
@@ -29,7 +30,8 @@ namespace Atheon.Services.Hosted
             IDiscordClientProvider discordClientProvider,
             IDestinyDb destinyDb,
             BroadcastSaver broadcastSaver,
-            IBungieClientProvider bungieClientProvider) : base(logger)
+            IBungieClientProvider bungieClientProvider,
+            EmbedBuilderService embedBuilderService) : base(logger)
         {
             _logger = logger;
             _clanBroadcastEventChannel = clanBroadcastEventChannel;
@@ -37,6 +39,7 @@ namespace Atheon.Services.Hosted
             _discordClientProvider = discordClientProvider;
             _destinyDb = destinyDb;
             _bungieClientProvider = bungieClientProvider;
+            _embedBuilderService = embedBuilderService;
         }
 
         protected override Task BeforeExecutionAsync(CancellationToken stoppingToken)
@@ -99,7 +102,7 @@ namespace Atheon.Services.Hosted
             if (clanModel is null)
                 return;
 
-            var clanEmbed = Embeds.Broadcasts.Clan(clanBroadcast, clanModel);
+            var clanEmbed = _embedBuilderService.CreateClanBroadcastEmbed(clanBroadcast, clanModel);
 
             var guild = client.GetGuild(clanBroadcast.GuildId);
             var channel = guild.GetTextChannel(settings.DefaultReportChannel.Value);
@@ -179,7 +182,7 @@ namespace Atheon.Services.Hosted
 
             if (channel is not null)
             {
-                var embed = Embeds.Broadcasts.BuildDestinyUserGroupedBroadcast(
+                var embed = _embedBuilderService.BuildDestinyUserGroupedBroadcast(
                     broadcasts,
                     broadcastType,
                     definitionHash,
@@ -247,7 +250,7 @@ namespace Atheon.Services.Hosted
             if (channel is not null)
             {
                 await channel.SendMessageAsync(
-                    embed: Embeds.Broadcasts.BuildDestinyUserBroadcast(
+                    embed: _embedBuilderService.BuildDestinyUserBroadcast(
                         destinyUserBroadcast,
                         clanData,
                         bungieClient,

@@ -14,14 +14,17 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
 {
     private readonly IDestinyDb _destinyDb;
     private readonly IBungieClientProvider _bungieClientProvider;
+    private readonly EmbedBuilderService _embedBuilderService;
 
     public ProfileDefinitionLookupCommandHandler(
         ILogger<ProfileDefinitionLookupCommandHandler> logger,
         IDestinyDb destinyDb,
-        IBungieClientProvider bungieClientProvider) : base(logger)
+        IBungieClientProvider bungieClientProvider,
+        EmbedBuilderService embedBuilderService) : base(logger)
     {
         _destinyDb = destinyDb;
         _bungieClientProvider = bungieClientProvider;
+        _embedBuilderService = embedBuilderService;
     }
 
     [SlashCommand("item-check", "Checks who has items")]
@@ -38,11 +41,9 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
 
         bungieClient.TryGetDefinition<DestinyCollectibleDefinition>(itemHash, DotNetBungieAPI.Models.BungieLocales.EN, out var colDef);
 
-        var embedBuilder = EmbedBuilders
-            .Embeds
+        var embedBuilder = _embedBuilderService
             .GetTemplateEmbed()
-            .WithTitle($"{users.Count} users {(hasItem ? "have" : "miss")} {colDef.DisplayProperties.Name}")
-            .WithColor(Color.Green);
+            .WithTitle($"{users.Count} users {(hasItem ? "have" : "miss")} {colDef.DisplayProperties.Name}");
 
         for (int j = 0; j < clanReferences.Count; j++)
         {
@@ -109,9 +110,8 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
         }
 
         await Context.Interaction.RespondAsync(
-            embed: EmbedBuilders.Embeds.GetGenericEmbed(
+            embed: _embedBuilderService.CreateSimpleResponseEmbed(
                     $"{users.Count} users have{(hasCompletedTriumph ? " " : " not ")}completed {recordDef.DisplayProperties.Name}",
-                    Color.Green,
                     description: sb.ToString())
                 .WithThumbnailUrl(recordDef.DisplayProperties.Icon.AbsolutePath)
                 .Build(),

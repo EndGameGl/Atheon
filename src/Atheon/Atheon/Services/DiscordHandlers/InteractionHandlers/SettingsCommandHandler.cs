@@ -2,7 +2,6 @@
 using Atheon.Models.Database.Destiny.Links;
 using Atheon.Models.Destiny;
 using Atheon.Services.DiscordHandlers.Autocompleters;
-using Atheon.Services.DiscordHandlers.EmbedBuilders;
 using Atheon.Services.DiscordHandlers.InteractionHandlers.Base;
 using Atheon.Services.DiscordHandlers.Preconditions;
 using Atheon.Services.Interfaces;
@@ -16,14 +15,17 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
 {
     private readonly IDestinyDb _destinyDb;
     private readonly IClanQueue _clanQueue;
+    private readonly EmbedBuilderService _embedBuilderService;
 
     public SettingsCommandHandler(
         ILogger<SettingsCommandHandler> logger,
         IDestinyDb destinyDb,
-        IClanQueue clanQueue) : base(logger)
+        IClanQueue clanQueue,
+        EmbedBuilderService embedBuilderService) : base(logger)
     {
         _destinyDb = destinyDb;
         _clanQueue = clanQueue;
+        _embedBuilderService = embedBuilderService;
     }
 
     [AtheonBotAdminOrOwner]
@@ -35,7 +37,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
 
         if (settings.Clans.Contains(clanId))
         {
-            var embedTemplate = Embeds.GetGenericEmbed("Add new clan failed", Discord.Color.Red, "Clan is already added to this discord guild");
+            var embedTemplate = _embedBuilderService.CreateSimpleResponseEmbed("Add new clan failed", "Clan is already added to this discord guild");
             await Context.Interaction.RespondAsync(embed: embedTemplate.Build());
             return;
         }
@@ -46,7 +48,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
         {
             settings.Clans.Add(clanId);
             await _destinyDb.UpsertGuildSettingsAsync(settings);
-            var embedTemplate = Embeds.GetGenericEmbed("Add new clan success", Discord.Color.Green, "Added clan to this guild");
+            var embedTemplate = _embedBuilderService.CreateSimpleResponseEmbed("Add new clan success", "Added clan to this guild");
             await Context.Interaction.RespondAsync(embed: embedTemplate.Build());
             return;
         }
@@ -55,10 +57,10 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
         settings.Clans.Add(clanId);
         await _destinyDb.UpsertGuildSettingsAsync(settings);
         await Context.Interaction.RespondAsync(embed:
-            Embeds.GetGenericEmbed(
+            _embedBuilderService.CreateSimpleResponseEmbed(
                 "Add new clan success",
-                Discord.Color.Green,
-                "New clan will be ready when scan message pops up").Build());
+                "New clan will be ready when scan message pops up")
+            .Build());
         return;
     }
 
@@ -81,7 +83,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
         await _destinyDb.UpsertClanModelAsync(clanModel);
         await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
 
-        await Context.Interaction.RespondAsync(embed: Embeds.GetGenericEmbed($"Removed clan {clanIdToRemove}", Color.Green, "Success").Build());
+        await Context.Interaction.RespondAsync(embed: _embedBuilderService.CreateSimpleResponseEmbed($"Removed clan {clanIdToRemove}", "Success").Build());
     }
 
     [AtheonBotAdminOrOwner]
@@ -101,10 +103,9 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
 
         await _destinyDb.UpsertProfileLinkAsync(link);
 
-        await Context.Interaction.RespondAsync(embed: 
-            Embeds.GetGenericEmbed(
-                "User updated", 
-                Color.Green, 
+        await Context.Interaction.RespondAsync(embed:
+            _embedBuilderService.CreateSimpleResponseEmbed(
+                "User updated",
                 $"{userToLinkTo.Mention} is now linked to {user.MembershipId}").Build());
     }
 
@@ -120,9 +121,8 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
         });
 
         await Context.Interaction.RespondAsync(embed:
-            Embeds.GetGenericEmbed(
+            _embedBuilderService.CreateSimpleResponseEmbed(
                 "Admin added",
-                Color.Green,
                 $"{user.Mention} is now bot admin").Build());
     }
 
@@ -138,9 +138,8 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
         });
 
         await Context.Interaction.RespondAsync(embed:
-            Embeds.GetGenericEmbed(
+            _embedBuilderService.CreateSimpleResponseEmbed(
                 "Admin removed",
-                Color.Green,
                 $"{user.Mention} is not bot admin anymore").Build());
     }
 }

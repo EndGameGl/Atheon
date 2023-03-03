@@ -32,6 +32,7 @@ public static class ServiceCollectionExtensions
     {
         serviceCollection.AddSingleton<IMemoryCache, MemoryCacheImplementation>();
         serviceCollection.AddHostedService<MemoryCacheBackgroundCleaner>();
+        serviceCollection.AddSingleton<EmbedBuilderService>();
         return serviceCollection;
     }
 }
