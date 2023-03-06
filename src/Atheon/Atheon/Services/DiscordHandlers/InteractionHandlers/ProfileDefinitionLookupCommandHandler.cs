@@ -1,5 +1,6 @@
 ﻿using Atheon.Models.Database.Destiny.Clans;
 using Atheon.Services.DiscordHandlers.Autocompleters;
+using Atheon.Services.DiscordHandlers.Autocompleters.DestinyCollectibles;
 using Atheon.Services.DiscordHandlers.InteractionHandlers.Base;
 using Atheon.Services.Interfaces;
 using Discord;

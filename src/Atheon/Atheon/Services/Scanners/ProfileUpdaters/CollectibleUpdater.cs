@@ -60,6 +60,9 @@ public class CollectibleUpdater : IProfileUpdater
             if (!guildSetting.TrackedCollectibles.IsReported)
                 continue;
 
+            if (!guildSetting.TrackedCollectibles.TrackedHashes.Contains(collectibleHashValue))
+                continue;
+
             _commonEvents.ProfileBroadcasts.Publish(new DestinyUserProfileBroadcastDbModel()
             {
                 Date = DateTime.UtcNow,

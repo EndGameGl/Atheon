@@ -4,15 +4,15 @@ using Discord.Interactions;
 using DotNetBungieAPI.Extensions;
 using DotNetBungieAPI.Models.Destiny.Definitions.Collectibles;
 
-namespace Atheon.Services.DiscordHandlers.Autocompleters;
+namespace Atheon.Services.DiscordHandlers.Autocompleters.DestinyCollectibles;
 
-public class DestinyExcludingCollectibleDefinitionAutocompleter : AutocompleteHandler
+public class DestinyDbCollectibleDefinitionAutocompleter : AutocompleteHandler
 {
     private readonly IBungieClientProvider _bungieClientProvider;
     private readonly ILogger<DestinyCollectibleDefinitionAutocompleter> _logger;
     private readonly IDestinyDb _destinyDb;
 
-    public DestinyExcludingCollectibleDefinitionAutocompleter(
+    public DestinyDbCollectibleDefinitionAutocompleter(
         IBungieClientProvider bungieClientProvider,
         ILogger<DestinyCollectibleDefinitionAutocompleter> logger,
         IDestinyDb destinyDb)
@@ -23,9 +23,9 @@ public class DestinyExcludingCollectibleDefinitionAutocompleter : AutocompleteHa
     }
 
     public override async Task<AutocompletionResult> GenerateSuggestionsAsync(
-        IInteractionContext context, 
-        IAutocompleteInteraction autocompleteInteraction, 
-        IParameterInfo parameter, 
+        IInteractionContext context,
+        IAutocompleteInteraction autocompleteInteraction,
+        IParameterInfo parameter,
         IServiceProvider services)
     {
         try
@@ -40,8 +40,8 @@ public class DestinyExcludingCollectibleDefinitionAutocompleter : AutocompleteHa
             var searchResults = client
                 .Repository
                 .GetAll<DestinyCollectibleDefinition>()
+                .Where(x => settings.TrackedCollectibles.TrackedHashes.Contains(x.Hash))
                 .Where(x => x.DisplayProperties.Name.Contains(searchEntry, StringComparison.InvariantCultureIgnoreCase))
-                .Where(x => !settings.TrackedCollectibles.TrackedHashes.Contains(x.Hash))
                 .Take(20);
 
             var results = searchResults

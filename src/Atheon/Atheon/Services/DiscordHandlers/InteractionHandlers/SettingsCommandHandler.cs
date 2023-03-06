@@ -2,6 +2,7 @@
 using Atheon.Models.Database.Destiny.Links;
 using Atheon.Models.Destiny;
 using Atheon.Services.DiscordHandlers.Autocompleters;
+using Atheon.Services.DiscordHandlers.Autocompleters.DestinyCollectibles;
 using Atheon.Services.DiscordHandlers.InteractionHandlers.Base;
 using Atheon.Services.DiscordHandlers.Preconditions;
 using Atheon.Services.Interfaces;
@@ -9,6 +10,7 @@ using Discord;
 using Discord.Interactions;
 using DotNetBungieAPI.Models;
 using DotNetBungieAPI.Models.Destiny.Definitions.Collectibles;
+using System.Text;
 using System.Threading.Channels;
 
 namespace Atheon.Services.DiscordHandlers.InteractionHandlers;
@@ -186,7 +188,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
     }
 
     [AtheonBotAdminOrOwner]
-    [SlashCommand("add-item", "Adds new item to tracking")]
+    [SlashCommand("item-add", "Adds new item to tracking")]
     public async Task AddCollectibleToTrackingAsync(
        [Summary("item", "Item to add to tracking")][Autocomplete(typeof(DestinyExcludingCollectibleDefinitionAutocompleter))] uint itemHash)
     {
@@ -214,6 +216,80 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
                     "Success",
                     $"Added **{collectibleDefinition.DisplayProperties.Name}** to tracking")
                 .WithThumbnailUrl(collectibleDefinition.DisplayProperties.Icon.AbsolutePath)
+                .Build());
+        });
+    }
+
+    [AtheonBotAdminOrOwner]
+    [SlashCommand("item-remove", "Removes item from tracking")]
+    public async Task RemoveCollectibleFromTrackingAsync(
+       [Summary("item", "Item to remove from tracking")][Autocomplete(typeof(DestinyDbCollectibleDefinitionAutocompleter))] uint itemHash)
+    {
+        await ExecuteAndHanldeErrors(async () =>
+        {
+            var client = await _bungieClientProvider.GetClientAsync();
+
+            if (!client.TryGetDefinition<DestinyCollectibleDefinition>(itemHash, BungieLocales.EN, out var collectibleDefinition))
+            {
+                await Context.Interaction.RespondAsync(embed:
+                    _embedBuilderService.CreateSimpleResponseEmbed(
+                        "Failure",
+                        $"Couldn't find definition in database",
+                        Color.Red)
+                    .Build());
+                return;
+            }
+
+            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            guildSettings.TrackedCollectibles.TrackedHashes.Remove(itemHash);
+            await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
+
+            await Context.Interaction.RespondAsync(embed:
+                _embedBuilderService.CreateSimpleResponseEmbed(
+                    "Success",
+                    $"Removed **{collectibleDefinition.DisplayProperties.Name}** from tracking")
+                .WithThumbnailUrl(collectibleDefinition.DisplayProperties.Icon.AbsolutePath)
+                .Build());
+        });
+    }
+
+    [SlashCommand("items-show", "Shows all tracked items")]
+    public async Task ShowTrackedItemsAsync()
+    {
+        await ExecuteAndHanldeErrors(async () =>
+        {
+            var client = await _bungieClientProvider.GetClientAsync();
+
+            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+
+            if (!guildSettings.TrackedCollectibles.TrackedHashes.Any())
+            {
+                await Context.Interaction.RespondAsync(embed:
+                    _embedBuilderService.CreateSimpleResponseEmbed(
+                        "Tracked items",
+                        $"Currently there's no tracked items")
+                    .Build());
+                return;
+            }
+
+            var sb = new StringBuilder();
+
+            foreach (var collectibleHash in guildSettings.TrackedCollectibles.TrackedHashes)
+            {
+                if (!client.TryGetDefinition<DestinyCollectibleDefinition>(collectibleHash, BungieLocales.EN, out var collectibleDefinition))
+                {
+                    sb.AppendLine($"> Unknown definition hash {collectibleHash}");
+                }
+                else
+                {
+                    sb.AppendLine($"> {collectibleDefinition.DisplayProperties.Name}");
+                }
+            }
+
+            await Context.Interaction.RespondAsync(embed:
+                _embedBuilderService.CreateSimpleResponseEmbed(
+                    $"Tracked items: {guildSettings.TrackedCollectibles.TrackedHashes.Count}",
+                    sb.ToString())
                 .Build());
         });
     }

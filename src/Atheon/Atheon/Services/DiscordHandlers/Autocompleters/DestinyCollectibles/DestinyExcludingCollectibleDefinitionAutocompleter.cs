@@ -3,22 +3,25 @@ using Discord;
 using Discord.Interactions;
 using DotNetBungieAPI.Extensions;
 using DotNetBungieAPI.Models.Destiny.Definitions.Collectibles;
-using System.Linq;
 
-namespace Atheon.Services.DiscordHandlers.Autocompleters;
+namespace Atheon.Services.DiscordHandlers.Autocompleters.DestinyCollectibles;
 
-public class DestinyCollectibleDefinitionAutocompleter : AutocompleteHandler
+public class DestinyExcludingCollectibleDefinitionAutocompleter : AutocompleteHandler
 {
     private readonly IBungieClientProvider _bungieClientProvider;
     private readonly ILogger<DestinyCollectibleDefinitionAutocompleter> _logger;
+    private readonly IDestinyDb _destinyDb;
 
-    public DestinyCollectibleDefinitionAutocompleter(
+    public DestinyExcludingCollectibleDefinitionAutocompleter(
         IBungieClientProvider bungieClientProvider,
-        ILogger<DestinyCollectibleDefinitionAutocompleter> logger)
+        ILogger<DestinyCollectibleDefinitionAutocompleter> logger,
+        IDestinyDb destinyDb)
     {
         _bungieClientProvider = bungieClientProvider;
         _logger = logger;
+        _destinyDb = destinyDb;
     }
+
     public override async Task<AutocompletionResult> GenerateSuggestionsAsync(
         IInteractionContext context,
         IAutocompleteInteraction autocompleteInteraction,
@@ -29,11 +32,16 @@ public class DestinyCollectibleDefinitionAutocompleter : AutocompleteHandler
         {
             var client = await _bungieClientProvider.GetClientAsync();
             var searchEntry = (string)autocompleteInteraction.Data.Options.First(x => x.Focused).Value;
+            var settings = await _destinyDb.GetGuildSettingsAsync(context.Guild.Id);
+
+            if (settings is null)
+                return AutocompletionResult.FromSuccess();
 
             var searchResults = client
                 .Repository
                 .GetAll<DestinyCollectibleDefinition>()
                 .Where(x => x.DisplayProperties.Name.Contains(searchEntry, StringComparison.InvariantCultureIgnoreCase))
+                .Where(x => !settings.TrackedCollectibles.TrackedHashes.Contains(x.Hash))
                 .Take(20);
 
             var results = searchResults
