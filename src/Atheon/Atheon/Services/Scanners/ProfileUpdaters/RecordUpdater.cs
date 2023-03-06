@@ -95,6 +95,12 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
                         {
                             foreach (var guildSetting in guildSettings)
                             {
+                                if (!guildSetting.TrackedRecords.IsReported)
+                                    continue;
+
+                                if (!guildSetting.TrackedRecords.TrackedHashes.Contains(recordHash))
+                                    continue;
+
                                 _commonEvents.ProfileBroadcasts.Publish(new DestinyUserProfileBroadcastDbModel()
                                 {
                                     Type = ProfileBroadcastType.Triumph,
