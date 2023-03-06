@@ -47,6 +47,9 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
                         {
                             foreach (var guildSetting in guildSettings)
                             {
+                                if (!guildSetting.TrackedRecords.IsReported)
+                                    continue;
+
                                 _commonEvents.ProfileBroadcasts.Publish(new DestinyUserProfileBroadcastDbModel()
                                 {
                                     Type = ProfileBroadcastType.Title,
@@ -71,9 +74,11 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
                             if (parentTitleRecord is null)
                                 continue;
 
-
                             foreach (var guildSetting in guildSettings)
                             {
+                                if (!guildSetting.TrackedRecords.IsReported)
+                                    continue;
+
                                 _commonEvents.ProfileBroadcasts.Publish(new DestinyUserProfileBroadcastDbModel()
                                 {
                                     Type = ProfileBroadcastType.GildedTitle,
