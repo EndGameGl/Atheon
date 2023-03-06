@@ -255,7 +255,7 @@ public class SqliteDestinyDb : IDestinyDb
             Name,
             ClanId
         FROM DestinyProfiles
-        WHERE EXISTS (SELECT 1 FROM json_each(Collectibles) WHERE value = @CollectibleHash)
+        WHERE EXISTS (SELECT 1 FROM json_each(Collectibles) WHERE value = @CollectibleHash) AND ClanId IN @ClanIds
         """;
 
     private const string GetProfilesWithoutCollectibleQuery =
@@ -265,16 +265,24 @@ public class SqliteDestinyDb : IDestinyDb
             Name,
             ClanId
         FROM DestinyProfiles
-        WHERE NOT EXISTS (SELECT 1 FROM json_each(Collectibles) WHERE value = @CollectibleHash)
+        WHERE NOT EXISTS (SELECT 1 FROM json_each(Collectibles) WHERE value = @CollectibleHash) AND ClanId IN @ClanIds
         """;
-    public async Task<List<DestinyProfileLite>> GetProfilesCollectibleStatusAsync(uint collectibleHash, bool hasItem)
+    public async Task<List<DestinyProfileLite>> GetProfilesCollectibleStatusAsync(uint collectibleHash, bool hasItem, long[] clandIds)
     {
         if (hasItem)
         {
-            return await _dbAccess.QueryAsync<DestinyProfileLite>(GetProfilesWithCollectibleQuery, new { CollectibleHash = collectibleHash });
+            return await _dbAccess.QueryAsync<DestinyProfileLite>(GetProfilesWithCollectibleQuery, new
+            {
+                CollectibleHash = collectibleHash,
+                ClanIds = clandIds
+            });
         }
 
-        return await _dbAccess.QueryAsync<DestinyProfileLite>(GetProfilesWithoutCollectibleQuery, new { CollectibleHash = collectibleHash });
+        return await _dbAccess.QueryAsync<DestinyProfileLite>(GetProfilesWithoutCollectibleQuery, new
+        {
+            CollectibleHash = collectibleHash,
+            ClanIds = clandIds
+        });
     }
 
     private const string TryInsertClanBroadcastQuery =
@@ -407,7 +415,7 @@ public class SqliteDestinyDb : IDestinyDb
             Name,
             ClanId
         FROM DestinyProfiles
-        WHERE EXISTS (SELECT 1 FROM json_each(Records) WHERE CAST(key as INTEGER) = @RecordHash AND json_extract(value, '$.state') NOT IN (4))
+        WHERE EXISTS (SELECT 1 FROM json_each(Records) WHERE CAST(key as INTEGER) = @RecordHash AND json_extract(value, '$.state') NOT IN (4)) AND ClanId IN @ClanIds
         """;
 
     private const string GetProfilesRecordStatusNotCompletedQuery =
@@ -417,15 +425,23 @@ public class SqliteDestinyDb : IDestinyDb
             Name,
             ClanId
         FROM DestinyProfiles
-        WHERE EXISTS (SELECT 1 FROM json_each(Records) WHERE CAST(key as INTEGER) = @RecordHash AND json_extract(value, '$.state') IN (4))
+        WHERE EXISTS (SELECT 1 FROM json_each(Records) WHERE CAST(key as INTEGER) = @RecordHash AND json_extract(value, '$.state') IN (4)) AND ClanId IN @ClanIds
         """;
-    public async Task<List<DestinyProfileLite>> GetProfilesRecordStatusAsync(uint recordHash, bool hasCompletedRecord)
+    public async Task<List<DestinyProfileLite>> GetProfilesRecordStatusAsync(uint recordHash, bool hasCompletedRecord, long[] clanIds)
     {
         if (hasCompletedRecord)
         {
-            return await _dbAccess.QueryAsync<DestinyProfileLite>(GetProfilesRecordStatusCompletedQuery, new { RecordHash = recordHash });
+            return await _dbAccess.QueryAsync<DestinyProfileLite>(GetProfilesRecordStatusCompletedQuery, new
+            {
+                RecordHash = recordHash,
+                ClanIds = clanIds
+            });
         }
-        return await _dbAccess.QueryAsync<DestinyProfileLite>(GetProfilesRecordStatusNotCompletedQuery, new { RecordHash = recordHash });
+        return await _dbAccess.QueryAsync<DestinyProfileLite>(GetProfilesRecordStatusNotCompletedQuery, new
+        {
+            RecordHash = recordHash,
+            ClanIds = clanIds
+        });
     }
 
     private const string UpsertCuratedRecordDefinitionQuery =

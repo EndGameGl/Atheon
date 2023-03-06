@@ -38,7 +38,8 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
         await ExecuteAndHanldeErrors(async () =>
         {
             var itemHash = uint.Parse(collectibleHash);
-            var users = await _destinyDb.GetProfilesCollectibleStatusAsync(itemHash, hasItem);
+            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var users = await _destinyDb.GetProfilesCollectibleStatusAsync(itemHash, hasItem, guildSettings.Clans.ToArray());
             var clanIds = users.Select(x => x.ClanId).Distinct().ToArray();
             var clanReferences = await _destinyDb.GetClanReferencesFromIdsAsync(clanIds);
 
@@ -95,7 +96,8 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
         await ExecuteAndHanldeErrors(async () =>
         {
             var itemHash = uint.Parse(recordHash);
-            var users = await _destinyDb.GetProfilesRecordStatusAsync(itemHash, hasCompletedTriumph);
+            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var users = await _destinyDb.GetProfilesRecordStatusAsync(itemHash, hasCompletedTriumph, guildSettings.Clans.ToArray());
             var clanIds = users.Select(x => x.ClanId).Distinct().ToArray();
             var clanReferences = await _destinyDb.GetClanReferencesFromIdsAsync(clanIds);
             var bungieClient = await _bungieClientProvider.GetClientAsync();
