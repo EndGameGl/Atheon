@@ -7,6 +7,9 @@ using Atheon.Services.DiscordHandlers.Preconditions;
 using Atheon.Services.Interfaces;
 using Discord;
 using Discord.Interactions;
+using DotNetBungieAPI.Models;
+using DotNetBungieAPI.Models.Destiny.Definitions.Collectibles;
+using System.Threading.Channels;
 
 namespace Atheon.Services.DiscordHandlers.InteractionHandlers;
 
@@ -16,16 +19,19 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
     private readonly IDestinyDb _destinyDb;
     private readonly IClanQueue _clanQueue;
     private readonly EmbedBuilderService _embedBuilderService;
+    private readonly IBungieClientProvider _bungieClientProvider;
 
     public SettingsCommandHandler(
         ILogger<SettingsCommandHandler> logger,
         IDestinyDb destinyDb,
         IClanQueue clanQueue,
-        EmbedBuilderService embedBuilderService) : base(logger, embedBuilderService)
+        EmbedBuilderService embedBuilderService,
+        IBungieClientProvider bungieClientProvider) : base(logger, embedBuilderService)
     {
         _destinyDb = destinyDb;
         _clanQueue = clanQueue;
         _embedBuilderService = embedBuilderService;
+        _bungieClientProvider = bungieClientProvider;
     }
 
     [AtheonBotAdminOrOwner]
@@ -162,7 +168,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
 
     [AtheonBotAdminOrOwner]
     [SlashCommand("set-report-channel", "Sets report channel")]
-    public async Task SetReportChannel(
+    public async Task SetReportChannelAsync(
         [Summary("channel", "Channel to send reports to")][ChannelTypes(ChannelType.Text)] IChannel channel)
     {
         await ExecuteAndHanldeErrors(async () =>
@@ -175,6 +181,39 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
                 _embedBuilderService.CreateSimpleResponseEmbed(
                     "Success",
                     $"Default report channel is now <#{channel.Id}>")
+                .Build());
+        });
+    }
+
+    [AtheonBotAdminOrOwner]
+    [SlashCommand("add-item", "Adds new item to tracking")]
+    public async Task AddCollectibleToTrackingAsync(
+       [Summary("item", "Item to add to tracking")][Autocomplete(typeof(DestinyExcludingCollectibleDefinitionAutocompleter))] uint itemHash)
+    {
+        await ExecuteAndHanldeErrors(async () =>
+        {
+            var client = await _bungieClientProvider.GetClientAsync();
+
+            if (!client.TryGetDefinition<DestinyCollectibleDefinition>(itemHash, BungieLocales.EN, out var collectibleDefinition))
+            {
+                await Context.Interaction.RespondAsync(embed:
+                    _embedBuilderService.CreateSimpleResponseEmbed(
+                        "Failure",
+                        $"Couldn't find definition in database",
+                        Color.Red)
+                    .Build());
+                return;
+            }
+
+            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            guildSettings.TrackedCollectibles.TrackedHashes.Add(itemHash);
+            await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
+
+            await Context.Interaction.RespondAsync(embed:
+                _embedBuilderService.CreateSimpleResponseEmbed(
+                    "Success",
+                    $"Added **{collectibleDefinition.DisplayProperties.Name}** to tracking")
+                .WithThumbnailUrl(collectibleDefinition.DisplayProperties.Icon.AbsolutePath)
                 .Build());
         });
     }

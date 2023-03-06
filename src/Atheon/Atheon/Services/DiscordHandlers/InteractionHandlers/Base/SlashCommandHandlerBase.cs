@@ -1,4 +1,5 @@
-﻿using Discord.Interactions;
+﻿using Atheon.Extensions;
+using Discord.Interactions;
 using Discord.WebSocket;
 
 namespace Atheon.Services.DiscordHandlers.InteractionHandlers.Base
@@ -33,7 +34,7 @@ namespace Atheon.Services.DiscordHandlers.InteractionHandlers.Base
         {
             try
             {
-                await actualCommand();
+                await actualCommand().ExecuteInTimeOrThrow(3000);
             }
             catch (Exception ex)
             {
