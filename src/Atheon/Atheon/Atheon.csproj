@@ -30,7 +30,6 @@
     <None Include="$(SpaRoot)**" Exclude="$(SpaRoot)node_modules\**" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Models\DiscordModels\" />
     <Folder Include="Models\Events\" />
   </ItemGroup>
   <ItemGroup>

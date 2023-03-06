@@ -3,7 +3,7 @@ using Discord;
 using Discord.Interactions;
 using DotNetBungieAPI.Models.Destiny.Definitions.Records;
 
-namespace Atheon.Services.DiscordHandlers.Autocompleters
+namespace Atheon.Services.DiscordHandlers.Autocompleters.DestinyRecords
 {
     public class DestinyRecordDefinitionAutocompleter : AutocompleteHandler
     {

@@ -1,8 +1,10 @@
 ﻿using Atheon.Models.Database.Administration;
 using Atheon.Models.Database.Destiny.Links;
 using Atheon.Models.Destiny;
+using Atheon.Models.DiscordModels;
 using Atheon.Services.DiscordHandlers.Autocompleters;
 using Atheon.Services.DiscordHandlers.Autocompleters.DestinyCollectibles;
+using Atheon.Services.DiscordHandlers.Autocompleters.DestinyRecords;
 using Atheon.Services.DiscordHandlers.InteractionHandlers.Base;
 using Atheon.Services.DiscordHandlers.Preconditions;
 using Atheon.Services.Interfaces;
@@ -10,6 +12,7 @@ using Discord;
 using Discord.Interactions;
 using DotNetBungieAPI.Models;
 using DotNetBungieAPI.Models.Destiny.Definitions.Collectibles;
+using DotNetBungieAPI.Models.Destiny.Definitions.Records;
 using System.Text;
 using System.Threading.Channels;
 
@@ -188,6 +191,36 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
     }
 
     [AtheonBotAdminOrOwner]
+    [SlashCommand("set-report-settings", "Sets report settings")]
+    public async Task SetReportSettingsAsync(
+        [Summary(description: "Whether to report new items")] DiscordNullableBoolean reportItems = DiscordNullableBoolean.None,
+        [Summary(description: "Whether to report completed triumphs")] DiscordNullableBoolean reportTriumphs = DiscordNullableBoolean.None)
+    {
+        await ExecuteAndHanldeErrors(async () =>
+        {
+            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+
+            if (reportItems != DiscordNullableBoolean.None)
+            {
+                guildSettings.TrackedCollectibles.IsReported = reportItems is DiscordNullableBoolean.True;
+            }
+
+            if (reportTriumphs != DiscordNullableBoolean.None)
+            {
+                guildSettings.TrackedRecords.IsReported = reportTriumphs is DiscordNullableBoolean.True;
+            }
+
+            await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
+
+            await Context.Interaction.RespondAsync(embed:
+                _embedBuilderService.CreateSimpleResponseEmbed(
+                    "Success",
+                    $"Updated report settings")
+                .Build());
+        });
+    }
+
+    [AtheonBotAdminOrOwner]
     [SlashCommand("item-add", "Adds new item to tracking")]
     public async Task AddCollectibleToTrackingAsync(
        [Summary("item", "Item to add to tracking")][Autocomplete(typeof(DestinyExcludingCollectibleDefinitionAutocompleter))] uint itemHash)
@@ -289,6 +322,113 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
             await Context.Interaction.RespondAsync(embed:
                 _embedBuilderService.CreateSimpleResponseEmbed(
                     $"Tracked items: {guildSettings.TrackedCollectibles.TrackedHashes.Count}",
+                    sb.ToString())
+                .Build());
+        });
+    }
+
+    [AtheonBotAdminOrOwner]
+    [SlashCommand("triumph-add", "Adds new triumph to tracking")]
+    public async Task AddRecordToTrackingAsync(
+       [Summary("triumph", "Item to add to tracking")][Autocomplete(typeof(DestinyExcludingRecordDefinitionAutocompleter))] uint recordHash)
+    {
+        await ExecuteAndHanldeErrors(async () =>
+        {
+            var client = await _bungieClientProvider.GetClientAsync();
+
+            if (!client.TryGetDefinition<DestinyRecordDefinition>(recordHash, BungieLocales.EN, out var recordDefinition))
+            {
+                await Context.Interaction.RespondAsync(embed:
+                    _embedBuilderService.CreateSimpleResponseEmbed(
+                        "Failure",
+                        $"Couldn't find definition in database",
+                        Color.Red)
+                    .Build());
+                return;
+            }
+
+            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            guildSettings.TrackedRecords.TrackedHashes.Add(recordHash);
+            await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
+
+            await Context.Interaction.RespondAsync(embed:
+                _embedBuilderService.CreateSimpleResponseEmbed(
+                    "Success",
+                    $"Added **{recordDefinition.DisplayProperties.Name}** to tracking")
+                .WithThumbnailUrl(recordDefinition.DisplayProperties.Icon.AbsolutePath)
+                .Build());
+        });
+    }
+
+    [AtheonBotAdminOrOwner]
+    [SlashCommand("triumph-remove", "Removes triumph from tracking")]
+    public async Task RemoveRecordFromTrackingAsync(
+       [Summary("triumph", "Triumph to remove from tracking")][Autocomplete(typeof(DestinyDbRecordDefinitionAutocompleter))] uint recordHash)
+    {
+        await ExecuteAndHanldeErrors(async () =>
+        {
+            var client = await _bungieClientProvider.GetClientAsync();
+
+            if (!client.TryGetDefinition<DestinyRecordDefinition>(recordHash, BungieLocales.EN, out var recordDefinition))
+            {
+                await Context.Interaction.RespondAsync(embed:
+                    _embedBuilderService.CreateSimpleResponseEmbed(
+                        "Failure",
+                        $"Couldn't find definition in database",
+                        Color.Red)
+                    .Build());
+                return;
+            }
+
+            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            guildSettings.TrackedRecords.TrackedHashes.Remove(recordHash);
+            await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
+
+            await Context.Interaction.RespondAsync(embed:
+                _embedBuilderService.CreateSimpleResponseEmbed(
+                    "Success",
+                    $"Removed **{recordDefinition.DisplayProperties.Name}** from tracking")
+                .WithThumbnailUrl(recordDefinition.DisplayProperties.Icon.AbsolutePath)
+                .Build());
+        });
+    }
+
+    [SlashCommand("triumphs-show", "Shows all tracked triumphs")]
+    public async Task ShowTrackedRecordsAsync()
+    {
+        await ExecuteAndHanldeErrors(async () =>
+        {
+            var client = await _bungieClientProvider.GetClientAsync();
+
+            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+
+            if (!guildSettings.TrackedRecords.TrackedHashes.Any())
+            {
+                await Context.Interaction.RespondAsync(embed:
+                    _embedBuilderService.CreateSimpleResponseEmbed(
+                        "Tracked triumphs",
+                        $"Currently there's no tracked triumphs")
+                    .Build());
+                return;
+            }
+
+            var sb = new StringBuilder();
+
+            foreach (var collectibleHash in guildSettings.TrackedRecords.TrackedHashes)
+            {
+                if (!client.TryGetDefinition<DestinyRecordDefinition>(collectibleHash, BungieLocales.EN, out var recordDefinition))
+                {
+                    sb.AppendLine($"> Unknown definition hash {collectibleHash}");
+                }
+                else
+                {
+                    sb.AppendLine($"> {recordDefinition.DisplayProperties.Name}");
+                }
+            }
+
+            await Context.Interaction.RespondAsync(embed:
+                _embedBuilderService.CreateSimpleResponseEmbed(
+                    $"Tracked triumphs: {guildSettings.TrackedRecords.TrackedHashes.Count}",
                     sb.ToString())
                 .Build());
         });
