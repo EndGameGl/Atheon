@@ -137,7 +137,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
                 _embedBuilderService.CreateSimpleResponseEmbed(
                     "Admin added",
                     $"{user.Mention} is now bot admin").Build());
-        });    
+        });
     }
 
     [RequireOwner]
@@ -157,6 +157,25 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
                 _embedBuilderService.CreateSimpleResponseEmbed(
                     "Admin removed",
                     $"{user.Mention} is not bot admin anymore").Build());
-        });       
+        });
+    }
+
+    [AtheonBotAdminOrOwner]
+    [SlashCommand("set-report-channel", "Sets report channel")]
+    public async Task SetReportChannel(
+        [Summary("channel", "Channel to send reports to")][ChannelTypes(ChannelType.Text)] IChannel channel)
+    {
+        await ExecuteAndHanldeErrors(async () =>
+        {
+            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            guildSettings.DefaultReportChannel = channel.Id;
+            await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
+
+            await Context.Interaction.RespondAsync(embed:
+                _embedBuilderService.CreateSimpleResponseEmbed(
+                    "Success",
+                    $"Default report channel is now <#{channel.Id}>")
+                .Build());
+        });
     }
 }

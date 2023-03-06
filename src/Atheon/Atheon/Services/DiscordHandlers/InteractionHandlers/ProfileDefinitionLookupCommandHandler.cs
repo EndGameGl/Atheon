@@ -32,7 +32,7 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
     public async Task GetUsersWithItem(
         [Autocomplete(typeof(DestinyCollectibleDefinitionAutocompleter))][Summary(description: "Collectible")] string collectibleHash,
         [Summary(description: "Whether user has item or not")] bool hasItem,
-        [Summary("Set this to true to hide this message")] bool hide = false)
+        [Summary(description: "Whether to hide this message")] bool hide = false)
     {
         await ExecuteAndHanldeErrors(async () =>
         {
@@ -89,7 +89,7 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
     public async Task GetUsersWithRecord(
         [Autocomplete(typeof(DestinyRecordDefinitionAutocompleter))][Summary(description: "Record")] string recordHash,
         [Summary(description: "Whether user has completed triumph or not")] bool hasCompletedTriumph,
-        [Summary("Set this to true to hide this message")] bool hide = false)
+        [Summary(description: "Whether to hide this message")] bool hide = false)
     {
         await ExecuteAndHanldeErrors(async () =>
         {
