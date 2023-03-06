@@ -31,7 +31,8 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
     [SlashCommand("item-check", "Checks who has items")]
     public async Task GetUsersWithItem(
         [Autocomplete(typeof(DestinyCollectibleDefinitionAutocompleter))][Summary(description: "Collectible")] string collectibleHash,
-        [Summary(description: "Whether user has item or not")] bool hasItem)
+        [Summary(description: "Whether user has item or not")] bool hasItem,
+        [Summary("Set this to true to hide this message")] bool hide = false)
     {
         await ExecuteAndHanldeErrors(async () =>
         {
@@ -80,14 +81,15 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
                 embed: embedBuilder
                     .WithThumbnailUrl(colDef.DisplayProperties.Icon.AbsolutePath)
                     .Build(),
-                ephemeral: true);
+                ephemeral: hide);
         });
     }
 
     [SlashCommand("triumph-check", "Checks who completed triumph")]
     public async Task GetUsersWithRecord(
         [Autocomplete(typeof(DestinyRecordDefinitionAutocompleter))][Summary(description: "Record")] string recordHash,
-        [Summary(description: "Whether user has completed triumph or not")] bool hasCompletedTriumph)
+        [Summary(description: "Whether user has completed triumph or not")] bool hasCompletedTriumph,
+        [Summary("Set this to true to hide this message")] bool hide = false)
     {
         await ExecuteAndHanldeErrors(async () =>
         {
@@ -135,7 +137,7 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
                 embed: embedBuilder
                     .WithThumbnailUrl(recordDef.DisplayProperties.Icon.AbsolutePath)
                     .Build(),
-                ephemeral: true);
+                ephemeral: hide);
         });
     }
 }
