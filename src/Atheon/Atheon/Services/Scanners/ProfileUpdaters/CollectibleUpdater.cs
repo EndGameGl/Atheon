@@ -30,14 +30,14 @@ public class CollectibleUpdater : IProfileUpdater
     {
         foreach (var (collectiblePointer, collectibleComponent) in profileResponse.ProfileCollectibles.Data.Collectibles)
         {
-            ProcessAndAnnounceCollectible(dbProfile, collectiblePointer, collectibleComponent, guildSettings);
+            ProcessAndAnnounceCollectible(dbProfile, collectiblePointer, collectibleComponent, guildSettings, profileResponse);
         }
 
         foreach (var (characterId, collectibleComponents) in profileResponse.CharacterCollectibles.Data)
         {
             foreach (var (collectiblePointer, collectibleComponent) in collectibleComponents.Collectibles)
             {
-                ProcessAndAnnounceCollectible(dbProfile, collectiblePointer, collectibleComponent, guildSettings);
+                ProcessAndAnnounceCollectible(dbProfile, collectiblePointer, collectibleComponent, guildSettings, profileResponse);
             }
         }
     }
