@@ -9,12 +9,12 @@ namespace Atheon.Services.Interfaces
         bool ReliesOnSecondaryComponents { get; }
         int Priority { get; }
 
-        void UpdateSilent(
+        Task UpdateSilent(
             IBungieClient bungieClient,
             DestinyProfileDbModel dbProfile,
             DestinyProfileResponse profileResponse);
 
-        void Update(
+        Task Update(
             IBungieClient bungieClient,
             DestinyProfileDbModel dbProfile,
             DestinyProfileResponse profileResponse,

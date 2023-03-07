@@ -99,6 +99,7 @@ void ConfigureServices(WebApplicationBuilder applicationBuilder)
     applicationBuilder.Services.AddSingleton<IProfileUpdater, CollectibleUpdater>();
     applicationBuilder.Services.AddSingleton<IProfileUpdater, ProgressionUpdater>();
     applicationBuilder.Services.AddSingleton<IProfileUpdater, RecordUpdater>();
+    applicationBuilder.Services.AddSingleton<IProfileUpdater, ComputedDataUpdater>();
 
     applicationBuilder.Services.AddHostedService<ApplicationStartup>();
 

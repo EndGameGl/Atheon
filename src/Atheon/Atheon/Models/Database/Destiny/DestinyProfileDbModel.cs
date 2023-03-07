@@ -2,6 +2,7 @@
 using Atheon.Extensions;
 using Atheon.Models.Database.Destiny.Profiles;
 using Atheon.Options;
+using Atheon.Services.BungieApi;
 using DotNetBungieAPI.Models;
 using DotNetBungieAPI.Models.Destiny;
 using DotNetBungieAPI.Models.Destiny.Components;
@@ -57,10 +58,14 @@ public class DestinyProfileDbModel
     [AutoColumn(nameof(SecondaryComponentsMintedTimestamp), sqliteType: DatabaseOptions.SQLiteTypes.NUMERIC.DATETIME)]
     public DateTime? SecondaryComponentsMintedTimestamp { get; set; }
 
-    public static DestinyProfileDbModel CreateFromApiResponse(
+    [AutoColumn(nameof(ComputedData), sqliteType: DatabaseOptions.SQLiteTypes.TEXT.DEFAULT_VALUE)]
+    public DestinyComputedData? ComputedData { get; set; } = new();
+
+    public static async Task<DestinyProfileDbModel> CreateFromApiResponse(
         long clanId,
         DestinyProfileResponse destinyProfileResponse,
-        IBungieClient bungieClient)
+        IBungieClient bungieClient,
+        DestinyDefinitionDataService destinyDefinitionDataService)
     {
         var userInfo = destinyProfileResponse.Profile.Data.UserInfo;
 
@@ -73,7 +78,7 @@ public class DestinyProfileDbModel
             MinutesPlayedTotal = destinyProfileResponse.Characters.Data.Sum(x => x.Value.MinutesPlayedTotal),
             Collectibles = new HashSet<uint>(),
             Records = new Dictionary<uint, DestinyRecordDbModel>(),
-
+            ClanId = clanId,
             ResponseMintedTimestamp = destinyProfileResponse.ResponseMintedTimestamp,
             SecondaryComponentsMintedTimestamp = destinyProfileResponse.SecondaryComponentsMintedTimestamp
         };
@@ -81,11 +86,12 @@ public class DestinyProfileDbModel
         dbModel.FillCollectibles(destinyProfileResponse);
         dbModel.FillRecords(destinyProfileResponse);
         dbModel.FillProgressions(destinyProfileResponse, bungieClient);
-
+        await dbModel.FillComputedData(destinyProfileResponse, destinyDefinitionDataService);
         return dbModel;
     }
 
-    private void FillCollectibles(DestinyProfileResponse destinyProfileResponse)
+    private void FillCollectibles(
+        DestinyProfileResponse destinyProfileResponse)
     {
         foreach (var (collectibleHash, collectibleState) in destinyProfileResponse.ProfileCollectibles.Data.Collectibles)
         {
@@ -107,7 +113,8 @@ public class DestinyProfileDbModel
         }
     }
 
-    private void FillRecords(DestinyProfileResponse destinyProfileResponse)
+    private void FillRecords(
+        DestinyProfileResponse destinyProfileResponse)
     {
         foreach (var (recordHash, recordComponent) in destinyProfileResponse.ProfileRecords.Data.Records)
         {
@@ -148,6 +155,62 @@ public class DestinyProfileDbModel
                 bungieClient);
 
             Progressions.Add(progressionHash.Hash.Value, new DestinyProgressionDbModel(progressionData));
+        }
+    }
+
+    private async Task FillComputedData(
+        DestinyProfileResponse destinyProfileResponse,
+        DestinyDefinitionDataService destinyDefinitionDataService)
+    {
+        ComputedData!.Drystreaks = new Dictionary<uint, int>();
+        foreach (var (collectibleHash, metricHash) in Destiny2Metadata.DryStreakItemSettings)
+        {
+            if (!destinyProfileResponse.Metrics.Data.Metrics.TryGetValue(metricHash, out var metricComponent))
+                continue;
+
+            var progress = metricComponent.ObjectiveProgress.Progress ?? 0;
+
+            if (destinyProfileResponse.ProfileCollectibles.Data.Collectibles.TryGetValue(collectibleHash, out var collectibleComponent) &&
+                collectibleComponent.State.HasFlag(DestinyCollectibleState.NotAcquired))
+            {
+                ComputedData.Drystreaks[collectibleHash] = progress;
+                continue;
+            }
+
+            foreach (var (_, characterCollectibles) in destinyProfileResponse.CharacterCollectibles.Data)
+            {
+                if (characterCollectibles.Collectibles.TryGetValue(collectibleHash, out var chacterCollectibleComponent) &&
+                    !chacterCollectibleComponent.State.HasFlag(DestinyCollectibleState.NotAcquired))
+                {
+                    continue;
+                }
+                else
+                {
+                    ComputedData.Drystreaks[collectibleHash] = progress;
+                    break;
+                }
+            }
+        }
+
+        ComputedData.Titles = new Dictionary<uint, int>();
+        var titleHashes = await destinyDefinitionDataService.GetTitleHashesCachedAsync();
+        var profileRecords = destinyProfileResponse.ProfileRecords.Data.Records;
+        foreach (var (titleHash, gildHash) in titleHashes)
+        {
+            int completions = 0;
+            if (profileRecords.TryGetValue(titleHash, out var recordComponent)
+                && !recordComponent.State.HasFlag(DestinyRecordState.ObjectiveNotCompleted))
+            {
+                completions++;
+
+                if (gildHash.HasValue && 
+                    profileRecords.TryGetValue(gildHash.Value, out var gildRecordComponent))
+                {
+                    completions += (gildRecordComponent.CompletedCount ?? 0);
+                }
+            }
+
+            ComputedData.Titles[titleHash] = completions;
         }
     }
 

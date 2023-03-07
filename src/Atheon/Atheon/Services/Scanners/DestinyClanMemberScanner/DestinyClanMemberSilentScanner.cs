@@ -14,17 +14,20 @@ public class DestinyClanMemberSilentScanner : EntityScannerBase<DestinyClanMembe
 {
     private readonly BungieNetApiCallHandler _bungieNetApiCallHandler;
     private readonly IDestinyDb _destinyDb;
+    private readonly DestinyDefinitionDataService _destinyDefinitionDataService;
     private readonly IProfileUpdater[] _profileUpdaters;
 
     public DestinyClanMemberSilentScanner(
         ILogger<DestinyClanMemberSilentScanner> logger,
         BungieNetApiCallHandler bungieNetApiCallHandler,
         IDestinyDb destinyDb,
-        IEnumerable<IProfileUpdater> profileUpdaters) : base(logger)
+        IEnumerable<IProfileUpdater> profileUpdaters,
+        DestinyDefinitionDataService destinyDefinitionDataService) : base(logger)
     {
         Initialize();
         _bungieNetApiCallHandler = bungieNetApiCallHandler;
         _destinyDb = destinyDb;
+        _destinyDefinitionDataService = destinyDefinitionDataService;
         _profileUpdaters = profileUpdaters.OrderBy(x => x.Priority).ToArray();
     }
 
@@ -140,10 +143,11 @@ public class DestinyClanMemberSilentScanner : EntityScannerBase<DestinyClanMembe
 
         if (profile is null)
         {
-            profile = DestinyProfileDbModel.CreateFromApiResponse(
+            profile = await DestinyProfileDbModel.CreateFromApiResponse(
                 input.GroupMember.GroupId, 
                 context.DestinyProfileResponse!, 
-                input.BungieClient);
+                input.BungieClient,
+                _destinyDefinitionDataService);
             profile.ClanId = input.ClanScannerContext.ClanId;
             profile.LastUpdated = DateTime.UtcNow;
             await _destinyDb.UpsertDestinyProfileAsync(profile);

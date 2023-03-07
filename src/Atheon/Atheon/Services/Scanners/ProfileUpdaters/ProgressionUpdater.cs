@@ -12,7 +12,7 @@ public class ProgressionUpdater : IProfileUpdater
     public bool ReliesOnSecondaryComponents => false;
     public int Priority => 0;
 
-    public void Update(
+    public async Task Update(
         IBungieClient bungieClient,
         DestinyProfileDbModel dbProfile,
         DestinyProfileResponse profileResponse,
@@ -37,7 +37,7 @@ public class ProgressionUpdater : IProfileUpdater
         }
     }
 
-    public void UpdateSilent(
+    public async Task UpdateSilent(
         IBungieClient bungieClient,
         DestinyProfileDbModel dbProfile,
         DestinyProfileResponse profileResponse)

@@ -22,7 +22,7 @@ public class CollectibleUpdater : IProfileUpdater
         _commonEvents = commonEvents;
     }
 
-    public void Update(
+    public async Task Update(
         IBungieClient bungieClient,
         DestinyProfileDbModel dbProfile,
         DestinyProfileResponse profileResponse,
@@ -100,7 +100,7 @@ public class CollectibleUpdater : IProfileUpdater
         }
     }
 
-    public void UpdateSilent(
+    public async Task UpdateSilent(
         IBungieClient bungieClient,
         DestinyProfileDbModel dbProfile,
         DestinyProfileResponse profileResponse)

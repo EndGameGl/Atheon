@@ -30,7 +30,7 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
         public bool ReliesOnSecondaryComponents => true;
         public int Priority => 0;
 
-        public void Update(
+        public async Task Update(
             IBungieClient bungieClient,
             DestinyProfileDbModel dbProfile,
             DestinyProfileResponse profileResponse,
@@ -148,7 +148,7 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
             }
         }
 
-        public void UpdateSilent(
+        public async Task UpdateSilent(
             IBungieClient bungieClient,
             DestinyProfileDbModel dbProfile,
             DestinyProfileResponse profileResponse)

@@ -201,47 +201,50 @@ public class SqliteDestinyDb : IDestinyDb
     private const string UpsertDestinyProfileQuery =
         $"""
         INSERT INTO DestinyProfiles
-            (
-                {nameof(DestinyProfileDbModel.MembershipId)},
-                {nameof(DestinyProfileDbModel.MembershipType)},
-                {nameof(DestinyProfileDbModel.Name)},
-                {nameof(DestinyProfileDbModel.ClanId)},
-                {nameof(DestinyProfileDbModel.DateLastPlayed)},
-                {nameof(DestinyProfileDbModel.MinutesPlayedTotal)},
-                {nameof(DestinyProfileDbModel.Collectibles)},
-                {nameof(DestinyProfileDbModel.Records)},
-                {nameof(DestinyProfileDbModel.Progressions)},
-                {nameof(DestinyProfileDbModel.ResponseMintedTimestamp)},
-                {nameof(DestinyProfileDbModel.SecondaryComponentsMintedTimestamp)},
-                {nameof(DestinyProfileDbModel.LastUpdated)}
-            )
-            VALUES 
-            (
-                @{nameof(DestinyProfileDbModel.MembershipId)},
-                @{nameof(DestinyProfileDbModel.MembershipType)},
-                @{nameof(DestinyProfileDbModel.Name)},
-                @{nameof(DestinyProfileDbModel.ClanId)},
-                @{nameof(DestinyProfileDbModel.DateLastPlayed)},
-                @{nameof(DestinyProfileDbModel.MinutesPlayedTotal)},
-                @{nameof(DestinyProfileDbModel.Collectibles)},
-                @{nameof(DestinyProfileDbModel.Records)},
-                @{nameof(DestinyProfileDbModel.Progressions)},
-                @{nameof(DestinyProfileDbModel.ResponseMintedTimestamp)},
-                @{nameof(DestinyProfileDbModel.SecondaryComponentsMintedTimestamp)},
-                @{nameof(DestinyProfileDbModel.LastUpdated)}
-            )
-            ON CONFLICT ({nameof(DestinyProfileDbModel.MembershipId)}) DO UPDATE SET 
-                {nameof(DestinyProfileDbModel.MembershipType)} = @{nameof(DestinyProfileDbModel.MembershipType)},
-                {nameof(DestinyProfileDbModel.ClanId)} = @{nameof(DestinyProfileDbModel.ClanId)},
-                {nameof(DestinyProfileDbModel.Name)} = @{nameof(DestinyProfileDbModel.Name)},
-                {nameof(DestinyProfileDbModel.DateLastPlayed)} = @{nameof(DestinyProfileDbModel.DateLastPlayed)},
-                {nameof(DestinyProfileDbModel.MinutesPlayedTotal)} = @{nameof(DestinyProfileDbModel.MinutesPlayedTotal)},
-                {nameof(DestinyProfileDbModel.Collectibles)} = @{nameof(DestinyProfileDbModel.Collectibles)},
-                {nameof(DestinyProfileDbModel.Records)} = @{nameof(DestinyProfileDbModel.Records)},
-                {nameof(DestinyProfileDbModel.Progressions)} = @{nameof(DestinyProfileDbModel.Progressions)},
-                {nameof(DestinyProfileDbModel.ResponseMintedTimestamp)} = @{nameof(DestinyProfileDbModel.ResponseMintedTimestamp)},
-                {nameof(DestinyProfileDbModel.SecondaryComponentsMintedTimestamp)} = @{nameof(DestinyProfileDbModel.SecondaryComponentsMintedTimestamp)},
-                {nameof(DestinyProfileDbModel.LastUpdated)} = @{nameof(DestinyProfileDbModel.LastUpdated)}
+        (
+            {nameof(DestinyProfileDbModel.MembershipId)},
+            {nameof(DestinyProfileDbModel.MembershipType)},
+            {nameof(DestinyProfileDbModel.Name)},
+            {nameof(DestinyProfileDbModel.ClanId)},
+            {nameof(DestinyProfileDbModel.DateLastPlayed)},
+            {nameof(DestinyProfileDbModel.MinutesPlayedTotal)},
+            {nameof(DestinyProfileDbModel.Collectibles)},
+            {nameof(DestinyProfileDbModel.Records)},
+            {nameof(DestinyProfileDbModel.Progressions)},
+            {nameof(DestinyProfileDbModel.ResponseMintedTimestamp)},
+            {nameof(DestinyProfileDbModel.SecondaryComponentsMintedTimestamp)},
+            {nameof(DestinyProfileDbModel.LastUpdated)},
+            {nameof(DestinyProfileDbModel.ComputedData)}
+        )
+        VALUES 
+        (
+            @{nameof(DestinyProfileDbModel.MembershipId)},
+            @{nameof(DestinyProfileDbModel.MembershipType)},
+            @{nameof(DestinyProfileDbModel.Name)},
+            @{nameof(DestinyProfileDbModel.ClanId)},
+            @{nameof(DestinyProfileDbModel.DateLastPlayed)},
+            @{nameof(DestinyProfileDbModel.MinutesPlayedTotal)},
+            @{nameof(DestinyProfileDbModel.Collectibles)},
+            @{nameof(DestinyProfileDbModel.Records)},
+            @{nameof(DestinyProfileDbModel.Progressions)},
+            @{nameof(DestinyProfileDbModel.ResponseMintedTimestamp)},
+            @{nameof(DestinyProfileDbModel.SecondaryComponentsMintedTimestamp)},
+            @{nameof(DestinyProfileDbModel.LastUpdated)},
+            @{nameof(DestinyProfileDbModel.ComputedData)}
+        )
+        ON CONFLICT ({nameof(DestinyProfileDbModel.MembershipId)}) DO UPDATE SET 
+            {nameof(DestinyProfileDbModel.MembershipType)} = @{nameof(DestinyProfileDbModel.MembershipType)},
+            {nameof(DestinyProfileDbModel.ClanId)} = @{nameof(DestinyProfileDbModel.ClanId)},
+            {nameof(DestinyProfileDbModel.Name)} = @{nameof(DestinyProfileDbModel.Name)},
+            {nameof(DestinyProfileDbModel.DateLastPlayed)} = @{nameof(DestinyProfileDbModel.DateLastPlayed)},
+            {nameof(DestinyProfileDbModel.MinutesPlayedTotal)} = @{nameof(DestinyProfileDbModel.MinutesPlayedTotal)},
+            {nameof(DestinyProfileDbModel.Collectibles)} = @{nameof(DestinyProfileDbModel.Collectibles)},
+            {nameof(DestinyProfileDbModel.Records)} = @{nameof(DestinyProfileDbModel.Records)},
+            {nameof(DestinyProfileDbModel.Progressions)} = @{nameof(DestinyProfileDbModel.Progressions)},
+            {nameof(DestinyProfileDbModel.ResponseMintedTimestamp)} = @{nameof(DestinyProfileDbModel.ResponseMintedTimestamp)},
+            {nameof(DestinyProfileDbModel.SecondaryComponentsMintedTimestamp)} = @{nameof(DestinyProfileDbModel.SecondaryComponentsMintedTimestamp)},
+            {nameof(DestinyProfileDbModel.LastUpdated)} = @{nameof(DestinyProfileDbModel.LastUpdated)},
+            {nameof(DestinyProfileDbModel.ComputedData)} = @{nameof(DestinyProfileDbModel.ComputedData)};
         """;
     public async Task UpsertDestinyProfileAsync(DestinyProfileDbModel profileDbModel)
     {
