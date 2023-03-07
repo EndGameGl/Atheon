@@ -11,6 +11,7 @@ using DotNetBungieAPI.HashReferences;
 using DotNetBungieAPI.Models;
 using DotNetBungieAPI.Models.Destiny.Definitions.Collectibles;
 using DotNetBungieAPI.Models.Destiny.Definitions.Metrics;
+using DotNetBungieAPI.Models.Destiny.Definitions.PresentationNodes;
 using DotNetBungieAPI.Models.Destiny.Definitions.Records;
 using DotNetBungieAPI.Models.Tokens;
 using System.Text;
@@ -274,9 +275,24 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
                 embedBuilder.AddField(reference.Name, $"```{formattedData}```");
             }
 
+            var icon = string.Empty;
+
+            if (titleDefinition.DisplayProperties.Icon.HasValue)
+            {
+                icon = titleDefinition.DisplayProperties.Icon.AbsolutePath;
+            }
+            else
+            {
+                var parentNode = client.Repository
+                     .GetAll<DestinyPresentationNodeDefinition>()
+                     .FirstOrDefault(x => x.CompletionRecord == titleDefinition.Hash);
+
+                icon = parentNode?.DisplayProperties.Icon.AbsolutePath;
+            }
+
             await Context.Interaction.RespondAsync(
-            embed: embedBuilder
-                    .WithThumbnailUrl(titleDefinition.DisplayProperties.Icon.AbsolutePath)
+                embed: embedBuilder
+                    .WithThumbnailUrl(icon ?? titleDefinition.DisplayProperties.Icon.AbsolutePath)
                     .Build(),
                 ephemeral: hide);
         });
