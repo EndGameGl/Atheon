@@ -7,6 +7,8 @@ using DotNetBungieAPI.HashReferences;
 using IMemoryCache = Atheon.Services.Interfaces.IMemoryCache;
 using Atheon.Services.Caching;
 using Atheon.Models.Database.Destiny.Tracking;
+using DotNetBungieAPI.Models.Destiny.Definitions.Records;
+using System.Collections.Generic;
 
 namespace Atheon.Services.BungieApi;
 
@@ -48,6 +50,15 @@ public class DestinyDefinitionDataService
             },
             TimeSpan.FromSeconds(30),
             CacheExpirationType.Absolute);
+    }
+
+    public async Task<List<DestinyRecordDefinition>> GetAllTitleDefinitionsAsync()
+    {
+        var titles = new List<DestinyRecordDefinition>();
+        var client = await _bungieClientProvider.GetClientAsync();
+        AddAddTitleRecordsFromPresentationNode(client, titles, DefinitionHashes.PresentationNodes.Titles);
+        AddAddTitleRecordsFromPresentationNode(client, titles, DefinitionHashes.PresentationNodes.LegacyTitles);
+        return titles;
     }
 
     public async Task<List<(uint TitleRecordHash, uint? TitleGildRecordHash)>?> GetTitleHashesCachedAsync()
@@ -119,6 +130,31 @@ public class DestinyDefinitionDataService
 
             gildingHash = sealRecordDefinition.TitleInfo.GildingTrackingRecord.Hash.GetValueOrDefault();
             hashes.Add((titleHash, gildingHash));
+        }
+    }
+
+    private static void AddAddTitleRecordsFromPresentationNode(
+        IBungieClient bungieClient,
+        List<DestinyRecordDefinition> records,
+        uint presentationNodeHash)
+    {
+        if (!bungieClient.TryGetDefinition<DestinyPresentationNodeDefinition>(
+                presentationNodeHash,
+                BungieLocales.EN, out var sealsPresentationNodeDefinition))
+            return;
+
+        foreach (var nodeSealEntry in sealsPresentationNodeDefinition.Children.PresentationNodes)
+        {
+            if (!nodeSealEntry.PresentationNode.TryGetDefinition(out var sealDefinition))
+                continue;
+
+            if (sealDefinition.Redacted)
+                continue;
+
+            if (sealDefinition.CompletionRecord.TryGetDefinition(out var sealRecordDefinition))
+            {
+                records.Add(sealRecordDefinition);
+            }
         }
     }
 

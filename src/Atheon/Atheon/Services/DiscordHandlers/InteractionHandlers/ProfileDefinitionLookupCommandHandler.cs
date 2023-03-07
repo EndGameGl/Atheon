@@ -1,4 +1,5 @@
-﻿using Atheon.Models.Database.Destiny.Clans;
+﻿using Atheon.Extensions;
+using Atheon.Models.Database.Destiny.Clans;
 using Atheon.Models.Database.Destiny.Profiles;
 using Atheon.Services.DiscordHandlers.Autocompleters.DestinyCollectibles;
 using Atheon.Services.DiscordHandlers.Autocompleters.DestinyRecords;
@@ -11,6 +12,7 @@ using DotNetBungieAPI.Models;
 using DotNetBungieAPI.Models.Destiny.Definitions.Collectibles;
 using DotNetBungieAPI.Models.Destiny.Definitions.Metrics;
 using DotNetBungieAPI.Models.Destiny.Definitions.Records;
+using DotNetBungieAPI.Models.Tokens;
 using System.Text;
 
 namespace Atheon.Services.DiscordHandlers.InteractionHandlers;
@@ -215,9 +217,68 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
         });
     }
 
-    [SlashCommand("titles", "Checks who completed title")]
-    public async Task GetUserTitles()
+    [SlashCommand("title", "Checks who completed title")]
+    public async Task GetUserTitles(
+        [Summary("title", "Title to look for")][Autocomplete(typeof(DestinyTitleAutocompleter))] string titleRecordHashString,
+        [Summary(description: "Whether user has title or not")] bool hasTitle,
+        [Summary(description: "Whether to hide this message")] bool hide = false)
     {
+        await ExecuteAndHanldeErrors(async () =>
+        {
+            var titleRecordHash = uint.Parse(titleRecordHashString);
+            var client = await _bungieClientProvider.GetClientAsync();
 
+            if (!client.TryGetDefinition<DestinyRecordDefinition>(titleRecordHash, BungieLocales.EN, out var titleDefinition))
+            {
+                var embed = _embedBuilderService.CreateSimpleResponseEmbed("Failure", "Failed to get definition", Color.Red).Build();
+                await Context.Interaction.RespondAsync(embed: embed);
+                return;
+            }
+
+            var titleName = titleDefinition.TitleInfo.TitlesByGenderHash[DefinitionHashes.Genders.Masculine];
+
+            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var titles = await _destinyDb.GetProfileTitlesAsync(titleRecordHash, hasTitle, guildSettings.Clans.ToArray());
+            var clanIds = titles.Select(x => x.ClanId).Distinct().ToArray();
+            var clanReferences = await _destinyDb.GetClanReferencesFromIdsAsync(clanIds);
+
+            var embedBuilder = _embedBuilderService
+            .GetTemplateEmbed()
+                .WithTitle($"Users who have {titleName} title");
+
+            var gettersList = new List<Func<DestinyProfileLiteWithValue, object>>()
+            {
+                user => user.Name
+            };
+
+            if (hasTitle)
+            {
+                gettersList.Add(user => user.Value);
+            }
+
+            var getters = gettersList.ToArray();
+
+            for (int j = 0; j < clanReferences.Count; j++)
+            {
+                var reference = clanReferences[j];
+                var usersOfClan = titles.Where(x => x.ClanId == reference.Id).ToList();
+
+                var formattedData = _embedBuilderService.FormatAsStringTable<DestinyProfileLiteWithValue, long>(
+                    usersOfClan.Count,
+                    "No users",
+                    usersOfClan,
+                    (user) => user.MembershipId,
+                    getters)
+                .LimitTo(1018);
+
+                embedBuilder.AddField(reference.Name, $"```{formattedData}```");
+            }
+
+            await Context.Interaction.RespondAsync(
+            embed: embedBuilder
+                    .WithThumbnailUrl(titleDefinition.DisplayProperties.Icon.AbsolutePath)
+                    .Build(),
+                ephemeral: hide);
+        });
     }
 }

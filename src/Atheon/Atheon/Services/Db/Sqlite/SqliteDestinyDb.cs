@@ -644,4 +644,40 @@ public class SqliteDestinyDb : IDestinyDb
                 ClanIds = clanIds
             });
     }
+
+    private const string GetProfilesWithTitleQuery =
+        """
+        SELECT 
+            MembershipId,
+            Name,
+            ClanId,
+            json_extract(ComputedData, '$.titles.{0}') as Value
+        FROM DestinyProfiles
+        WHERE ClanId IN @ClanIds AND Value IS NOT NULL AND Value != 0
+        ORDER BY Value DESC
+        """;
+
+    private const string GetProfilesWithoutTitleQuery =
+        """
+        SELECT 
+            MembershipId,
+            Name,
+            ClanId,
+            json_extract(ComputedData, '$.titles.{0}') as Value
+        FROM DestinyProfiles
+        WHERE ClanId IN @ClanIds AND Value IS NULL OR Value = 0
+        """;
+    public async Task<List<DestinyProfileLiteWithValue>> GetProfileTitlesAsync(uint titleRecordHash, bool hasTitle, long[] clanIds)
+    {
+        if (hasTitle)
+        {
+            return await _dbAccess.QueryAsync<DestinyProfileLiteWithValue>(
+                string.Format(GetProfilesWithTitleQuery, titleRecordHash),
+                new { ClanIds = clanIds });
+        }
+
+        return await _dbAccess.QueryAsync<DestinyProfileLiteWithValue>(
+                string.Format(GetProfilesWithoutTitleQuery, titleRecordHash),
+                new { ClanIds = clanIds });
+    }
 }
