@@ -9,6 +9,7 @@ using Discord.Interactions;
 using DotNetBungieAPI.HashReferences;
 using DotNetBungieAPI.Models;
 using DotNetBungieAPI.Models.Destiny.Definitions.Collectibles;
+using DotNetBungieAPI.Models.Destiny.Definitions.Metrics;
 using DotNetBungieAPI.Models.Destiny.Definitions.Records;
 using System.Text;
 
@@ -177,9 +178,15 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
             var clanIds = drystreaks.Select(x => x.ClanId).Distinct().ToArray();
             var clanReferences = await _destinyDb.GetClanReferencesFromIdsAsync(clanIds);
 
+
             var embedBuilder = _embedBuilderService
                 .GetTemplateEmbed()
                 .WithTitle($"Users who don't have {collectibleDefinition.DisplayProperties.Name}");
+
+            if (Destiny2Metadata.DryStreakItemSources.TryGetValue(collectibleHash, out var source))
+            {
+                embedBuilder.WithDescription(source);
+            }
 
             for (int j = 0; j < clanReferences.Count; j++)
             {

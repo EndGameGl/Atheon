@@ -36,6 +36,18 @@ public static class Destiny2Metadata
         { DefinitionHashes.Collectibles.HierarchyofNeeds, DefinitionHashes.Metrics.SpireoftheWatcherCompletions }
     });
 
+    public static ReadOnlyDictionary<uint, string> DryStreakItemSources { get; } = new(new Dictionary<uint, string>
+    {
+        { DefinitionHashes.Collectibles.OneThousandVoices, "Source: Last Wish Raid" },
+        { DefinitionHashes.Collectibles.EyesofTomorrow, "Source: Deep Stone Crypt Raid" },
+        { DefinitionHashes.Collectibles.VexMythoclast, "Source: Vault of Glass Raid" },
+        { DefinitionHashes.Collectibles.CollectiveObligation, "Source: Vow of the Disciple Raid" },
+        { DefinitionHashes.Collectibles.Heartshadow, "Source: Duality Dungeon" },
+        { DefinitionHashes.Collectibles.InMemoriamShell, "Source: Trials of Osiris" },
+        { DefinitionHashes.Collectibles.TouchofMalice, "Source: Kings Fall Raid" },
+        { DefinitionHashes.Collectibles.HierarchyofNeeds, "Source: Spire of the Watcher Dungeon" }
+    });
+
     public static DestinyComponentType[] GenericProfileComponents { get; } =
     {
         DestinyComponentType.Profiles,
