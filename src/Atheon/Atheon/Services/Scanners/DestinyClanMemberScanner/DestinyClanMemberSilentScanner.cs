@@ -25,7 +25,7 @@ public class DestinyClanMemberSilentScanner : EntityScannerBase<DestinyClanMembe
         Initialize();
         _bungieNetApiCallHandler = bungieNetApiCallHandler;
         _destinyDb = destinyDb;
-        _profileUpdaters = profileUpdaters.ToArray();
+        _profileUpdaters = profileUpdaters.OrderBy(x => x.Priority).ToArray();
     }
 
     [ScanStep(nameof(CheckIfMemberIsOnline), 1)]

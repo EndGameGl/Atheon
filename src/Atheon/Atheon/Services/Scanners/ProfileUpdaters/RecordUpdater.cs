@@ -28,13 +28,14 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
         }
 
         public bool ReliesOnSecondaryComponents => true;
+        public int Priority => 0;
 
         public void Update(
             IBungieClient bungieClient,
             DestinyProfileDbModel dbProfile,
             DestinyProfileResponse profileResponse,
             List<DiscordGuildSettingsDbModel> guildSettings)
-        {
+        {          
             var titleAndGildHashes = _destinyDefinitionDataService.GetTitleHashesCachedAsync().GetAwaiter().GetResult()!;
             foreach (var (recordHash, recordComponent) in profileResponse.ProfileRecords.Data.Records)
             {

@@ -7,6 +7,7 @@ namespace Atheon.Services.Interfaces
     public interface IProfileUpdater
     {
         bool ReliesOnSecondaryComponents { get; }
+        int Priority { get; }
 
         void UpdateSilent(
             IBungieClient bungieClient,

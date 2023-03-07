@@ -10,6 +10,7 @@ namespace Atheon.Services.Scanners.ProfileUpdaters;
 public class ProgressionUpdater : IProfileUpdater
 {
     public bool ReliesOnSecondaryComponents => false;
+    public int Priority => 0;
 
     public void Update(
         IBungieClient bungieClient,
