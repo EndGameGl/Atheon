@@ -622,4 +622,25 @@ public class SqliteDestinyDb : IDestinyDb
     {
         return await _dbAccess.QueryAsync<ClanReference>(GetClansFromIdsQuery, new { ClanIds = clanIds });
     }
+
+    private const string GetProfileDrystreaksQuery =
+        """
+        SELECT 
+            MembershipId,
+            Name,
+            ClanId,
+            json_extract(ComputedData, '$.drystreaks.{0}') as Value
+        FROM DestinyProfiles
+        WHERE ClanId IN @ClanIds AND Value IS NOT NULL AND Value != 0
+        ORDER BY Value DESC
+        """;
+
+    public async Task<List<DestinyProfileLiteWithValue>> GetProfileDrystreaksAsync(uint collectibleHash, long[] clanIds)
+    {
+        return await _dbAccess.QueryAsync<DestinyProfileLiteWithValue>(string.Format(GetProfileDrystreaksQuery, collectibleHash),
+            new
+            {
+                ClanIds = clanIds
+            });
+    }
 }

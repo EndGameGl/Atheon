@@ -170,25 +170,9 @@ public class DestinyProfileDbModel
 
             var progress = metricComponent.ObjectiveProgress.Progress ?? 0;
 
-            if (destinyProfileResponse.ProfileCollectibles.Data.Collectibles.TryGetValue(collectibleHash, out var collectibleComponent) &&
-                collectibleComponent.State.HasFlag(DestinyCollectibleState.NotAcquired))
+            if (!Collectibles.Contains(collectibleHash))
             {
                 ComputedData.Drystreaks[collectibleHash] = progress;
-                continue;
-            }
-
-            foreach (var (_, characterCollectibles) in destinyProfileResponse.CharacterCollectibles.Data)
-            {
-                if (characterCollectibles.Collectibles.TryGetValue(collectibleHash, out var chacterCollectibleComponent) &&
-                    !chacterCollectibleComponent.State.HasFlag(DestinyCollectibleState.NotAcquired))
-                {
-                    continue;
-                }
-                else
-                {
-                    ComputedData.Drystreaks[collectibleHash] = progress;
-                    break;
-                }
             }
         }
 

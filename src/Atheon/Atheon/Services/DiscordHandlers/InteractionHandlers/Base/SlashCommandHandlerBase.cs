@@ -34,10 +34,11 @@ namespace Atheon.Services.DiscordHandlers.InteractionHandlers.Base
         {
             try
             {
-                await actualCommand().ExecuteInTimeOrThrow(3000);
+                await actualCommand();
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error while executing command");
                 var embed = EmbedBuilderService.CreateErrorEmbed(ex);
 
                 if (Context.Interaction.HasResponded)
