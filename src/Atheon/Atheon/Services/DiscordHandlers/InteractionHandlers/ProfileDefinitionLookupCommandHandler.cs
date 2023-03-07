@@ -1,4 +1,5 @@
 ﻿using Atheon.Models.Database.Destiny.Clans;
+using Atheon.Models.Database.Destiny.Profiles;
 using Atheon.Services.DiscordHandlers.Autocompleters.DestinyCollectibles;
 using Atheon.Services.DiscordHandlers.Autocompleters.DestinyRecords;
 using Atheon.Services.DiscordHandlers.InteractionHandlers.Base;
@@ -183,29 +184,20 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
             for (int j = 0; j < clanReferences.Count; j++)
             {
                 var reference = clanReferences[j];
-                var sb = new StringBuilder();
-                sb.Append("```");
                 var usersOfClan = drystreaks.Where(x => x.ClanId == reference.Id).ToList();
 
-                for (int i = 0; i < usersOfClan.Count; i++)
-                {
-                    var user = usersOfClan[i];
-                    if (user.Name is "#")
-                        continue;
-                    var userDisplayString = $"{user.Name}: {user.Value}\n";
-                    if ((sb.Length + userDisplayString.Length) <= 1005)
+                var formattedData = _embedBuilderService.FormatAsStringTable<DestinyProfileLiteWithValue, long>(
+                    usersOfClan.Count,
+                    "No users",
+                    usersOfClan,
+                    (user) => user.MembershipId,
+                    new Func<DestinyProfileLiteWithValue, object>[]
                     {
-                        sb.Append(userDisplayString);
-                    }
-                    else
-                    {
-                        var left = usersOfClan.Count - i + 1;
-                        sb.Append($"And {left} more...");
-                        break;
-                    }
-                }
-                sb.Append("```");
-                embedBuilder.AddField(reference.Name, sb.ToString(), j % 2 == 0);
+                        user => user.Name,
+                        user => user.Value
+                    });
+
+                embedBuilder.AddField(reference.Name, $"```{formattedData}```");
             }
 
             await Context.Interaction.RespondAsync(
@@ -214,5 +206,11 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
                     .Build(),
                 ephemeral: hide);
         });
+    }
+
+    [SlashCommand("titles", "Checks who completed title")]
+    public async Task GetUserTitles()
+    {
+
     }
 }

@@ -637,7 +637,8 @@ public class SqliteDestinyDb : IDestinyDb
 
     public async Task<List<DestinyProfileLiteWithValue>> GetProfileDrystreaksAsync(uint collectibleHash, long[] clanIds)
     {
-        return await _dbAccess.QueryAsync<DestinyProfileLiteWithValue>(string.Format(GetProfileDrystreaksQuery, collectibleHash),
+        return await _dbAccess.QueryAsync<DestinyProfileLiteWithValue>(
+            string.Format(GetProfileDrystreaksQuery, collectibleHash),
             new
             {
                 ClanIds = clanIds

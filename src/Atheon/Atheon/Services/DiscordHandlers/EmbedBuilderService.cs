@@ -11,6 +11,7 @@ using DotNetBungieAPI.Service.Abstractions;
 using System.Text;
 using System.Drawing;
 using Atheon.Extensions;
+using Microsoft.OpenApi.Services;
 
 namespace Atheon.Services.DiscordHandlers;
 
@@ -521,5 +522,154 @@ public class EmbedBuilderService
             }
         }
     }
+    #endregion
+
+    #region Leaderboards
+
+    public Embed CreateRankingLeaderboard<TEntry, TKey>(
+        int supposedAmount,
+        string rankingsName,
+        string subtitle,
+        string emptySubtitle,
+        List<TEntry> leaderboard,
+        Func<TEntry, TKey> keyGetter,
+        Func<TEntry, object>[] valueGetter,
+        TKey? currentKey)
+    {
+        var eb = GetTemplateEmbed();
+        eb.WithTitle(rankingsName);
+
+        if (leaderboard.Count == 0)
+        {
+            eb.WithDescription(emptySubtitle);
+            return eb.Build();
+        }
+
+        var amountIndentation = supposedAmount.ToString().Length;
+        var paddingBuffer = new int[valueGetter.Length];
+
+        for (var i = 0; i < valueGetter.Length; i++)
+        {
+            var value = valueGetter[i](leaderboard[0]);
+
+            if (i == valueGetter.Length - 1)
+            {
+                paddingBuffer[i] = 0;
+            }
+            else
+            {
+                paddingBuffer[i] = value.ToString().Length;
+            }
+        }
+
+        var sb = new StringBuilder();
+
+        sb.AppendLine($"```{subtitle}\n");
+
+        var cutLeaderboard = leaderboard.Take(supposedAmount).ToArray();
+
+        var valueBuffer = new object[valueGetter.Length];
+
+        for (var i = 0; i < cutLeaderboard.Length; i++)
+        {
+            var entry = cutLeaderboard[i];
+
+            var paddedAmount = (i + 1).ToString().PadLeft(amountIndentation);
+
+            for (var j = 0; j < valueGetter.Length; j++)
+            {
+                valueBuffer[j] = valueGetter[j](entry);
+            }
+
+            var mainText = string.Join(
+                " | ",
+                valueBuffer.Select((x, inc) => x.ToString().PadLeft(paddingBuffer[inc])));
+
+            sb.AppendLine($"{paddedAmount}: {mainText}");
+        }
+
+        if (currentKey is not null)
+        {
+            var indexOfUser = leaderboard.FindIndex(x => keyGetter(x).Equals(currentKey));
+
+            if (indexOfUser != -1)
+            {
+                var user = leaderboard[indexOfUser];
+                var paddedAmount = (indexOfUser + 1).ToString().PadLeft(amountIndentation);
+
+                for (var j = 0; j < valueGetter.Length; j++)
+                {
+                    valueBuffer[j] = valueGetter[j](user);
+                }
+
+                var mainText = string.Join(
+                    " | ",
+                    valueBuffer.Select((x, inc) => x.ToString().PadLeft(paddingBuffer[inc])));
+
+                sb.AppendLine($"\n{paddedAmount}: {mainText}");
+            }
+        }
+
+        sb.Append("```");
+
+        eb.WithDescription(sb.ToString());
+
+        return eb.Build();
+    }
+
+    public string FormatAsStringTable<TEntry, TKey>(
+        int supposedAmount,
+        string emptySubtitle,
+        List<TEntry> leaderboard,
+        Func<TEntry, TKey> keyGetter,
+        Func<TEntry, object>[] valueGetter)
+    {
+        if (leaderboard.Count == 0)
+        {
+            return emptySubtitle;
+        }
+
+        var amountIndentation = supposedAmount.ToString().Length;
+        var paddingBuffer = new int[valueGetter.Length];
+
+        for (var i = 0; i < valueGetter.Length; i++)
+        {
+            if (i == valueGetter.Length - 1)
+            {
+                paddingBuffer[i] = 0;
+                continue;
+            }
+
+            var getter = valueGetter[i];
+            paddingBuffer[i] = leaderboard.Select(x => getter(x).ToString().Length).Max();
+        }
+
+        var sb = new StringBuilder();
+
+        var cutLeaderboard = leaderboard.Take(supposedAmount).ToArray();
+
+        var valueBuffer = new object[valueGetter.Length];
+
+        for (var i = 0; i < cutLeaderboard.Length; i++)
+        {
+            var entry = cutLeaderboard[i];
+
+            var paddedAmount = (i + 1).ToString().PadLeft(amountIndentation);
+
+            for (var j = 0; j < valueGetter.Length; j++)
+            {
+                valueBuffer[j] = valueGetter[j](entry);
+            }
+
+            var mainText = string.Join(
+                "   ",
+                valueBuffer.Select((x, inc) => x.ToString().PadRight(paddingBuffer[inc])));
+
+            sb.AppendLine($"{paddedAmount}: {mainText}");
+        }
+
+        return sb.ToString();
+    }
+
     #endregion
 }
