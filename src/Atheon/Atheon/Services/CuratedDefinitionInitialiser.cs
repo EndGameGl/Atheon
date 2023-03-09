@@ -1,12 +1,15 @@
 ﻿using Atheon.Models.Database.Destiny.Tracking;
 using Atheon.Services.Interfaces;
 using DotNetBungieAPI.HashReferences;
+using System.Collections.ObjectModel;
 
 namespace Atheon.Services;
 
 public class CuratedDefinitionInitialiser
 {
     private readonly IDestinyDb _destinyDb;
+
+    public ReadOnlyDictionary<uint, CuratedCollectible> CuratedCollectibles { get; private set; }
 
     public CuratedDefinitionInitialiser(
         IDestinyDb destinyDb)
@@ -16,6 +19,7 @@ public class CuratedDefinitionInitialiser
 
     public async Task Initialise()
     {
+        await _destinyDb.ClearAllCuratedTables();
         await InitialiseRecords();
         await InitialiseCollectibles();
 
@@ -28,6 +32,20 @@ public class CuratedDefinitionInitialiser
 
     private async Task InitialiseCollectibles()
     {
-        await _destinyDb.UpsertCuratedCollectibleDefinitionAsync(CuratedCollectible.New(DefinitionHashes.Collectibles.Parasite));
+
+        var curatedCollectibles = new Dictionary<uint, CuratedCollectible>()
+        {
+            {
+                DefinitionHashes.Collectibles.Classified_2629609052,
+                CuratedCollectible.New(DefinitionHashes.Collectibles.Classified_2629609052, "Vexcalibur")
+            }
+        };
+
+        foreach (var curatedCollectible in curatedCollectibles)
+        {
+            await _destinyDb.UpsertCuratedCollectibleDefinitionAsync(curatedCollectible.Value);
+        }
+
+        CuratedCollectibles = new ReadOnlyDictionary<uint, CuratedCollectible>(curatedCollectibles);
     }
 }

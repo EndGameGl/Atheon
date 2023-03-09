@@ -43,6 +43,7 @@ public interface IDestinyDb
 
     Task UpsertCuratedRecordDefinitionAsync(CuratedRecord curatedRecord);
     Task UpsertCuratedCollectibleDefinitionAsync(CuratedCollectible curatedCollectible);
+    Task ClearAllCuratedTables();
 
     Task<List<CuratedRecord>> GetCuratedRecordsAsync();
     Task<List<CuratedCollectible>> GetCuratedCollectiblesAsync();

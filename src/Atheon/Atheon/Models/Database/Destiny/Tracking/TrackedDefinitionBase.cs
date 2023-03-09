@@ -11,6 +11,9 @@ public abstract class TrackedDefinitionBase
     [AutoColumn(nameof(OverrideName), sqliteType: DatabaseOptions.SQLiteTypes.TEXT.DEFAULT_VALUE)]
     public string? OverrideName { get; set; }
 
+    [AutoColumn(nameof(OverrideIcon), sqliteType: DatabaseOptions.SQLiteTypes.TEXT.DEFAULT_VALUE)]
+    public string? OverrideIcon { get; set; }
+
     [AutoColumn(nameof(IsEnabled), sqliteType: DatabaseOptions.SQLiteTypes.NUMERIC.BOOLEAN)]
     public bool? IsEnabled { get; set; }
 }

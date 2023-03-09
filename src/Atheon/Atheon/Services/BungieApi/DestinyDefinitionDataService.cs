@@ -21,15 +21,18 @@ public class DestinyDefinitionDataService
     private readonly IBungieClientProvider _bungieClientProvider;
     private readonly IMemoryCache _memoryCache;
     private readonly IDestinyDb _destinyDb;
+    private readonly CuratedDefinitionInitialiser _curatedDefinitionInitialiser;
 
     public DestinyDefinitionDataService(
         IBungieClientProvider bungieClientProvider,
         IMemoryCache memoryCache,
-        IDestinyDb destinyDb)
+        IDestinyDb destinyDb,
+        CuratedDefinitionInitialiser curatedDefinitionInitialiser)
     {
         _bungieClientProvider = bungieClientProvider;
         _memoryCache = memoryCache;
         _destinyDb = destinyDb;
+        _curatedDefinitionInitialiser = curatedDefinitionInitialiser;
     }
 
     public async Task MapLookupTables()
@@ -50,6 +53,11 @@ public class DestinyDefinitionDataService
 
     public (string CollectibleName, string CollectbleIcon) GetCollectibleDisplayProperties(DestinyCollectibleDefinition collectibleDefinition)
     {
+        if (_curatedDefinitionInitialiser.CuratedCollectibles.TryGetValue(collectibleDefinition.Hash, out var curatedCollectible))
+        {
+            return (curatedCollectible.OverrideName!, curatedCollectible.OverrideIcon!);
+        }
+
         if (collectibleDefinition.Redacted &&
             _collectibleToItemMapping.TryGetValue(collectibleDefinition.Hash, out uint itemHash) &&
             (new DefinitionHashPointer<DestinyInventoryItemDefinition>(itemHash)).TryGetDefinition(out var item))

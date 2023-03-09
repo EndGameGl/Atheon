@@ -680,4 +680,13 @@ public class SqliteDestinyDb : IDestinyDb
                 string.Format(GetProfilesWithoutTitleQuery, titleRecordHash),
                 new { ClanIds = clanIds });
     }
+
+    private const string DeleteCuratedCollectiblesQuery =
+        """
+        DELETE FROM CuratedCollectibles;
+        """;
+    public async Task ClearAllCuratedTables()
+    {
+        await _dbAccess.ExecuteAsync(DeleteCuratedCollectiblesQuery);
+    }
 }
