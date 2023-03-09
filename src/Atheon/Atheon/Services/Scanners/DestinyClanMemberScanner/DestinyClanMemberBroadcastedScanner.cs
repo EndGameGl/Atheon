@@ -181,6 +181,8 @@ public class DestinyClanMemberBroadcastedScanner : EntityScannerBase<DestinyClan
             }
         }
 
+        context.ProfileDbModel.DateLastPlayed = context.DestinyProfileResponse.Profile.Data.DateLastPlayed;
+
         return true;
     }
 
