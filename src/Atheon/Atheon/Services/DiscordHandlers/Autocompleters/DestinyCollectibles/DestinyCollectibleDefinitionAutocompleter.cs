@@ -37,7 +37,17 @@ public class DestinyCollectibleDefinitionAutocompleter : AutocompleteHandler
             var searchResults = client
                 .Repository
                 .GetAll<DestinyCollectibleDefinition>()
-                .Where(x => x.DisplayProperties.Name.Contains(searchEntry, StringComparison.InvariantCultureIgnoreCase))
+                .Where(x =>
+                {
+                    if (x.DisplayProperties.Name.Contains(searchEntry, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        return true;
+                    }
+
+                    var (name, _) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(x);
+
+                    return name.Contains(searchEntry, StringComparison.InvariantCultureIgnoreCase);
+                })
                 .Take(20);
 
             var results = searchResults
@@ -56,6 +66,12 @@ public class DestinyCollectibleDefinitionAutocompleter : AutocompleteHandler
     private string GetCollectibleDisplayName(DestinyCollectibleDefinition destinyCollectible)
     {
         var (name, _) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(destinyCollectible);
-        return new string($"{name} ({destinyCollectible.Item.Select(x => x?.ItemTypeAndTierDisplayName)})".Take(100).ToArray());
+
+        if (destinyCollectible.Item.HasValidHash)
+        {
+            return new string($"{name} ({destinyCollectible.Item.Select(x => x.ItemTypeAndTierDisplayName)})".Take(100).ToArray());
+        }
+
+        return new string($"{name}".Take(100).ToArray());
     }
 }

@@ -1,4 +1,5 @@
-﻿using Atheon.Services.Interfaces;
+﻿using Atheon.Services.BungieApi;
+using Atheon.Services.Interfaces;
 using Discord;
 using Discord.Interactions;
 using DotNetBungieAPI.Extensions;
@@ -11,15 +12,18 @@ public class DestinyExcludingCollectibleDefinitionAutocompleter : AutocompleteHa
     private readonly IBungieClientProvider _bungieClientProvider;
     private readonly ILogger<DestinyCollectibleDefinitionAutocompleter> _logger;
     private readonly IDestinyDb _destinyDb;
+    private readonly DestinyDefinitionDataService _destinyDefinitionDataService;
 
     public DestinyExcludingCollectibleDefinitionAutocompleter(
         IBungieClientProvider bungieClientProvider,
         ILogger<DestinyCollectibleDefinitionAutocompleter> logger,
-        IDestinyDb destinyDb)
+        IDestinyDb destinyDb,
+        DestinyDefinitionDataService destinyDefinitionDataService)
     {
         _bungieClientProvider = bungieClientProvider;
         _logger = logger;
         _destinyDb = destinyDb;
+        _destinyDefinitionDataService = destinyDefinitionDataService;
     }
 
     public override async Task<AutocompletionResult> GenerateSuggestionsAsync(
@@ -40,7 +44,17 @@ public class DestinyExcludingCollectibleDefinitionAutocompleter : AutocompleteHa
             var searchResults = client
                 .Repository
                 .GetAll<DestinyCollectibleDefinition>()
-                .Where(x => x.DisplayProperties.Name.Contains(searchEntry, StringComparison.InvariantCultureIgnoreCase))
+                .Where(x =>
+                {
+                    if (x.DisplayProperties.Name.Contains(searchEntry, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        return true;
+                    }
+                    
+                    var (name, _) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(x);
+
+                    return name.Contains(searchEntry, StringComparison.InvariantCultureIgnoreCase);
+                })
                 .Where(x => !settings.TrackedCollectibles.TrackedHashes.Contains(x.Hash))
                 .Take(20);
 
@@ -59,6 +73,13 @@ public class DestinyExcludingCollectibleDefinitionAutocompleter : AutocompleteHa
 
     private string GetCollectibleDisplayName(DestinyCollectibleDefinition destinyCollectible)
     {
-        return new string($"{destinyCollectible.DisplayProperties.Name} ({destinyCollectible.Item.Select(x => x.ItemTypeAndTierDisplayName)})".Take(100).ToArray());
+        var (name, _) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(destinyCollectible);
+
+        if (destinyCollectible.Item.HasValidHash)
+        {
+            return new string($"{name} ({destinyCollectible.Item.Select(x => x.ItemTypeAndTierDisplayName)})".Take(100).ToArray());
+        }
+
+        return new string($"{name}".Take(100).ToArray());
     }
 }

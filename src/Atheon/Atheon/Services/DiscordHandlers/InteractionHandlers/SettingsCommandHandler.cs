@@ -247,11 +247,13 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
             guildSettings.TrackedCollectibles.TrackedHashes.Add(itemHash);
             await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
 
+            var (name, icon) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(collectibleDefinition);
+
             await Context.Interaction.RespondAsync(embed:
                 _embedBuilderService.CreateSimpleResponseEmbed(
                     "Success",
-                    $"Added **{collectibleDefinition.DisplayProperties.Name}** to tracking")
-                .WithThumbnailUrl(collectibleDefinition.DisplayProperties.Icon.AbsolutePath)
+                    $"Added **{name}** to tracking")
+                .WithThumbnailUrl(icon)
                 .Build());
         });
     }
@@ -280,11 +282,13 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
             guildSettings.TrackedCollectibles.TrackedHashes.Remove(itemHash);
             await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
 
+            var (name, icon) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(collectibleDefinition);
+
             await Context.Interaction.RespondAsync(embed:
                 _embedBuilderService.CreateSimpleResponseEmbed(
                     "Success",
-                    $"Removed **{collectibleDefinition.DisplayProperties.Name}** from tracking")
-                .WithThumbnailUrl(collectibleDefinition.DisplayProperties.Icon.AbsolutePath)
+                    $"Removed **{name}** from tracking")
+                .WithThumbnailUrl(icon)
                 .Build());
         });
     }
