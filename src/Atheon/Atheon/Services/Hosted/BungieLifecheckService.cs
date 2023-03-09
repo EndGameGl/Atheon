@@ -10,6 +10,7 @@ public class BungieLifecheckService : PeriodicBackgroundService, IBungieApiStatu
     private readonly ILogger<BungieLifecheckService> _logger;
     private readonly IBungieClientProvider _bungieClientProvider;
     private readonly BungieNetApiCallHandler _bungieNetApiCallHandler;
+    private readonly IDiscordEventHandler _discordEventHandler;
 
     public bool IsLive { get; private set; }
     public event Func<bool, Task>? StatusChanged;
@@ -20,11 +21,13 @@ public class BungieLifecheckService : PeriodicBackgroundService, IBungieApiStatu
     public BungieLifecheckService(
         ILogger<BungieLifecheckService> logger,
         IBungieClientProvider bungieClientProvider,
-        BungieNetApiCallHandler bungieNetApiCallHandler) : base(logger)
+        BungieNetApiCallHandler bungieNetApiCallHandler,
+        IDiscordEventHandler discordEventHandler) : base(logger)
     {
         _logger = logger;
         _bungieClientProvider = bungieClientProvider;
         _bungieNetApiCallHandler = bungieNetApiCallHandler;
+        _discordEventHandler = discordEventHandler;
     }
 
     protected override Task BeforeExecutionAsync(CancellationToken stoppingToken)
@@ -78,6 +81,7 @@ public class BungieLifecheckService : PeriodicBackgroundService, IBungieApiStatu
             {
                 await StatusChanged(IsLive);
             }
+            await _discordEventHandler.ReportToSystemChannelAsync($"Bungie api status change: {(IsLive ? "Live" : "Down")}");
         }
     }
 

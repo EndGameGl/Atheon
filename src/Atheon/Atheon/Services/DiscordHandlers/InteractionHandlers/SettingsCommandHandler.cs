@@ -14,7 +14,6 @@ using DotNetBungieAPI.Models;
 using DotNetBungieAPI.Models.Destiny.Definitions.Collectibles;
 using DotNetBungieAPI.Models.Destiny.Definitions.Records;
 using System.Text;
-using System.Threading.Channels;
 
 namespace Atheon.Services.DiscordHandlers.InteractionHandlers;
 
@@ -431,6 +430,49 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
                     $"Tracked triumphs: {guildSettings.TrackedRecords.TrackedHashes.Count}",
                     sb.ToString())
                 .Build());
+        });
+    }
+
+    [AtheonBotAdminOrOwner]
+    [SlashCommand("system-reports", "Sets system report settings")]
+    public async Task SetSystemReportSettings(
+        [Summary(description: "Whether to report system notifications")] DiscordNullableBoolean enableSystemReports = DiscordNullableBoolean.None,
+        [Summary(description: "Channel to report them to")] IChannel? channel = null)
+    {
+        await ExecuteAndHanldeErrors(async () =>
+        {
+            var currentGuildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+
+            var anyChanges = false;
+            if (enableSystemReports != DiscordNullableBoolean.None)
+            {
+                var newValue = enableSystemReports is DiscordNullableBoolean.True;
+                if (currentGuildSettings.SystemReportsEnabled != newValue)
+                {
+                    currentGuildSettings.SystemReportsEnabled = newValue;
+                    anyChanges = true;
+                }
+            }
+
+            if (channel is not null)
+            {
+                var channelId = channel.Id;
+
+                if (currentGuildSettings.SystemReportsOverrideChannel != channelId)
+                {
+                    currentGuildSettings.SystemReportsOverrideChannel = channelId;
+                    anyChanges = true;
+                }
+            }
+
+            if (anyChanges)
+            {
+                await _destinyDb.UpsertGuildSettingsAsync(currentGuildSettings);
+            }
+
+            var embed = _embedBuilderService.CreateSimpleResponseEmbed("Success", "Guild settings updated").Build();
+
+            await Context.Interaction.RespondAsync(embed: embed);
         });
     }
 }

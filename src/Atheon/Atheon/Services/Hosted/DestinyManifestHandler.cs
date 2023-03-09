@@ -1,6 +1,8 @@
 ﻿using Atheon.Services.BungieApi;
+using Atheon.Services.DiscordHandlers;
 using Atheon.Services.Hosted.Utilities;
 using Atheon.Services.Interfaces;
+using System.ComponentModel;
 
 namespace Atheon.Services.Hosted;
 
@@ -8,16 +10,19 @@ public class DestinyManifestHandler : PeriodicBackgroundService, IDestinyManifes
 {
     private readonly ILogger<DestinyManifestHandler> _logger;
     private readonly IBungieClientProvider _bungieClientProvider;
+    private readonly IDiscordEventHandler _discordEventHandler;
 
     public bool IsUpdating { get; private set; }
     public event Func<Task> UpdateStarted;
 
     public DestinyManifestHandler(
         ILogger<DestinyManifestHandler> logger,
-        IBungieClientProvider bungieClientProvider) : base(logger)
+        IBungieClientProvider bungieClientProvider,
+        IDiscordEventHandler discordEventHandler) : base(logger)
     {
         _logger = logger;
         _bungieClientProvider = bungieClientProvider;
+        _discordEventHandler = discordEventHandler;
     }
 
     protected override Task BeforeExecutionAsync(CancellationToken stoppingToken)
@@ -46,7 +51,7 @@ public class DestinyManifestHandler : PeriodicBackgroundService, IDestinyManifes
                 {
                     await UpdateStarted();
                 }
-
+                await _discordEventHandler.ReportToSystemChannelAsync($"Destiny manifest update started...");
                 _logger.LogInformation("Manifest update started!");
 
                 await client.DefinitionProvider.Update();
@@ -54,6 +59,7 @@ public class DestinyManifestHandler : PeriodicBackgroundService, IDestinyManifes
                 sw.Stop();
 
                 _logger.LogInformation("Manifest update finished in {Time} ms", sw.ElapsedMilliseconds);
+                await _discordEventHandler.ReportToSystemChannelAsync($"Manifest update finished in {sw.ElapsedMilliseconds} ms");
             }
         }
         catch (Exception exception)

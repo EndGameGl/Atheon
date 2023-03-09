@@ -16,6 +16,7 @@ public class DiscordEventHandler : IDiscordEventHandler
     private readonly IDestinyDb _destinyDb;
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<DiscordEventHandler> _logger;
+    private readonly EmbedBuilderService _embedBuilderService;
 
     private InteractionService _interactionService;
     private DiscordShardedClient _discordClient;
@@ -24,12 +25,14 @@ public class DiscordEventHandler : IDiscordEventHandler
         IDiscordClientProvider discordClientProvider,
         IDestinyDb destinyDb,
         IServiceProvider serviceProvider,
-        ILogger<DiscordEventHandler> logger)
+        ILogger<DiscordEventHandler> logger,
+        EmbedBuilderService embedBuilderService)
     {
         _discordClientProvider = discordClientProvider;
         _destinyDb = destinyDb;
         _serviceProvider = serviceProvider;
         _logger = logger;
+        _embedBuilderService = embedBuilderService;
     }
 
     private async Task RegisterInteractions()
@@ -126,6 +129,37 @@ public class DiscordEventHandler : IDiscordEventHandler
             case LogSeverity.Debug:
                 _logger.LogDebug("[Discord] {Source}: {Message}", logMessage.Source, logMessage.Message);
                 break;
+        }
+    }
+
+    public async Task ReportToSystemChannelAsync(string message)
+    {
+        var guildSettings = await _destinyDb.GetAllGuildSettings();
+
+        var embed = _embedBuilderService.CreateSimpleResponseEmbed("System alert", message, Color.Orange).Build();
+        foreach (var guildSetting in guildSettings)
+        {
+            if (guildSetting is not null && guildSetting.SystemReportsEnabled)
+            {
+                var channelToReportTo = guildSetting.SystemReportsOverrideChannel ?? guildSetting.DefaultReportChannel;
+                if (channelToReportTo is null)
+                {
+                    continue;
+                }
+
+                if (!_discordClientProvider.IsReady)
+                {
+                    continue;
+                }
+
+                var client = _discordClientProvider.Client!;
+                var guild = client.GetGuild(guildSetting.GuildId);
+                if (guild is null)
+                    continue;
+
+                var textChannel = guild.GetTextChannel(channelToReportTo.Value);
+                await textChannel.SendMessageAsync(embed: embed);
+            }
         }
     }
 }
