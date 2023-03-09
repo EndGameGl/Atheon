@@ -1,6 +1,7 @@
 ﻿using Atheon.Extensions;
 using Atheon.Models.Database.Destiny.Clans;
 using Atheon.Models.Database.Destiny.Profiles;
+using Atheon.Services.BungieApi;
 using Atheon.Services.DiscordHandlers.Autocompleters.DestinyCollectibles;
 using Atheon.Services.DiscordHandlers.Autocompleters.DestinyRecords;
 using Atheon.Services.DiscordHandlers.InteractionHandlers.Base;
@@ -24,16 +25,19 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
     private readonly IDestinyDb _destinyDb;
     private readonly IBungieClientProvider _bungieClientProvider;
     private readonly EmbedBuilderService _embedBuilderService;
+    private readonly DestinyDefinitionDataService _destinyDefinitionDataService;
 
     public ProfileDefinitionLookupCommandHandler(
         ILogger<ProfileDefinitionLookupCommandHandler> logger,
         IDestinyDb destinyDb,
         IBungieClientProvider bungieClientProvider,
-        EmbedBuilderService embedBuilderService) : base(logger, embedBuilderService)
+        EmbedBuilderService embedBuilderService,
+        DestinyDefinitionDataService destinyDefinitionDataService) : base(logger, embedBuilderService)
     {
         _destinyDb = destinyDb;
         _bungieClientProvider = bungieClientProvider;
         _embedBuilderService = embedBuilderService;
+        _destinyDefinitionDataService = destinyDefinitionDataService;
     }
 
     [SlashCommand("item-check", "Checks who has items")]
@@ -52,11 +56,14 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
 
             var bungieClient = await _bungieClientProvider.GetClientAsync();
 
-            bungieClient.TryGetDefinition<DestinyCollectibleDefinition>(itemHash, DotNetBungieAPI.Models.BungieLocales.EN, out var colDef);
+            bungieClient.TryGetDefinition<DestinyCollectibleDefinition>(itemHash, BungieLocales.EN, out var colDef);
+
+            var (defName, defIcon) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(colDef);
 
             var embedBuilder = _embedBuilderService
                 .GetTemplateEmbed()
-                .WithTitle($"{users.Count} users {(hasItem ? "have" : "miss")} {colDef.DisplayProperties.Name}");
+                .WithTitle($"{users.Count} users {(hasItem ? "have" : "miss")} {defName}")
+                .WithThumbnailUrl(defIcon);
 
             for (int j = 0; j < clanReferences.Count; j++)
             {
@@ -87,9 +94,7 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
             }
 
             await Context.Interaction.RespondAsync(
-                embed: embedBuilder
-                    .WithThumbnailUrl(colDef.DisplayProperties.Icon.AbsolutePath)
-                    .Build(),
+                embed: embedBuilder.Build(),
                 ephemeral: hide);
         });
     }

@@ -11,6 +11,7 @@ public class DestinyManifestHandler : PeriodicBackgroundService, IDestinyManifes
     private readonly ILogger<DestinyManifestHandler> _logger;
     private readonly IBungieClientProvider _bungieClientProvider;
     private readonly IDiscordEventHandler _discordEventHandler;
+    private readonly DestinyDefinitionDataService _destinyDefinitionDataService;
 
     public bool IsUpdating { get; private set; }
     public event Func<Task> UpdateStarted;
@@ -18,11 +19,13 @@ public class DestinyManifestHandler : PeriodicBackgroundService, IDestinyManifes
     public DestinyManifestHandler(
         ILogger<DestinyManifestHandler> logger,
         IBungieClientProvider bungieClientProvider,
-        IDiscordEventHandler discordEventHandler) : base(logger)
+        IDiscordEventHandler discordEventHandler,
+        DestinyDefinitionDataService destinyDefinitionDataService) : base(logger)
     {
         _logger = logger;
         _bungieClientProvider = bungieClientProvider;
         _discordEventHandler = discordEventHandler;
+        _destinyDefinitionDataService = destinyDefinitionDataService;
     }
 
     protected override Task BeforeExecutionAsync(CancellationToken stoppingToken)
@@ -55,6 +58,9 @@ public class DestinyManifestHandler : PeriodicBackgroundService, IDestinyManifes
                 _logger.LogInformation("Manifest update started!");
 
                 await client.DefinitionProvider.Update();
+                client.Repository.Clear();
+                await client.DefinitionProvider.ReadToRepository(client.Repository);
+                await _destinyDefinitionDataService.MapLookupTables();
 
                 sw.Stop();
 

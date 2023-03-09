@@ -1,4 +1,5 @@
 ﻿using Atheon.Extensions;
+using Atheon.Services.BungieApi;
 using Atheon.Services.Interfaces;
 using Discord;
 
@@ -14,6 +15,7 @@ namespace Atheon.Services.Hosted
         private readonly IDiscordEventHandler _discordEventHandler;
         private readonly IDbDataValidator _dbDataValidator;
         private readonly CuratedDefinitionInitialiser _curatedDefinitionInitialiser;
+        private readonly DestinyDefinitionDataService _destinyDefinitionDataService;
 
         public ApplicationStartup(
             IDiscordClientProvider discordClientProvider,
@@ -23,7 +25,8 @@ namespace Atheon.Services.Hosted
             ILogger<ApplicationStartup> logger,
             IDiscordEventHandler discordEventHandler,
             IDbDataValidator dbDataValidator,
-            CuratedDefinitionInitialiser curatedDefinitionInitialiser)
+            CuratedDefinitionInitialiser curatedDefinitionInitialiser,
+            DestinyDefinitionDataService destinyDefinitionDataService)
         {
             _discordClientProvider = discordClientProvider;
             _dbBootstrap = dbBootstrap;
@@ -33,6 +36,7 @@ namespace Atheon.Services.Hosted
             _discordEventHandler = discordEventHandler;
             _dbDataValidator = dbDataValidator;
             _curatedDefinitionInitialiser = curatedDefinitionInitialiser;
+            _destinyDefinitionDataService = destinyDefinitionDataService;
         }
 
         private async Task RunInitialWarnings()
@@ -74,6 +78,8 @@ namespace Atheon.Services.Hosted
                     return;
                 await client.DefinitionProvider.Initialize();
                 await client.DefinitionProvider.ReadToRepository(client.Repository);
+                await _destinyDefinitionDataService.MapLookupTables();
+
             });
             await TryExecute(async () =>
             {

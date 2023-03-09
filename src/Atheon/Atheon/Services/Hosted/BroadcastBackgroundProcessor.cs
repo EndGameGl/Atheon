@@ -20,6 +20,7 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
     private readonly IDestinyDb _destinyDb;
     private readonly IBungieClientProvider _bungieClientProvider;
     private readonly EmbedBuilderService _embedBuilderService;
+    private readonly DestinyDefinitionDataService _destinyDefinitionDataService;
     private ConcurrentQueue<ClanBroadcastDbModel> _clanBroadcasts = new();
     private ConcurrentQueue<DestinyUserProfileBroadcastDbModel> _userBroadcasts = new();
 
@@ -31,7 +32,8 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
         IDestinyDb destinyDb,
         BroadcastSaver broadcastSaver,
         IBungieClientProvider bungieClientProvider,
-        EmbedBuilderService embedBuilderService) : base(logger)
+        EmbedBuilderService embedBuilderService,
+        DestinyDefinitionDataService destinyDefinitionDataService) : base(logger)
     {
         _logger = logger;
         _clanBroadcastEventChannel = clanBroadcastEventChannel;
@@ -40,6 +42,7 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
         _destinyDb = destinyDb;
         _bungieClientProvider = bungieClientProvider;
         _embedBuilderService = embedBuilderService;
+        _destinyDefinitionDataService = destinyDefinitionDataService;
     }
 
     protected override Task BeforeExecutionAsync(CancellationToken stoppingToken)

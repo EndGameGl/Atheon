@@ -1,5 +1,6 @@
 ﻿using Atheon.Controllers.Base;
 using Atheon.Models.Api;
+using Atheon.Services.BungieApi;
 using Atheon.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,16 +13,19 @@ public class SettingsStorageController : ApiResponseControllerBase
     private readonly ISettingsStorage _settingsStorage;
     private readonly IDiscordClientProvider _discordClientProvider;
     private readonly IBungieClientProvider _bungieClientProvider;
+    private readonly DestinyDefinitionDataService _destinyDefinitionDataService;
 
     public SettingsStorageController(
         ISettingsStorage settingsStorage,
         ILogger<SettingsStorageController> logger,
         IDiscordClientProvider discordClientProvider,
-        IBungieClientProvider bungieClientProvider) : base(logger)
+        IBungieClientProvider bungieClientProvider,
+        DestinyDefinitionDataService destinyDefinitionDataService) : base(logger)
     {
         _settingsStorage = settingsStorage;
         _discordClientProvider = discordClientProvider;
         _bungieClientProvider = bungieClientProvider;
+        _destinyDefinitionDataService = destinyDefinitionDataService;
     }
 
     [HttpPost("SetDiscordToken/{reload}")]
@@ -69,6 +73,7 @@ public class SettingsStorageController : ApiResponseControllerBase
         {
             await _settingsStorage.SetOption(SettingKeys.BungieManifestStoragePath, manifestPath);
             await _bungieClientProvider.SetManifestPath(manifestPath, reload);
+            await _destinyDefinitionDataService.MapLookupTables();
             return OkResult(true);
         }
         catch (Exception ex)

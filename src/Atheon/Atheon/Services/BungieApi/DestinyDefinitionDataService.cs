@@ -9,11 +9,15 @@ using Atheon.Services.Caching;
 using Atheon.Models.Database.Destiny.Tracking;
 using DotNetBungieAPI.Models.Destiny.Definitions.Records;
 using System.Collections.Generic;
+using DotNetBungieAPI.Models.Destiny.Definitions.InventoryItems;
+using DotNetBungieAPI.Models.Destiny.Definitions.Collectibles;
 
 namespace Atheon.Services.BungieApi;
 
 public class DestinyDefinitionDataService
 {
+    private Dictionary<uint, uint> _collectibleToItemMapping;
+
     private readonly IBungieClientProvider _bungieClientProvider;
     private readonly IMemoryCache _memoryCache;
     private readonly IDestinyDb _destinyDb;
@@ -26,6 +30,33 @@ public class DestinyDefinitionDataService
         _bungieClientProvider = bungieClientProvider;
         _memoryCache = memoryCache;
         _destinyDb = destinyDb;
+    }
+
+    public async Task MapLookupTables()
+    {
+        var client = await _bungieClientProvider.GetClientAsync();
+        _collectibleToItemMapping = new Dictionary<uint, uint>();
+
+        var items = client.Repository.GetAll<DestinyInventoryItemDefinition>();
+
+        foreach (var item in items)
+        {
+            if (item.Collectible.HasValidHash)
+            {
+                _collectibleToItemMapping.Add(item.Collectible.Hash.GetValueOrDefault(), item.Hash);
+            }
+        }
+    }
+
+    public (string CollectibleName, string CollectbleIcon) GetCollectibleDisplayProperties(DestinyCollectibleDefinition collectibleDefinition)
+    {
+        if (collectibleDefinition.Redacted &&
+            _collectibleToItemMapping.TryGetValue(collectibleDefinition.Hash, out uint itemHash) &&
+            (new DefinitionHashPointer<DestinyInventoryItemDefinition>(itemHash)).TryGetDefinition(out var item))
+        {
+            return (item.DisplayProperties.Name, item.DisplayProperties.Icon.AbsolutePath);
+        }
+        return (collectibleDefinition.DisplayProperties.Name, collectibleDefinition.DisplayProperties.Icon.AbsolutePath);
     }
 
     public async Task<List<CuratedCollectible>?> GetCuratedCollectiblesCachedAsync()

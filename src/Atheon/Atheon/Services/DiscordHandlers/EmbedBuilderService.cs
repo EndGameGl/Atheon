@@ -9,17 +9,19 @@ using DotNetBungieAPI.Models.Destiny.Definitions.Records;
 using DotNetBungieAPI.Models;
 using DotNetBungieAPI.Service.Abstractions;
 using System.Text;
-using System.Drawing;
 using Atheon.Extensions;
-using Microsoft.OpenApi.Services;
+using Atheon.Services.BungieApi;
 
 namespace Atheon.Services.DiscordHandlers;
 
 public class EmbedBuilderService
 {
-    public EmbedBuilderService()
-    {
+    private readonly DestinyDefinitionDataService _destinyDefinitionDataService;
 
+    public EmbedBuilderService(
+        DestinyDefinitionDataService destinyDefinitionDataService)
+    {
+        _destinyDefinitionDataService = destinyDefinitionDataService;
     }
 
     public EmbedBuilder GetTemplateEmbed(Color? color = null)
@@ -159,7 +161,7 @@ public class EmbedBuilderService
         return templateEmbed.Build();
     }
 
-    private static void AddCollectibleDataToEmbed(
+    private void AddCollectibleDataToEmbed(
         EmbedBuilder embedBuilder,
         DestinyUserProfileBroadcastDbModel destinyUserBroadcast,
         IBungieClient bungieClient,
@@ -170,22 +172,23 @@ public class EmbedBuilderService
                 BungieLocales.EN,
                 out var collectibleDefinition))
         {
-            embedBuilder.WithThumbnailUrl(collectibleDefinition.DisplayProperties.Icon.AbsolutePath);
+            var (name, icon) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(collectibleDefinition);
+            embedBuilder.WithThumbnailUrl(icon);
 
             if (destinyUserBroadcast.AdditionalData is not null &&
                 destinyUserBroadcast.AdditionalData.TryGetValue("completions", out var complString))
             {
                 if (int.TryParse(complString, out var activityCompletions))
                     embedBuilder.WithDescription(
-                        $"{username} has obtained [{collectibleDefinition.DisplayProperties.Name}](https://www.light.gg/db/items/{collectibleDefinition.Item.Hash.GetValueOrDefault()}) on their {activityCompletions}th clear");
+                        $"{username} has obtained [{name}](https://www.light.gg/db/items/{collectibleDefinition.Item.Hash.GetValueOrDefault()}) on their {activityCompletions}th clear");
                 else
                     embedBuilder.WithDescription(
-                        $"{username} has obtained [{collectibleDefinition.DisplayProperties.Name}](https://www.light.gg/db/items/{collectibleDefinition.Item.Hash.GetValueOrDefault()})");
+                        $"{username} has obtained [{name}](https://www.light.gg/db/items/{collectibleDefinition.Item.Hash.GetValueOrDefault()})");
             }
             else
             {
                 embedBuilder.WithDescription(
-                    $"{username} has obtained [{collectibleDefinition.DisplayProperties.Name}](https://www.light.gg/db/items/{collectibleDefinition.Item.Hash.GetValueOrDefault()})");
+                    $"{username} has obtained [{name}](https://www.light.gg/db/items/{collectibleDefinition.Item.Hash.GetValueOrDefault()})");
             }
         }
     }
@@ -340,7 +343,7 @@ public class EmbedBuilderService
         return embedBuilder.Build();
     }
 
-    private static void AddGroupCollectibleDataToEmbed(
+    private void AddGroupCollectibleDataToEmbed(
         EmbedBuilder embedBuilder,
         IEnumerable<DestinyUserProfileBroadcastDbModel> destinyUserBroadcasts,
         uint definitionHash,
@@ -353,9 +356,10 @@ public class EmbedBuilderService
                 BungieLocales.EN,
                 out var collectibleDefinition))
         {
+            var (name, icon) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(collectibleDefinition);
             embedBuilder.WithDescription(
-                $"{usernames.Count} people have obtained [{collectibleDefinition.DisplayProperties.Name}](https://www.light.gg/db/items/{collectibleDefinition.Item.Hash.GetValueOrDefault()})!");
-            embedBuilder.WithThumbnailUrl(collectibleDefinition.DisplayProperties.Icon.AbsolutePath);
+                $"{usernames.Count} people have obtained [{name}](https://www.light.gg/db/items/{collectibleDefinition.Item.Hash.GetValueOrDefault()})!");
+            embedBuilder.WithThumbnailUrl(icon);
 
             var stringBuilder = new StringBuilder();
             foreach (var (clanId, clanData) in clansData)

@@ -1,4 +1,5 @@
-﻿using Atheon.Services.Interfaces;
+﻿using Atheon.Services.BungieApi;
+using Atheon.Services.Interfaces;
 using Discord;
 using Discord.Interactions;
 using DotNetBungieAPI.Extensions;
@@ -11,13 +12,16 @@ public class DestinyCollectibleDefinitionAutocompleter : AutocompleteHandler
 {
     private readonly IBungieClientProvider _bungieClientProvider;
     private readonly ILogger<DestinyCollectibleDefinitionAutocompleter> _logger;
+    private readonly DestinyDefinitionDataService _destinyDefinitionDataService;
 
     public DestinyCollectibleDefinitionAutocompleter(
         IBungieClientProvider bungieClientProvider,
-        ILogger<DestinyCollectibleDefinitionAutocompleter> logger)
+        ILogger<DestinyCollectibleDefinitionAutocompleter> logger,
+        DestinyDefinitionDataService destinyDefinitionDataService)
     {
         _bungieClientProvider = bungieClientProvider;
         _logger = logger;
+        _destinyDefinitionDataService = destinyDefinitionDataService;
     }
     public override async Task<AutocompletionResult> GenerateSuggestionsAsync(
         IInteractionContext context,
@@ -51,6 +55,7 @@ public class DestinyCollectibleDefinitionAutocompleter : AutocompleteHandler
 
     private string GetCollectibleDisplayName(DestinyCollectibleDefinition destinyCollectible)
     {
-        return new string($"{destinyCollectible.DisplayProperties.Name} ({destinyCollectible.Item.Select(x => x.ItemTypeAndTierDisplayName)})".Take(100).ToArray());
+        var (name, _) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(destinyCollectible);
+        return new string($"{name} ({destinyCollectible.Item.Select(x => x?.ItemTypeAndTierDisplayName)})".Take(100).ToArray());
     }
 }
