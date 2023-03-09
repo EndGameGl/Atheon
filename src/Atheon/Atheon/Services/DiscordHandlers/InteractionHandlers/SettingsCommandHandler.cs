@@ -2,6 +2,7 @@
 using Atheon.Models.Database.Destiny.Links;
 using Atheon.Models.Destiny;
 using Atheon.Models.DiscordModels;
+using Atheon.Services.BungieApi;
 using Atheon.Services.DiscordHandlers.Autocompleters;
 using Atheon.Services.DiscordHandlers.Autocompleters.DestinyCollectibles;
 using Atheon.Services.DiscordHandlers.Autocompleters.DestinyRecords;
@@ -24,18 +25,21 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
     private readonly IClanQueue _clanQueue;
     private readonly EmbedBuilderService _embedBuilderService;
     private readonly IBungieClientProvider _bungieClientProvider;
+    private readonly DestinyDefinitionDataService _destinyDefinitionDataService;
 
     public SettingsCommandHandler(
         ILogger<SettingsCommandHandler> logger,
         IDestinyDb destinyDb,
         IClanQueue clanQueue,
         EmbedBuilderService embedBuilderService,
-        IBungieClientProvider bungieClientProvider) : base(logger, embedBuilderService)
+        IBungieClientProvider bungieClientProvider,
+        DestinyDefinitionDataService destinyDefinitionDataService) : base(logger, embedBuilderService)
     {
         _destinyDb = destinyDb;
         _clanQueue = clanQueue;
         _embedBuilderService = embedBuilderService;
         _bungieClientProvider = bungieClientProvider;
+        _destinyDefinitionDataService = destinyDefinitionDataService;
     }
 
     [AtheonBotAdminOrOwner]
@@ -314,7 +318,8 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
                 }
                 else
                 {
-                    sb.AppendLine($"> {collectibleDefinition.DisplayProperties.Name}");
+                    var (name, _) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(collectibleDefinition);
+                    sb.AppendLine($"> {name}");
                 }
             }
 
