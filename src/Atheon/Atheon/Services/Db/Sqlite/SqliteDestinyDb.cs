@@ -702,7 +702,7 @@ public class SqliteDestinyDb : IDestinyDb
             ClanId,
             json_extract(Metrics, '$.{0}.progress.progress') as Value
         FROM DestinyProfiles
-        WHERE ClanId IN @ClanIds
+        WHERE ClanId IN @ClanIds AND Value != 0
         ORDER BY Value {1};
         """;
     public async Task<List<DestinyProfileLiteWithValue>> GetProfileMetricsAsync(
