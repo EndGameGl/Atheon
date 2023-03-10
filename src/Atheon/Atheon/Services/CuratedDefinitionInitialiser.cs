@@ -35,13 +35,6 @@ public class CuratedDefinitionInitialiser
 
         var curatedCollectibles = new Dictionary<uint, CuratedCollectible>()
         {
-            {
-                DefinitionHashes.Collectibles.Classified_2629609052,
-                CuratedCollectible.New(
-                    DefinitionHashes.Collectibles.Classified_2629609052, 
-                    "Vexcalibur",
-                    "https://cdn.discordapp.com/attachments/296008136785920001/1083368881411866654/image.png")
-            }
         };
 
         foreach (var curatedCollectible in curatedCollectibles)
