@@ -9,6 +9,7 @@ using System.Text;
 using Atheon.Models.Database.Destiny.Profiles;
 using static DotNetBungieAPI.HashReferences.DefinitionHashes;
 using Atheon.Extensions;
+using DotNetBungieAPI.Extensions;
 
 namespace Atheon.Services.DiscordHandlers.InteractionHandlers;
 
@@ -54,7 +55,10 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
             var getters = new Func<DestinyProfileLiteWithValue, object>[]
             {
                 user => user.Name,
-                user => user.Value
+                user =>
+                {
+                    return user.Value.FormatUIDisplayValue(metricDefinition.TrackingObjective.GetValueOrNull()); 
+                }
             };
 
             for (int j = 0; j < clanReferences.Count; j++)
