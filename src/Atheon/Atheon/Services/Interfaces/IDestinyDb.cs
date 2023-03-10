@@ -34,6 +34,7 @@ public interface IDestinyDb
     Task<List<DestinyProfileLite>> GetProfilesRecordStatusAsync(uint recordHash, bool hasCompletedRecord, long[] clandIds);
     Task<List<DestinyProfileLiteWithValue>> GetProfileDrystreaksAsync(uint collectibleHash, long[] clanIds);
     Task<List<DestinyProfileLiteWithValue>> GetProfileTitlesAsync(uint titleRecordHash, bool hasTitle, long[] clanIds);
+    Task<List<DestinyProfileLiteWithValue>> GetProfileMetricsAsync(uint metricHash, bool descending, long[] clanIds);
 
     Task TryInsertClanBroadcastAsync(ClanBroadcastDbModel clanBroadcast);
     Task TryInsertProfileBroadcastAsync(DestinyUserProfileBroadcastDbModel profileBroadcast);

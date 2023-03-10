@@ -61,6 +61,10 @@ public class DestinyProfileDbModel
     [AutoColumn(nameof(ComputedData), sqliteType: DatabaseOptions.SQLiteTypes.TEXT.DEFAULT_VALUE)]
     public DestinyComputedData? ComputedData { get; set; } = new();
 
+    [AutoColumn(nameof(Metrics), sqliteType: DatabaseOptions.SQLiteTypes.TEXT.DEFAULT_VALUE)]
+    public Dictionary<uint, DestinyMetricDbModel> Metrics { get; set; } = new();
+
+
     public static async Task<DestinyProfileDbModel> CreateFromApiResponse(
         long clanId,
         DestinyProfileResponse destinyProfileResponse,
@@ -86,6 +90,7 @@ public class DestinyProfileDbModel
         dbModel.FillCollectibles(destinyProfileResponse);
         dbModel.FillRecords(destinyProfileResponse);
         dbModel.FillProgressions(destinyProfileResponse, bungieClient);
+        dbModel.FillMetrics(destinyProfileResponse);
         await dbModel.FillComputedData(destinyProfileResponse, destinyDefinitionDataService);
         return dbModel;
     }
@@ -158,6 +163,18 @@ public class DestinyProfileDbModel
         }
     }
 
+    private void FillMetrics(
+        DestinyProfileResponse destinyProfileResponse)
+    {
+        foreach (var (metricHash, metricComponent) in destinyProfileResponse.Metrics.Data.Metrics)
+        {
+            if (metricComponent.ObjectiveProgress is null)
+                continue;
+
+            Metrics.TryAdd(metricHash, DestinyMetricDbModel.FromMetricComponent(metricComponent));
+        }
+    }
+
     private async Task FillComputedData(
         DestinyProfileResponse destinyProfileResponse,
         DestinyDefinitionDataService destinyDefinitionDataService)
@@ -187,7 +204,7 @@ public class DestinyProfileDbModel
             {
                 completions++;
 
-                if (gildHash.HasValue && 
+                if (gildHash.HasValue &&
                     profileRecords.TryGetValue(gildHash.Value, out var gildRecordComponent))
                 {
                     completions += (gildRecordComponent.CompletedCount ?? 0);

@@ -214,7 +214,8 @@ public class SqliteDestinyDb : IDestinyDb
             {nameof(DestinyProfileDbModel.ResponseMintedTimestamp)},
             {nameof(DestinyProfileDbModel.SecondaryComponentsMintedTimestamp)},
             {nameof(DestinyProfileDbModel.LastUpdated)},
-            {nameof(DestinyProfileDbModel.ComputedData)}
+            {nameof(DestinyProfileDbModel.ComputedData)},
+            {nameof(DestinyProfileDbModel.Metrics)}
         )
         VALUES 
         (
@@ -230,7 +231,8 @@ public class SqliteDestinyDb : IDestinyDb
             @{nameof(DestinyProfileDbModel.ResponseMintedTimestamp)},
             @{nameof(DestinyProfileDbModel.SecondaryComponentsMintedTimestamp)},
             @{nameof(DestinyProfileDbModel.LastUpdated)},
-            @{nameof(DestinyProfileDbModel.ComputedData)}
+            @{nameof(DestinyProfileDbModel.ComputedData)},
+            @{nameof(DestinyProfileDbModel.Metrics)}
         )
         ON CONFLICT ({nameof(DestinyProfileDbModel.MembershipId)}) DO UPDATE SET 
             {nameof(DestinyProfileDbModel.MembershipType)} = @{nameof(DestinyProfileDbModel.MembershipType)},
@@ -244,7 +246,8 @@ public class SqliteDestinyDb : IDestinyDb
             {nameof(DestinyProfileDbModel.ResponseMintedTimestamp)} = @{nameof(DestinyProfileDbModel.ResponseMintedTimestamp)},
             {nameof(DestinyProfileDbModel.SecondaryComponentsMintedTimestamp)} = @{nameof(DestinyProfileDbModel.SecondaryComponentsMintedTimestamp)},
             {nameof(DestinyProfileDbModel.LastUpdated)} = @{nameof(DestinyProfileDbModel.LastUpdated)},
-            {nameof(DestinyProfileDbModel.ComputedData)} = @{nameof(DestinyProfileDbModel.ComputedData)};
+            {nameof(DestinyProfileDbModel.ComputedData)} = @{nameof(DestinyProfileDbModel.ComputedData)},
+            {nameof(DestinyProfileDbModel.Metrics)} = @{nameof(DestinyProfileDbModel.Metrics)};
         """;
     public async Task UpsertDestinyProfileAsync(DestinyProfileDbModel profileDbModel)
     {
@@ -688,5 +691,27 @@ public class SqliteDestinyDb : IDestinyDb
     public async Task ClearAllCuratedTables()
     {
         await _dbAccess.ExecuteAsync(DeleteCuratedCollectiblesQuery);
+    }
+
+
+    private const string GetProfileMetricsQuery =
+        """
+        SELECT 
+            MembershipId,
+            Name,
+            ClanId,
+            json_extract(Metrics, '$.{0}.progress.progress') as Value
+        FROM DestinyProfiles
+        WHERE ClanId IN @ClanIds
+        ORDER BY Value {1};
+        """;
+    public async Task<List<DestinyProfileLiteWithValue>> GetProfileMetricsAsync(
+        uint metricHash,
+        bool descending,
+        long[] clanIds)
+    {
+        return await _dbAccess.QueryAsync<DestinyProfileLiteWithValue>(
+                string.Format(GetProfileMetricsQuery, metricHash, descending ? "DESC" : string.Empty),
+                new { ClanIds = clanIds });
     }
 }
