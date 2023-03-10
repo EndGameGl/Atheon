@@ -12,6 +12,7 @@ public class DestinyManifestHandler : PeriodicBackgroundService, IDestinyManifes
     private readonly IBungieClientProvider _bungieClientProvider;
     private readonly IDiscordEventHandler _discordEventHandler;
     private readonly DestinyDefinitionDataService _destinyDefinitionDataService;
+    private readonly IBungieApiStatus _bungieApiStatus;
 
     public bool IsUpdating { get; private set; }
     public event Func<Task> UpdateStarted;
@@ -20,12 +21,14 @@ public class DestinyManifestHandler : PeriodicBackgroundService, IDestinyManifes
         ILogger<DestinyManifestHandler> logger,
         IBungieClientProvider bungieClientProvider,
         IDiscordEventHandler discordEventHandler,
-        DestinyDefinitionDataService destinyDefinitionDataService) : base(logger)
+        DestinyDefinitionDataService destinyDefinitionDataService,
+        IBungieApiStatus bungieApiStatus) : base(logger)
     {
         _logger = logger;
         _bungieClientProvider = bungieClientProvider;
         _discordEventHandler = discordEventHandler;
         _destinyDefinitionDataService = destinyDefinitionDataService;
+        _bungieApiStatus = bungieApiStatus;
     }
 
     protected override Task BeforeExecutionAsync(CancellationToken stoppingToken)
@@ -39,6 +42,9 @@ public class DestinyManifestHandler : PeriodicBackgroundService, IDestinyManifes
         try
         {
             if (!_bungieClientProvider.IsReady)
+                return;
+
+            if (!_bungieApiStatus.IsLive)
                 return;
 
             var client = await _bungieClientProvider.GetClientAsync();
