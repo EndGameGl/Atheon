@@ -18,6 +18,7 @@ public class DestinyClanScanner : EntityScannerBase<DestinyClanScannerInput, Des
     private readonly IDestinyDb _destinyDb;
     private readonly ICommonEvents _commonEvents;
     private readonly IMemoryCache _memoryCache;
+    private readonly ISettingsStorage _settingsStorage;
     private AsyncPolicy _apiCallPolicy;
 
     public DestinyClanScanner(
@@ -27,7 +28,8 @@ public class DestinyClanScanner : EntityScannerBase<DestinyClanScannerInput, Des
         IUserQueue userQueue,
         IDestinyDb destinyDb,
         ICommonEvents commonEvents,
-        IMemoryCache memoryCache) : base(logger)
+        IMemoryCache memoryCache,
+        ISettingsStorage settingsStorage) : base(logger)
     {
         Initialize();
         BuildApiCallPolicy();
@@ -37,6 +39,7 @@ public class DestinyClanScanner : EntityScannerBase<DestinyClanScannerInput, Des
         _destinyDb = destinyDb;
         _commonEvents = commonEvents;
         _memoryCache = memoryCache;
+        _settingsStorage = settingsStorage;
     }
 
     private void BuildApiCallPolicy()
@@ -174,7 +177,7 @@ public class DestinyClanScanner : EntityScannerBase<DestinyClanScannerInput, Des
         {
             var foundMember = context.Members.FirstOrDefault(x => x.DestinyUserInfo.MembershipId == memberReference.MembershipId);
             if (foundMember is null)
-            {              
+            {
                 await _destinyDb.DeleteDestinyProfileAsync(memberReference.MembershipId);
             }
         }
@@ -196,8 +199,17 @@ public class DestinyClanScanner : EntityScannerBase<DestinyClanScannerInput, Des
             return true;
         }
 
+        var rescanInterval = await _memoryCache.GetOrAddAsync(
+            "RescanIntervalTheshold",
+            async () =>
+            {
+                return await _settingsStorage.GetOption<TimeSpan?>(SettingKeys.RescanIntervalTheshold, () => TimeSpan.FromMinutes(10));
+            },
+            TimeSpan.FromSeconds(30),
+            Caching.CacheExpirationType.Absolute);
+
         if (!context.DestinyClanDbModel.LastScan.HasValue ||
-            (DateTime.UtcNow - context.DestinyClanDbModel.LastScan.Value).TotalMinutes > 10)
+            (DateTime.UtcNow - context.DestinyClanDbModel.LastScan.Value) > rescanInterval)
         {
             context.MembersToScan = context.Members.ToList();
             await _userQueue.EnqueueAndWaitForSilentUserScans(context, cancellationToken);

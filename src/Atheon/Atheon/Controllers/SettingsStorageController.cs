@@ -98,4 +98,20 @@ public class SettingsStorageController : ApiResponseControllerBase
             return ErrorResult(ex);
         }
     }
+
+    [HttpPost("SetRescanIntervalTheshold")]
+    [Produces(typeof(ApiResponse<bool>))]
+    public async Task<IActionResult> SetRescanIntervalTheshold([FromBody] int seconds)
+    {
+        try
+        {
+            await _settingsStorage.SetOption(SettingKeys.RescanIntervalTheshold, TimeSpan.FromSeconds(seconds));
+            return OkResult(true);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to set new interval");
+            return ErrorResult(ex);
+        }
+    }
 }

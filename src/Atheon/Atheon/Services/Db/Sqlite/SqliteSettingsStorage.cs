@@ -22,7 +22,7 @@ namespace Atheon.Services.Db.Sqlite
             _dbConnectionFactory = dbConnectionFactory;
         }
 
-        public async Task<T?> GetOption<T>(string key)
+        public async Task<T?> GetOption<T>(string key, Func<T>? defaultValue = null)
         {
             using var connection = _dbConnectionFactory.GetDbConnection();
 
@@ -31,6 +31,8 @@ namespace Atheon.Services.Db.Sqlite
             {
                 return JsonSerializer.Deserialize<T>(result, _jsonOptions);
             }
+            if (defaultValue != null)
+                return defaultValue();
             return default;
         }
 
