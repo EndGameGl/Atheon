@@ -57,9 +57,21 @@ public class DestinyDefinitionDataService
         {
             sb.Clear();
 
-            var parentPath = string.Join(" // ", nodeWithCollectibles.ParentNodes.Select(x => x.Select(q => q.DisplayProperties.Name)));
+            var currentParentNodePointer = nodeWithCollectibles.ParentNodes.FirstOrDefault();
+            if (!currentParentNodePointer.HasValidHash)
+            {
+                _presentationNodeWithCollectiblesNameMappings.Add((nodeWithCollectibles.DisplayProperties.Name, nodeWithCollectibles.Hash));
+                continue;
+            }
 
-            sb.Append(parentPath);
+            var currentParentNode = currentParentNodePointer.Select(x => x);
+            sb.Append(currentParentNode.DisplayProperties.Name);
+            while (currentParentNode.ParentNodes.Count > 0)
+            {
+                currentParentNode = currentParentNode.ParentNodes.First().Select(x => x);
+                sb.Append($" // {currentParentNode.DisplayProperties.Name}");
+            }
+
             sb.Append($" // {nodeWithCollectibles.DisplayProperties.Name}");
             _presentationNodeWithCollectiblesNameMappings.Add((sb.ToString(), nodeWithCollectibles.Hash));
         }

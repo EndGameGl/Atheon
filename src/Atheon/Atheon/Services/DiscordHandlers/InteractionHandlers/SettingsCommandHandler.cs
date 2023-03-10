@@ -522,7 +522,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
             await Context.Interaction.RespondAsync(embed:
                 _embedBuilderService.CreateSimpleResponseEmbed(
                     "Success",
-                    $"Added **{presentationNodeDefinition.DisplayProperties.Name}** to tracking")
+                    $"Added **{presentationNodeDefinition.DisplayProperties.Name}** ({presentationNodeDefinition.Children.Collectibles.Count} item(s)) to tracking")
                 .WithThumbnailUrl(presentationNodeDefinition.DisplayProperties.Icon.AbsolutePath)
                 .Build());
         });
@@ -562,7 +562,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
             await Context.Interaction.RespondAsync(embed:
                 _embedBuilderService.CreateSimpleResponseEmbed(
                     "Success",
-                    $"Removed **{presentationNodeDefinition.DisplayProperties.Name}** to tracking")
+                    $"Removed **{presentationNodeDefinition.DisplayProperties.Name}** ({presentationNodeDefinition.Children.Collectibles.Count} item(s)) from tracking")
                 .WithThumbnailUrl(presentationNodeDefinition.DisplayProperties.Icon.AbsolutePath)
                 .Build());
         });
