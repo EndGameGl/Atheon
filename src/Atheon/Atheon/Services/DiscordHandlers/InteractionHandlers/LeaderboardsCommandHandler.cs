@@ -82,4 +82,50 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
                 ephemeral: hide);
         });
     }
+
+    [SlashCommand("guardian-ranks", "Shows leaderboard for a guardian ranks")]
+    public async Task CreateLeaderboardForMetricAsync(
+        [Summary(description: "Whether to hide this message")] bool hide = false)
+    {
+        await ExecuteAndHanldeErrors(async () =>
+        {
+            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var users = await _destinyDb.GetGuardianRanksLeaderboardAsync(guildSettings.Clans.ToArray());
+            var clanIds = users.Select(x => x.ClanId).Distinct().ToArray();
+            var clanReferences = await _destinyDb.GetClanReferencesFromIdsAsync(clanIds);
+
+            var embedBuilder = _embedBuilderService
+                .GetTemplateEmbed()
+                .WithTitle($"Guardian Ranks Leaderboard");
+
+            var getters = new Func<DestinyProfileLiteWithValue, object>[]
+            {
+                user => user.Name,
+                user =>
+                {
+                    return user.Value;
+                }
+            };
+
+            for (int j = 0; j < clanReferences.Count; j++)
+            {
+                var reference = clanReferences[j];
+                var usersOfClan = users.Where(x => x.ClanId == reference.Id).ToList();
+
+                var formattedData = _embedBuilderService.FormatAsStringTable<DestinyProfileLiteWithValue, long>(
+                    usersOfClan.Count,
+                    "No users",
+                    usersOfClan,
+                    (user) => user.MembershipId,
+                    getters)
+                .LimitTo(1018);
+
+                embedBuilder.AddField(reference.Name, $"```{formattedData}```");
+            }
+
+            await Context.Interaction.RespondAsync(
+                embed: embedBuilder.Build(),
+                ephemeral: hide);
+        });
+    }
 }

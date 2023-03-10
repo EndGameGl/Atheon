@@ -215,7 +215,8 @@ public class SqliteDestinyDb : IDestinyDb
             {nameof(DestinyProfileDbModel.SecondaryComponentsMintedTimestamp)},
             {nameof(DestinyProfileDbModel.LastUpdated)},
             {nameof(DestinyProfileDbModel.ComputedData)},
-            {nameof(DestinyProfileDbModel.Metrics)}
+            {nameof(DestinyProfileDbModel.Metrics)},
+            {nameof(DestinyProfileDbModel.CurrentGuardianRank)}
         )
         VALUES 
         (
@@ -232,7 +233,8 @@ public class SqliteDestinyDb : IDestinyDb
             @{nameof(DestinyProfileDbModel.SecondaryComponentsMintedTimestamp)},
             @{nameof(DestinyProfileDbModel.LastUpdated)},
             @{nameof(DestinyProfileDbModel.ComputedData)},
-            @{nameof(DestinyProfileDbModel.Metrics)}
+            @{nameof(DestinyProfileDbModel.Metrics)},
+            @{nameof(DestinyProfileDbModel.CurrentGuardianRank)}
         )
         ON CONFLICT ({nameof(DestinyProfileDbModel.MembershipId)}) DO UPDATE SET 
             {nameof(DestinyProfileDbModel.MembershipType)} = @{nameof(DestinyProfileDbModel.MembershipType)},
@@ -247,7 +249,8 @@ public class SqliteDestinyDb : IDestinyDb
             {nameof(DestinyProfileDbModel.SecondaryComponentsMintedTimestamp)} = @{nameof(DestinyProfileDbModel.SecondaryComponentsMintedTimestamp)},
             {nameof(DestinyProfileDbModel.LastUpdated)} = @{nameof(DestinyProfileDbModel.LastUpdated)},
             {nameof(DestinyProfileDbModel.ComputedData)} = @{nameof(DestinyProfileDbModel.ComputedData)},
-            {nameof(DestinyProfileDbModel.Metrics)} = @{nameof(DestinyProfileDbModel.Metrics)};
+            {nameof(DestinyProfileDbModel.Metrics)} = @{nameof(DestinyProfileDbModel.Metrics)},
+            {nameof(DestinyProfileDbModel.CurrentGuardianRank)} = @{nameof(DestinyProfileDbModel.CurrentGuardianRank)};
         """;
     public async Task UpsertDestinyProfileAsync(DestinyProfileDbModel profileDbModel)
     {
@@ -712,6 +715,24 @@ public class SqliteDestinyDb : IDestinyDb
     {
         return await _dbAccess.QueryAsync<DestinyProfileLiteWithValue>(
                 string.Format(GetProfileMetricsQuery, metricHash, descending ? "DESC" : string.Empty),
+                new { ClanIds = clanIds });
+    }
+
+    private const string GetGuardianRanksLeaderboard =
+        $"""
+        SELECT
+            MembershipId,
+            Name,
+            ClanId,
+            {nameof(DestinyProfileDbModel.CurrentGuardianRank)} as Value
+        FROM DestinyProfiles
+        WHERE ClanId IN @ClanIds AND Value > 0
+        ORDER BY Value DESC
+        """;
+    public async Task<List<DestinyProfileLiteWithValue>> GetGuardianRanksLeaderboardAsync(long[] clanIds)
+    {
+        return await _dbAccess.QueryAsync<DestinyProfileLiteWithValue>(
+                GetGuardianRanksLeaderboard,
                 new { ClanIds = clanIds });
     }
 }

@@ -64,6 +64,9 @@ public class DestinyProfileDbModel
     [AutoColumn(nameof(Metrics), sqliteType: DatabaseOptions.SQLiteTypes.TEXT.DEFAULT_VALUE)]
     public Dictionary<uint, DestinyMetricDbModel> Metrics { get; set; } = new();
 
+    [AutoColumn(nameof(CurrentGuardianRank), sqliteType: DatabaseOptions.SQLiteTypes.INTEGER.DEFAULT_VALUE)]
+    public int CurrentGuardianRank { get; set; }
+
 
     public static async Task<DestinyProfileDbModel> CreateFromApiResponse(
         long clanId,
@@ -84,7 +87,8 @@ public class DestinyProfileDbModel
             Records = new Dictionary<uint, DestinyRecordDbModel>(),
             ClanId = clanId,
             ResponseMintedTimestamp = destinyProfileResponse.ResponseMintedTimestamp,
-            SecondaryComponentsMintedTimestamp = destinyProfileResponse.SecondaryComponentsMintedTimestamp
+            SecondaryComponentsMintedTimestamp = destinyProfileResponse.SecondaryComponentsMintedTimestamp,
+            CurrentGuardianRank = destinyProfileResponse.Profile.Data.CurrentGuardianRank
         };
 
         dbModel.FillCollectibles(destinyProfileResponse);

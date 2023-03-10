@@ -177,11 +177,9 @@ public class DestinyClanMemberSilentScanner : EntityScannerBase<DestinyClanMembe
             if ((!updater.ReliesOnSecondaryComponents && shouldUpdatePrimary) ||
                 (updater.ReliesOnSecondaryComponents && shouldUpdateSecondary))
             {
-                updater.UpdateSilent(input.BungieClient, context.ProfileDbModel!, context.DestinyProfileResponse!);
+                await updater.UpdateSilent(input.BungieClient, context.ProfileDbModel!, context.DestinyProfileResponse!);
             }
         }
-
-        context.ProfileDbModel.DateLastPlayed = context.DestinyProfileResponse.Profile.Data.DateLastPlayed;
 
         return true;
     }
@@ -192,7 +190,6 @@ public class DestinyClanMemberSilentScanner : EntityScannerBase<DestinyClanMembe
         DestinyClanMemberScannerContext context,
         CancellationToken cancellationToken)
     {
-        context.ProfileDbModel.LastUpdated = DateTime.UtcNow;
         await _destinyDb.UpsertDestinyProfileAsync(context.ProfileDbModel!);
         return true;
     }
