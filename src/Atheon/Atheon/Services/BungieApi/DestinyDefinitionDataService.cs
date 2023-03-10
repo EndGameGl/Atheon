@@ -8,15 +8,16 @@ using IMemoryCache = Atheon.Services.Interfaces.IMemoryCache;
 using Atheon.Services.Caching;
 using Atheon.Models.Database.Destiny.Tracking;
 using DotNetBungieAPI.Models.Destiny.Definitions.Records;
-using System.Collections.Generic;
 using DotNetBungieAPI.Models.Destiny.Definitions.InventoryItems;
 using DotNetBungieAPI.Models.Destiny.Definitions.Collectibles;
+using System.Text;
 
 namespace Atheon.Services.BungieApi;
 
 public class DestinyDefinitionDataService
 {
     private Dictionary<uint, uint> _collectibleToItemMapping;
+    private List<(string NodeFulleName, uint Hash)> _presentationNodeWithCollectiblesNameMappings;
 
     private readonly IBungieClientProvider _bungieClientProvider;
     private readonly IMemoryCache _memoryCache;
@@ -38,16 +39,29 @@ public class DestinyDefinitionDataService
     public async Task MapLookupTables()
     {
         var client = await _bungieClientProvider.GetClientAsync();
+        var sb = new StringBuilder();
         _collectibleToItemMapping = new Dictionary<uint, uint>();
-
         var items = client.Repository.GetAll<DestinyInventoryItemDefinition>();
-
         foreach (var item in items)
         {
             if (item.Collectible.HasValidHash)
             {
                 _collectibleToItemMapping.Add(item.Collectible.Hash.GetValueOrDefault(), item.Hash);
             }
+        }
+
+        sb.Clear();
+        _presentationNodeWithCollectiblesNameMappings = new List<(string NodeFulleName, uint Hash)>();
+        var nodesWithCollectibles = client.Repository.GetAll<DestinyPresentationNodeDefinition>().Where(x => x.Children?.Collectibles.Count > 0).ToList();
+        foreach (var nodeWithCollectibles in nodesWithCollectibles)
+        {
+            sb.Clear();
+
+            var parentPath = string.Join(" // ", nodeWithCollectibles.ParentNodes.Select(x => x.Select(q => q.DisplayProperties.Name)));
+
+            sb.Append(parentPath);
+            sb.Append($" // {nodeWithCollectibles.DisplayProperties.Name}");
+            _presentationNodeWithCollectiblesNameMappings.Add((sb.ToString(), nodeWithCollectibles.Hash));
         }
     }
 
@@ -65,6 +79,13 @@ public class DestinyDefinitionDataService
             return (item.DisplayProperties.Name, item.DisplayProperties.Icon.AbsolutePath);
         }
         return (collectibleDefinition.DisplayProperties.Name, collectibleDefinition.DisplayProperties.Icon.AbsolutePath);
+    }
+
+    public List<(string NodeFulleName, uint Hash)> FindNodes(string input)
+    {
+        return _presentationNodeWithCollectiblesNameMappings
+            .Where(x => x.NodeFulleName.Contains(input, StringComparison.OrdinalIgnoreCase))
+            .ToList();
     }
 
     public async Task<List<CuratedCollectible>?> GetCuratedCollectiblesCachedAsync()

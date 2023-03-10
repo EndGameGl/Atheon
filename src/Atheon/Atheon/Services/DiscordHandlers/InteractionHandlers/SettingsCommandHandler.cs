@@ -5,6 +5,8 @@ using Atheon.Models.DiscordModels;
 using Atheon.Services.BungieApi;
 using Atheon.Services.DiscordHandlers.Autocompleters;
 using Atheon.Services.DiscordHandlers.Autocompleters.DestinyCollectibles;
+using Atheon.Services.DiscordHandlers.Autocompleters.DestinyMetrics;
+using Atheon.Services.DiscordHandlers.Autocompleters.DestinyPresentationNodes;
 using Atheon.Services.DiscordHandlers.Autocompleters.DestinyRecords;
 using Atheon.Services.DiscordHandlers.InteractionHandlers.Base;
 using Atheon.Services.DiscordHandlers.Preconditions;
@@ -13,6 +15,7 @@ using Discord;
 using Discord.Interactions;
 using DotNetBungieAPI.Models;
 using DotNetBungieAPI.Models.Destiny.Definitions.Collectibles;
+using DotNetBungieAPI.Models.Destiny.Definitions.PresentationNodes;
 using DotNetBungieAPI.Models.Destiny.Definitions.Records;
 using System.Text;
 
@@ -482,6 +485,86 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
             var embed = _embedBuilderService.CreateSimpleResponseEmbed("Success", "Guild settings updated").Build();
 
             await Context.Interaction.RespondAsync(embed: embed);
+        });
+    }
+
+    [AtheonBotAdminOrOwner]
+    [SlashCommand("item-add-set", "Adds all items from set to tracking")]
+    public async Task AddAllCollectiblesFromNode(
+        [Summary("presentation-node")][Autocomplete(typeof(DestinyPresentationNodeWithCollectiblesAutocompleter))] string presentationNodeHashString)
+    {
+        await ExecuteAndHanldeErrors(async () =>
+        {
+            var presentationNodeHash = uint.Parse(presentationNodeHashString);
+
+            var client = await _bungieClientProvider.GetClientAsync();
+
+            if (!client.TryGetDefinition<DestinyPresentationNodeDefinition>(presentationNodeHash, BungieLocales.EN, out var presentationNodeDefinition))
+            {
+                await Context.Interaction.RespondAsync(embed:
+                    _embedBuilderService.CreateSimpleResponseEmbed(
+                        "Failure",
+                        $"Couldn't find definition in database",
+                        Color.Red)
+                    .Build());
+                return;
+            }
+
+            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+
+            foreach (var collectibleHash in presentationNodeDefinition.Children.Collectibles)
+            {
+                guildSettings.TrackedCollectibles.TrackedHashes.Add(collectibleHash.Collectible.Hash.GetValueOrDefault());
+            }
+            
+            await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
+
+            await Context.Interaction.RespondAsync(embed:
+                _embedBuilderService.CreateSimpleResponseEmbed(
+                    "Success",
+                    $"Added **{presentationNodeDefinition.DisplayProperties.Name}** to tracking")
+                .WithThumbnailUrl(presentationNodeDefinition.DisplayProperties.Icon.AbsolutePath)
+                .Build());
+        });
+    }
+
+    [AtheonBotAdminOrOwner]
+    [SlashCommand("item-remove-set", "Adds all items from set to tracking")]
+    public async Task RemoveAllCollectiblesFromNode(
+        [Summary("presentation-node")][Autocomplete(typeof(DestinyPresentationNodeWithCollectiblesAutocompleter))] string presentationNodeHashString)
+    {
+        await ExecuteAndHanldeErrors(async () =>
+        {
+            var presentationNodeHash = uint.Parse(presentationNodeHashString);
+
+            var client = await _bungieClientProvider.GetClientAsync();
+
+            if (!client.TryGetDefinition<DestinyPresentationNodeDefinition>(presentationNodeHash, BungieLocales.EN, out var presentationNodeDefinition))
+            {
+                await Context.Interaction.RespondAsync(embed:
+                    _embedBuilderService.CreateSimpleResponseEmbed(
+                        "Failure",
+                        $"Couldn't find definition in database",
+                        Color.Red)
+                    .Build());
+                return;
+            }
+
+            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+
+            foreach (var collectibleHash in presentationNodeDefinition.Children.Collectibles)
+            {
+                guildSettings.TrackedCollectibles.TrackedHashes.Remove(collectibleHash.Collectible.Hash.GetValueOrDefault());
+            }
+
+            await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
+
+            await Context.Interaction.RespondAsync(embed:
+                _embedBuilderService.CreateSimpleResponseEmbed(
+                    "Success",
+                    $"Removed **{presentationNodeDefinition.DisplayProperties.Name}** to tracking")
+                .WithThumbnailUrl(presentationNodeDefinition.DisplayProperties.Icon.AbsolutePath)
+                .Build());
         });
     }
 }
