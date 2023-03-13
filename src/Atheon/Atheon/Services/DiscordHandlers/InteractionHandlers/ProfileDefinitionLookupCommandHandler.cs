@@ -8,7 +8,6 @@ using Atheon.Services.Interfaces;
 using Discord;
 using Discord.Interactions;
 using DotNetBungieAPI.HashReferences;
-using DotNetBungieAPI.Models;
 using DotNetBungieAPI.Models.Destiny.Definitions.Collectibles;
 using DotNetBungieAPI.Models.Destiny.Definitions.PresentationNodes;
 using DotNetBungieAPI.Models.Destiny.Definitions.Records;
@@ -23,18 +22,21 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
     private readonly IBungieClientProvider _bungieClientProvider;
     private readonly EmbedBuilderService _embedBuilderService;
     private readonly DestinyDefinitionDataService _destinyDefinitionDataService;
+    private readonly IMemoryCache _memoryCache;
 
     public ProfileDefinitionLookupCommandHandler(
         ILogger<ProfileDefinitionLookupCommandHandler> logger,
         IDestinyDb destinyDb,
         IBungieClientProvider bungieClientProvider,
         EmbedBuilderService embedBuilderService,
-        DestinyDefinitionDataService destinyDefinitionDataService) : base(logger, embedBuilderService)
+        DestinyDefinitionDataService destinyDefinitionDataService,
+        IMemoryCache memoryCache) : base(logger, embedBuilderService)
     {
         _destinyDb = destinyDb;
         _bungieClientProvider = bungieClientProvider;
         _embedBuilderService = embedBuilderService;
         _destinyDefinitionDataService = destinyDefinitionDataService;
+        _memoryCache = memoryCache;
     }
 
     [SlashCommand("item-check", "Checks who has items")]
@@ -45,6 +47,7 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
     {
         await ExecuteAndHanldeErrors(async () =>
         {
+            
             var itemHash = uint.Parse(collectibleHash);
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
             var users = await _destinyDb.GetProfilesCollectibleStatusAsync(itemHash, hasItem, guildSettings.Clans.ToArray());
@@ -53,9 +56,15 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
 
             var bungieClient = await _bungieClientProvider.GetClientAsync();
 
-            bungieClient.TryGetDefinition<DestinyCollectibleDefinition>(itemHash, BungieLocales.EN, out var colDef);
+            var lang = await _memoryCache.GetOrAddAsync(
+                $"guild_lang_{GuildId}",
+                async () => (await _destinyDb.GetGuildLanguageAsync(GuildId)).ConvertToBungieLocale(),
+                TimeSpan.FromSeconds(15),
+                Caching.CacheExpirationType.Absolute);
 
-            var (defName, defIcon) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(colDef);
+            bungieClient.TryGetDefinition<DestinyCollectibleDefinition>(itemHash, lang, out var colDef);
+
+            var (defName, defIcon) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(colDef, lang);
 
             var embedBuilder = _embedBuilderService
                 .GetTemplateEmbed()
@@ -111,7 +120,13 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
             var clanReferences = await _destinyDb.GetClanReferencesFromIdsAsync(clanIds);
             var bungieClient = await _bungieClientProvider.GetClientAsync();
 
-            bungieClient.TryGetDefinition<DestinyRecordDefinition>(itemHash, BungieLocales.EN, out var recordDef);
+            var lang = await _memoryCache.GetOrAddAsync(
+                $"guild_lang_{GuildId}",
+                async () => (await _destinyDb.GetGuildLanguageAsync(GuildId)).ConvertToBungieLocale(),
+                TimeSpan.FromSeconds(15),
+                Caching.CacheExpirationType.Absolute);
+
+            bungieClient.TryGetDefinition<DestinyRecordDefinition>(itemHash, lang, out var recordDef);
 
             var embedBuilder = _embedBuilderService
                 .GetTemplateEmbed()
@@ -171,7 +186,14 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
         await ExecuteAndHanldeErrors(async () =>
         {
             var client = await _bungieClientProvider.GetClientAsync();
-            if (!client.TryGetDefinition<DestinyCollectibleDefinition>(collectibleHash, BungieLocales.EN, out var collectibleDefinition))
+
+            var lang = await _memoryCache.GetOrAddAsync(
+                $"guild_lang_{GuildId}",
+                async () => (await _destinyDb.GetGuildLanguageAsync(GuildId)).ConvertToBungieLocale(),
+                TimeSpan.FromSeconds(15),
+                Caching.CacheExpirationType.Absolute);
+
+            if (!client.TryGetDefinition<DestinyCollectibleDefinition>(collectibleHash, lang, out var collectibleDefinition))
             {
                 var embed = _embedBuilderService.CreateSimpleResponseEmbed("Failure", "Failed to get definition", Color.Red).Build();
                 await Context.Interaction.RespondAsync(embed: embed);
@@ -231,7 +253,13 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
             var titleRecordHash = uint.Parse(titleRecordHashString);
             var client = await _bungieClientProvider.GetClientAsync();
 
-            if (!client.TryGetDefinition<DestinyRecordDefinition>(titleRecordHash, BungieLocales.EN, out var titleDefinition))
+            var lang = await _memoryCache.GetOrAddAsync(
+                $"guild_lang_{GuildId}",
+                async () => (await _destinyDb.GetGuildLanguageAsync(GuildId)).ConvertToBungieLocale(),
+                TimeSpan.FromSeconds(15),
+                Caching.CacheExpirationType.Absolute);
+
+            if (!client.TryGetDefinition<DestinyRecordDefinition>(titleRecordHash, lang, out var titleDefinition))
             {
                 var embed = _embedBuilderService.CreateSimpleResponseEmbed("Failure", "Failed to get definition", Color.Red).Build();
                 await Context.Interaction.RespondAsync(embed: embed);

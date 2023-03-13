@@ -6,6 +6,7 @@ using Atheon.Models.Database.Destiny.Guilds;
 using Atheon.Models.Database.Destiny.Links;
 using Atheon.Models.Database.Destiny.Profiles;
 using Atheon.Models.Database.Destiny.Tracking;
+using Atheon.Models.DiscordModels;
 using Atheon.Services.Interfaces;
 
 namespace Atheon.Services.Db.Sqlite;
@@ -54,7 +55,8 @@ public class SqliteDestinyDb : IDestinyDb
             {nameof(DiscordGuildSettingsDbModel.SystemReportsEnabled)},
             {nameof(DiscordGuildSettingsDbModel.SystemReportsOverrideChannel)},
             {nameof(DiscordGuildSettingsDbModel.Clans)},
-            {nameof(DiscordGuildSettingsDbModel.ReportClanChanges)}
+            {nameof(DiscordGuildSettingsDbModel.ReportClanChanges)},
+            {nameof(DiscordGuildSettingsDbModel.DestinyManifestLocale)}
         )
         VALUES 
         (
@@ -68,7 +70,8 @@ public class SqliteDestinyDb : IDestinyDb
             @{nameof(DiscordGuildSettingsDbModel.SystemReportsEnabled)},
             @{nameof(DiscordGuildSettingsDbModel.SystemReportsOverrideChannel)},
             @{nameof(DiscordGuildSettingsDbModel.Clans)},
-            @{nameof(DiscordGuildSettingsDbModel.ReportClanChanges)}
+            @{nameof(DiscordGuildSettingsDbModel.ReportClanChanges)},
+            @{nameof(DiscordGuildSettingsDbModel.DestinyManifestLocale)}
         )
         ON CONFLICT (GuildId) DO UPDATE SET
             {nameof(DiscordGuildSettingsDbModel.GuildId)} = @{nameof(DiscordGuildSettingsDbModel.GuildId)},
@@ -81,7 +84,8 @@ public class SqliteDestinyDb : IDestinyDb
             {nameof(DiscordGuildSettingsDbModel.SystemReportsEnabled)} = @{nameof(DiscordGuildSettingsDbModel.SystemReportsEnabled)},
             {nameof(DiscordGuildSettingsDbModel.SystemReportsOverrideChannel)} = @{nameof(DiscordGuildSettingsDbModel.SystemReportsOverrideChannel)},
             {nameof(DiscordGuildSettingsDbModel.Clans)} = @{nameof(DiscordGuildSettingsDbModel.Clans)},
-            {nameof(DiscordGuildSettingsDbModel.ReportClanChanges)} = @{nameof(DiscordGuildSettingsDbModel.ReportClanChanges)}
+            {nameof(DiscordGuildSettingsDbModel.ReportClanChanges)} = @{nameof(DiscordGuildSettingsDbModel.ReportClanChanges)},
+            {nameof(DiscordGuildSettingsDbModel.DestinyManifestLocale)} = @{nameof(DiscordGuildSettingsDbModel.DestinyManifestLocale)}
     """;
     public async Task UpsertGuildSettingsAsync(DiscordGuildSettingsDbModel guildSettings)
     {
@@ -845,5 +849,24 @@ public class SqliteDestinyDb : IDestinyDb
         return await _dbAccess.QueryAsync<DestinyProfileLiteWithValue<int>>(
                 GetTotalTitlesLeaderboardQuery,
                 new { ClanIds = clanIds });
+    }
+
+    private const string GetGuildLanguageQuery =
+        """
+        SELECT DestinyManifestLocale
+        FROM Guilds
+        WHERE GuildId = @GuildId
+        """;
+    public async Task<DiscordDestinyLanguageEnum> GetGuildLanguageAsync(ulong guildId)
+    {
+        var result = await _dbAccess.QueryFirstOrDefaultAsync<DiscordDestinyLanguageEnum?>(GetGuildLanguageQuery, new
+        {
+            GuildId = guildId
+        });
+
+        if (result is null)
+            return DiscordDestinyLanguageEnum.English;
+
+        return result.Value;
     }
 }

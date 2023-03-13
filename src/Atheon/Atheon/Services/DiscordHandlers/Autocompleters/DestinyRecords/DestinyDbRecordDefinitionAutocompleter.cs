@@ -1,4 +1,5 @@
-﻿using Atheon.Services.DiscordHandlers.Autocompleters.DestinyCollectibles;
+﻿using Atheon.Extensions;
+using Atheon.Services.DiscordHandlers.Autocompleters.DestinyCollectibles;
 using Atheon.Services.Interfaces;
 using Discord;
 using Discord.Interactions;
@@ -11,15 +12,18 @@ public class DestinyDbRecordDefinitionAutocompleter : AutocompleteHandler
     private readonly IBungieClientProvider _bungieClientProvider;
     private readonly ILogger<DestinyCollectibleDefinitionAutocompleter> _logger;
     private readonly IDestinyDb _destinyDb;
+    private readonly IMemoryCache _memoryCache;
 
     public DestinyDbRecordDefinitionAutocompleter(
         IBungieClientProvider bungieClientProvider,
         ILogger<DestinyCollectibleDefinitionAutocompleter> logger,
-        IDestinyDb destinyDb)
+        IDestinyDb destinyDb,
+        IMemoryCache memoryCache)
     {
         _bungieClientProvider = bungieClientProvider;
         _logger = logger;
         _destinyDb = destinyDb;
+        _memoryCache = memoryCache;
     }
 
     public override async Task<AutocompletionResult> GenerateSuggestionsAsync(
@@ -30,6 +34,12 @@ public class DestinyDbRecordDefinitionAutocompleter : AutocompleteHandler
     {
         try
         {
+            var lang = await _memoryCache.GetOrAddAsync(
+                $"guild_lang_{context.Guild.Id}",
+                async () => (await _destinyDb.GetGuildLanguageAsync(context.Guild.Id)).ConvertToBungieLocale(),
+                TimeSpan.FromSeconds(15),
+                Caching.CacheExpirationType.Absolute);
+
             var client = await _bungieClientProvider.GetClientAsync();
             var searchEntry = (string)autocompleteInteraction.Data.Options.First(x => x.Focused).Value;
             var settings = await _destinyDb.GetGuildSettingsAsync(context.Guild.Id);
@@ -39,7 +49,7 @@ public class DestinyDbRecordDefinitionAutocompleter : AutocompleteHandler
 
             var searchResults = client
                 .Repository
-                .GetAll<DestinyRecordDefinition>()
+                .GetAll<DestinyRecordDefinition>(lang)
                 .Where(x => settings.TrackedRecords.TrackedHashes.Contains(x.Hash))
                 .Where(x => x.DisplayProperties.Name.Contains(searchEntry, StringComparison.InvariantCultureIgnoreCase))
                 .Take(20);

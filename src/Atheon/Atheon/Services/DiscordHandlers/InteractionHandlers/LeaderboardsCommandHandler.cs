@@ -18,16 +18,19 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
     private readonly EmbedBuilderService _embedBuilderService;
     private readonly IDestinyDb _destinyDb;
     private readonly IBungieClientProvider _bungieClientProvider;
+    private readonly IMemoryCache _memoryCache;
 
     public LeaderboardsCommandHandler(
         ILogger<LeaderboardsCommandHandler> logger,
         EmbedBuilderService embedBuilderService,
         IDestinyDb destinyDb,
-        IBungieClientProvider bungieClientProvider) : base(logger, embedBuilderService)
+        IBungieClientProvider bungieClientProvider,
+        IMemoryCache memoryCache) : base(logger, embedBuilderService)
     {
         _embedBuilderService = embedBuilderService;
         _destinyDb = destinyDb;
         _bungieClientProvider = bungieClientProvider;
+        _memoryCache = memoryCache;
     }
 
     [SlashCommand("metric", "Shows leaderboard for a certain metric")]
@@ -39,7 +42,14 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
         {
             var metricHash = uint.Parse(metricHashString);
             var bungieClient = await _bungieClientProvider.GetClientAsync();
-            bungieClient.TryGetDefinition<DestinyMetricDefinition>(metricHash, BungieLocales.EN, out var metricDefinition);
+
+            var lang = await _memoryCache.GetOrAddAsync(
+                $"guild_lang_{GuildId}",
+                async () => (await _destinyDb.GetGuildLanguageAsync(GuildId)).ConvertToBungieLocale(),
+                TimeSpan.FromSeconds(15),
+                Caching.CacheExpirationType.Absolute);
+
+            bungieClient.TryGetDefinition<DestinyMetricDefinition>(metricHash, lang, out var metricDefinition);
 
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
             var users = await _destinyDb.GetProfileMetricsAsync(metricHash, !metricDefinition.LowerValueIsBetter, guildSettings.Clans.ToArray());
@@ -273,7 +283,14 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
         {
             var recordHash = uint.Parse(triumphHashString);
             var bungieClient = await _bungieClientProvider.GetClientAsync();
-            bungieClient.TryGetDefinition<DestinyRecordDefinition>(recordHash, BungieLocales.EN, out var recordDefinition);
+
+            var lang = await _memoryCache.GetOrAddAsync(
+                $"guild_lang_{GuildId}",
+                async () => (await _destinyDb.GetGuildLanguageAsync(GuildId)).ConvertToBungieLocale(),
+                TimeSpan.FromSeconds(15),
+                Caching.CacheExpirationType.Absolute);
+
+            bungieClient.TryGetDefinition<DestinyRecordDefinition>(recordHash, lang, out var recordDefinition);
 
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
 

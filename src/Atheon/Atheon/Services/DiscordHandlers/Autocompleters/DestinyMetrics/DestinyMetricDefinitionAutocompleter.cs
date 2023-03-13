@@ -1,4 +1,5 @@
-﻿using Atheon.Services.Interfaces;
+﻿using Atheon.Extensions;
+using Atheon.Services.Interfaces;
 using Discord;
 using Discord.Interactions;
 using DotNetBungieAPI.Models.Destiny.Definitions.Metrics;
@@ -9,13 +10,19 @@ namespace Atheon.Services.DiscordHandlers.Autocompleters.DestinyMetrics
     {
         private readonly IBungieClientProvider _bungieClientProvider;
         private readonly ILogger<DestinyMetricDefinitionAutocompleter> _logger;
+        private readonly IDestinyDb _destinyDb;
+        private readonly IMemoryCache _memoryCache;
 
         public DestinyMetricDefinitionAutocompleter(
             IBungieClientProvider bungieClientProvider,
-            ILogger<DestinyMetricDefinitionAutocompleter> logger)
+            ILogger<DestinyMetricDefinitionAutocompleter> logger,
+            IDestinyDb destinyDb,
+            IMemoryCache memoryCache)
         {
             _bungieClientProvider = bungieClientProvider;
             _logger = logger;
+            _destinyDb = destinyDb;
+            _memoryCache = memoryCache;
         }
 
         public override async Task<AutocompletionResult> GenerateSuggestionsAsync(
@@ -25,12 +32,18 @@ namespace Atheon.Services.DiscordHandlers.Autocompleters.DestinyMetrics
         {
             try
             {
+                var lang = await _memoryCache.GetOrAddAsync(
+                    $"guild_lang_{context.Guild.Id}",
+                    async () => (await _destinyDb.GetGuildLanguageAsync(context.Guild.Id)).ConvertToBungieLocale(),
+                    TimeSpan.FromSeconds(15),
+                    Caching.CacheExpirationType.Absolute);
+
                 var client = await _bungieClientProvider.GetClientAsync();
                 var searchEntry = (string)autocompleteInteraction.Data.Options.First(x => x.Focused).Value;
 
                 var searchResults = client
                     .Repository
-                    .GetAll<DestinyMetricDefinition>()
+                    .GetAll<DestinyMetricDefinition>(lang)
                     .Where(x =>
                     {
                         return x.DisplayProperties.Name.Contains(searchEntry, StringComparison.InvariantCultureIgnoreCase);

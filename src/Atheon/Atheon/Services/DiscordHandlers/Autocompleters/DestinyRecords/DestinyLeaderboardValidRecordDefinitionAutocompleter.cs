@@ -1,4 +1,6 @@
-﻿using Atheon.Services.BungieApi;
+﻿using Atheon.Extensions;
+using Atheon.Services.BungieApi;
+using Atheon.Services.Interfaces;
 using Discord;
 using Discord.Interactions;
 
@@ -7,11 +9,17 @@ namespace Atheon.Services.DiscordHandlers.Autocompleters.DestinyRecords;
 public class DestinyLeaderboardValidRecordDefinitionAutocompleter : AutocompleteHandler
 {
     private readonly DestinyDefinitionDataService _destinyDefinitionDataService;
+    private readonly IDestinyDb _destinyDb;
+    private readonly IMemoryCache _memoryCache;
 
     public DestinyLeaderboardValidRecordDefinitionAutocompleter(
-        DestinyDefinitionDataService destinyDefinitionDataService)
+        DestinyDefinitionDataService destinyDefinitionDataService,
+        IDestinyDb destinyDb,
+        IMemoryCache memoryCache)
     {
         _destinyDefinitionDataService = destinyDefinitionDataService;
+        _destinyDb = destinyDb;
+        _memoryCache = memoryCache;
     }
 
     public override async Task<AutocompletionResult> GenerateSuggestionsAsync(
@@ -20,10 +28,16 @@ public class DestinyLeaderboardValidRecordDefinitionAutocompleter : Autocomplete
         IParameterInfo parameter, 
         IServiceProvider services)
     {
+        var lang = await _memoryCache.GetOrAddAsync(
+                $"guild_lang_{context.Guild.Id}",
+                async () => (await _destinyDb.GetGuildLanguageAsync(context.Guild.Id)).ConvertToBungieLocale(),
+                TimeSpan.FromSeconds(15),
+                Caching.CacheExpirationType.Absolute);
+
         var searchEntry = (string)autocompleteInteraction.Data.Options.First(x => x.Focused).Value;
 
         var searchResults = _destinyDefinitionDataService
-                .LeaderboardValidRecords
+                .LeaderboardValidRecords[lang]
                 .Where(x => x.DisplayProperties.Name.Contains(searchEntry, StringComparison.InvariantCultureIgnoreCase))
                 .Take(20);
 

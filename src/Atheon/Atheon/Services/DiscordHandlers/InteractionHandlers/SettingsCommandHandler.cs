@@ -1,4 +1,5 @@
-﻿using Atheon.Models.Database.Administration;
+﻿using Atheon.Extensions;
+using Atheon.Models.Database.Administration;
 using Atheon.Models.Database.Destiny.Links;
 using Atheon.Models.Destiny;
 using Atheon.Models.DiscordModels;
@@ -16,6 +17,7 @@ using DotNetBungieAPI.Models;
 using DotNetBungieAPI.Models.Destiny.Definitions.Collectibles;
 using DotNetBungieAPI.Models.Destiny.Definitions.PresentationNodes;
 using DotNetBungieAPI.Models.Destiny.Definitions.Records;
+using Polly;
 using System.Text;
 
 namespace Atheon.Services.DiscordHandlers.InteractionHandlers;
@@ -28,6 +30,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
     private readonly EmbedBuilderService _embedBuilderService;
     private readonly IBungieClientProvider _bungieClientProvider;
     private readonly DestinyDefinitionDataService _destinyDefinitionDataService;
+    private readonly IMemoryCache _memoryCache;
 
     public SettingsCommandHandler(
         ILogger<SettingsCommandHandler> logger,
@@ -35,13 +38,15 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
         IClanQueue clanQueue,
         EmbedBuilderService embedBuilderService,
         IBungieClientProvider bungieClientProvider,
-        DestinyDefinitionDataService destinyDefinitionDataService) : base(logger, embedBuilderService)
+        DestinyDefinitionDataService destinyDefinitionDataService,
+        IMemoryCache memoryCache) : base(logger, embedBuilderService)
     {
         _destinyDb = destinyDb;
         _clanQueue = clanQueue;
         _embedBuilderService = embedBuilderService;
         _bungieClientProvider = bungieClientProvider;
         _destinyDefinitionDataService = destinyDefinitionDataService;
+        _memoryCache = memoryCache;
     }
 
     [AtheonBotAdminOrOwner]
@@ -234,7 +239,13 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
         {
             var client = await _bungieClientProvider.GetClientAsync();
 
-            if (!client.TryGetDefinition<DestinyCollectibleDefinition>(itemHash, BungieLocales.EN, out var collectibleDefinition))
+            var lang = await _memoryCache.GetOrAddAsync(
+                $"guild_lang_{GuildId}",
+                async () => (await _destinyDb.GetGuildLanguageAsync(GuildId)).ConvertToBungieLocale(),
+                TimeSpan.FromSeconds(15),
+                Caching.CacheExpirationType.Absolute);
+
+            if (!client.TryGetDefinition<DestinyCollectibleDefinition>(itemHash, lang, out var collectibleDefinition))
             {
                 await Context.Interaction.RespondAsync(embed:
                     _embedBuilderService.CreateSimpleResponseEmbed(
@@ -249,7 +260,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
             guildSettings.TrackedCollectibles.TrackedHashes.Add(itemHash);
             await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
 
-            var (name, icon) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(collectibleDefinition);
+            var (name, icon) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(collectibleDefinition, lang);
 
             await Context.Interaction.RespondAsync(embed:
                 _embedBuilderService.CreateSimpleResponseEmbed(
@@ -269,7 +280,13 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
         {
             var client = await _bungieClientProvider.GetClientAsync();
 
-            if (!client.TryGetDefinition<DestinyCollectibleDefinition>(itemHash, BungieLocales.EN, out var collectibleDefinition))
+            var lang = await _memoryCache.GetOrAddAsync(
+                $"guild_lang_{GuildId}",
+                async () => (await _destinyDb.GetGuildLanguageAsync(GuildId)).ConvertToBungieLocale(),
+                TimeSpan.FromSeconds(15),
+                Caching.CacheExpirationType.Absolute);
+
+            if (!client.TryGetDefinition<DestinyCollectibleDefinition>(itemHash, lang, out var collectibleDefinition))
             {
                 await Context.Interaction.RespondAsync(embed:
                     _embedBuilderService.CreateSimpleResponseEmbed(
@@ -284,7 +301,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
             guildSettings.TrackedCollectibles.TrackedHashes.Remove(itemHash);
             await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
 
-            var (name, icon) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(collectibleDefinition);
+            var (name, icon) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(collectibleDefinition, lang);
 
             await Context.Interaction.RespondAsync(embed:
                 _embedBuilderService.CreateSimpleResponseEmbed(
@@ -314,17 +331,23 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
                 return;
             }
 
+            var lang = await _memoryCache.GetOrAddAsync(
+                $"guild_lang_{GuildId}",
+                async () => (await _destinyDb.GetGuildLanguageAsync(GuildId)).ConvertToBungieLocale(),
+                TimeSpan.FromSeconds(15),
+                Caching.CacheExpirationType.Absolute);
+
             var sb = new StringBuilder();
 
             foreach (var collectibleHash in guildSettings.TrackedCollectibles.TrackedHashes)
             {
-                if (!client.TryGetDefinition<DestinyCollectibleDefinition>(collectibleHash, BungieLocales.EN, out var collectibleDefinition))
+                if (!client.TryGetDefinition<DestinyCollectibleDefinition>(collectibleHash, lang, out var collectibleDefinition))
                 {
                     sb.AppendLine($"> Unknown definition hash {collectibleHash}");
                 }
                 else
                 {
-                    var (name, _) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(collectibleDefinition);
+                    var (name, _) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(collectibleDefinition, lang);
                     sb.AppendLine($"> {name}");
                 }
             }
@@ -346,7 +369,13 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
         {
             var client = await _bungieClientProvider.GetClientAsync();
 
-            if (!client.TryGetDefinition<DestinyRecordDefinition>(recordHash, BungieLocales.EN, out var recordDefinition))
+            var lang = await _memoryCache.GetOrAddAsync(
+                $"guild_lang_{GuildId}",
+                async () => (await _destinyDb.GetGuildLanguageAsync(GuildId)).ConvertToBungieLocale(),
+                TimeSpan.FromSeconds(15),
+                Caching.CacheExpirationType.Absolute);
+
+            if (!client.TryGetDefinition<DestinyRecordDefinition>(recordHash, lang, out var recordDefinition))
             {
                 await Context.Interaction.RespondAsync(embed:
                     _embedBuilderService.CreateSimpleResponseEmbed(
@@ -379,7 +408,13 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
         {
             var client = await _bungieClientProvider.GetClientAsync();
 
-            if (!client.TryGetDefinition<DestinyRecordDefinition>(recordHash, BungieLocales.EN, out var recordDefinition))
+            var lang = await _memoryCache.GetOrAddAsync(
+                $"guild_lang_{GuildId}",
+                async () => (await _destinyDb.GetGuildLanguageAsync(GuildId)).ConvertToBungieLocale(),
+                TimeSpan.FromSeconds(15),
+                Caching.CacheExpirationType.Absolute);
+
+            if (!client.TryGetDefinition<DestinyRecordDefinition>(recordHash, lang, out var recordDefinition))
             {
                 await Context.Interaction.RespondAsync(embed:
                     _embedBuilderService.CreateSimpleResponseEmbed(
@@ -422,11 +457,17 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
                 return;
             }
 
+            var lang = await _memoryCache.GetOrAddAsync(
+                $"guild_lang_{GuildId}",
+                async () => (await _destinyDb.GetGuildLanguageAsync(GuildId)).ConvertToBungieLocale(),
+                TimeSpan.FromSeconds(15),
+                Caching.CacheExpirationType.Absolute);
+
             var sb = new StringBuilder();
 
             foreach (var collectibleHash in guildSettings.TrackedRecords.TrackedHashes)
             {
-                if (!client.TryGetDefinition<DestinyRecordDefinition>(collectibleHash, BungieLocales.EN, out var recordDefinition))
+                if (!client.TryGetDefinition<DestinyRecordDefinition>(collectibleHash, lang, out var recordDefinition))
                 {
                     sb.AppendLine($"> Unknown definition hash {collectibleHash}");
                 }
@@ -498,7 +539,13 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
 
             var client = await _bungieClientProvider.GetClientAsync();
 
-            if (!client.TryGetDefinition<DestinyPresentationNodeDefinition>(presentationNodeHash, BungieLocales.EN, out var presentationNodeDefinition))
+            var lang = await _memoryCache.GetOrAddAsync(
+                $"guild_lang_{GuildId}",
+                async () => (await _destinyDb.GetGuildLanguageAsync(GuildId)).ConvertToBungieLocale(),
+                TimeSpan.FromSeconds(15),
+                Caching.CacheExpirationType.Absolute);
+
+            if (!client.TryGetDefinition<DestinyPresentationNodeDefinition>(presentationNodeHash, lang, out var presentationNodeDefinition))
             {
                 await Context.Interaction.RespondAsync(embed:
                     _embedBuilderService.CreateSimpleResponseEmbed(
@@ -538,7 +585,13 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
 
             var client = await _bungieClientProvider.GetClientAsync();
 
-            if (!client.TryGetDefinition<DestinyPresentationNodeDefinition>(presentationNodeHash, BungieLocales.EN, out var presentationNodeDefinition))
+            var lang = await _memoryCache.GetOrAddAsync(
+                $"guild_lang_{GuildId}",
+                async () => (await _destinyDb.GetGuildLanguageAsync(GuildId)).ConvertToBungieLocale(),
+                TimeSpan.FromSeconds(15),
+                Caching.CacheExpirationType.Absolute);
+
+            if (!client.TryGetDefinition<DestinyPresentationNodeDefinition>(presentationNodeHash, lang, out var presentationNodeDefinition))
             {
                 await Context.Interaction.RespondAsync(embed:
                     _embedBuilderService.CreateSimpleResponseEmbed(
@@ -563,6 +616,31 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
                     "Success",
                     $"Removed **{presentationNodeDefinition.DisplayProperties.Name}** ({presentationNodeDefinition.Children.Collectibles.Count} item(s)) from tracking")
                 .WithThumbnailUrl(presentationNodeDefinition.DisplayProperties.Icon.AbsolutePath)
+                .Build());
+        });
+    }
+
+    [AtheonBotAdminOrOwner]
+    [SlashCommand("set-destiny-locale", "Sets locale user by destiny definitions, guild scoped")]
+    public async Task SetGuildDestinyLocale(
+        [Summary("locale", "Locale to use")] DiscordDestinyLanguageEnum locale)
+    {
+        await ExecuteAndHanldeErrors(async () =>
+        {
+            await Context.Interaction.DeferAsync();
+
+            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+
+            guildSettings.DestinyManifestLocale = locale;
+
+            await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
+
+            await _bungieClientProvider.ReloadClient();
+
+            await Context.Interaction.FollowupAsync(embed:
+                _embedBuilderService.CreateSimpleResponseEmbed(
+                    "Success",
+                    $"Changed locale language to {locale}")
                 .Build());
         });
     }

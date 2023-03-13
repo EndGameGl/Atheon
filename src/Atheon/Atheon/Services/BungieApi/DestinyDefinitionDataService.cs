@@ -11,20 +11,21 @@ using DotNetBungieAPI.Models.Destiny.Definitions.Records;
 using DotNetBungieAPI.Models.Destiny.Definitions.InventoryItems;
 using DotNetBungieAPI.Models.Destiny.Definitions.Collectibles;
 using System.Text;
+using Atheon.Extensions;
 
 namespace Atheon.Services.BungieApi;
 
 public class DestinyDefinitionDataService
 {
     private Dictionary<uint, uint> _collectibleToItemMapping;
-    private List<(string NodeFulleName, uint Hash)> _presentationNodeWithCollectiblesNameMappings;
+    private Dictionary<BungieLocales, List<(string NodeFulleName, uint Hash)>> _presentationNodeWithCollectiblesNameMappings;
 
     private readonly IBungieClientProvider _bungieClientProvider;
     private readonly IMemoryCache _memoryCache;
     private readonly IDestinyDb _destinyDb;
     private readonly CuratedDefinitionInitialiser _curatedDefinitionInitialiser;
 
-    public List<DestinyRecordDefinition> LeaderboardValidRecords { get; private set; }
+    public Dictionary<BungieLocales, List<DestinyRecordDefinition>> LeaderboardValidRecords { get; private set; }
 
     public DestinyDefinitionDataService(
         IBungieClientProvider bungieClientProvider,
@@ -40,8 +41,8 @@ public class DestinyDefinitionDataService
 
     public async Task MapLookupTables()
     {
+        var settings = await _destinyDb.GetAllGuildSettings();
         var client = await _bungieClientProvider.GetClientAsync();
-        var sb = new StringBuilder();
         _collectibleToItemMapping = new Dictionary<uint, uint>();
         var items = client.Repository.GetAll<DestinyInventoryItemDefinition>();
         foreach (var item in items)
@@ -52,9 +53,22 @@ public class DestinyDefinitionDataService
             }
         }
 
-        sb.Clear();
-        _presentationNodeWithCollectiblesNameMappings = new List<(string NodeFulleName, uint Hash)>();
-        var nodesWithCollectibles = client.Repository.GetAll<DestinyPresentationNodeDefinition>().Where(x => x.Children?.Collectibles.Count > 0).ToList();
+        _presentationNodeWithCollectiblesNameMappings = new Dictionary<BungieLocales, List<(string NodeFulleName, uint Hash)>>();
+        LeaderboardValidRecords = new Dictionary<BungieLocales, List<DestinyRecordDefinition>>();
+        foreach (var lang in settings.Select(x => x.DestinyManifestLocale.ConvertToBungieLocale()).Distinct().ToList())
+        {
+            await MapLookupTableForLocale(lang);
+        }
+    }
+
+    private async Task MapLookupTableForLocale(BungieLocales bungieLocales)
+    {
+        var client = await _bungieClientProvider.GetClientAsync();
+        var sb = new StringBuilder();
+
+        var presentationNodeWithCollectiblesNameMappings = new List<(string NodeFulleName, uint Hash)>();
+
+        var nodesWithCollectibles = client.Repository.GetAll<DestinyPresentationNodeDefinition>(bungieLocales).Where(x => x.Children?.Collectibles.Count > 0).ToList();
         foreach (var nodeWithCollectibles in nodesWithCollectibles)
         {
             sb.Clear();
@@ -62,7 +76,7 @@ public class DestinyDefinitionDataService
             var currentParentNodePointer = nodeWithCollectibles.ParentNodes.FirstOrDefault();
             if (!currentParentNodePointer.HasValidHash)
             {
-                _presentationNodeWithCollectiblesNameMappings.Add((nodeWithCollectibles.DisplayProperties.Name, nodeWithCollectibles.Hash));
+                presentationNodeWithCollectiblesNameMappings.Add((nodeWithCollectibles.DisplayProperties.Name, nodeWithCollectibles.Hash));
                 continue;
             }
 
@@ -75,10 +89,12 @@ public class DestinyDefinitionDataService
             }
 
             sb.Append($" // {nodeWithCollectibles.DisplayProperties.Name}");
-            _presentationNodeWithCollectiblesNameMappings.Add((sb.ToString(), nodeWithCollectibles.Hash));
+            presentationNodeWithCollectiblesNameMappings.Add((sb.ToString(), nodeWithCollectibles.Hash));
         }
 
-        LeaderboardValidRecords = client.Repository.GetAll<DestinyRecordDefinition>().Where(x =>
+        _presentationNodeWithCollectiblesNameMappings[bungieLocales] = presentationNodeWithCollectiblesNameMappings;
+
+        LeaderboardValidRecords[bungieLocales] = client.Repository.GetAll<DestinyRecordDefinition>(bungieLocales).Where(x =>
         {
             if (x.Objectives.Count == 1 && x.Objectives[0].TryGetDefinition(out var objectiveDefinition) && objectiveDefinition.AllowOvercompletion)
             {
@@ -99,7 +115,7 @@ public class DestinyDefinitionDataService
         }).ToList();
     }
 
-    public (string CollectibleName, string CollectbleIcon) GetCollectibleDisplayProperties(DestinyCollectibleDefinition collectibleDefinition)
+    public (string CollectibleName, string CollectbleIcon) GetCollectibleDisplayProperties(DestinyCollectibleDefinition collectibleDefinition, BungieLocales locale)
     {
         if (_curatedDefinitionInitialiser.CuratedCollectibles.TryGetValue(collectibleDefinition.Hash, out var curatedCollectible))
         {
@@ -108,16 +124,16 @@ public class DestinyDefinitionDataService
 
         if (collectibleDefinition.Redacted &&
             _collectibleToItemMapping.TryGetValue(collectibleDefinition.Hash, out uint itemHash) &&
-            (new DefinitionHashPointer<DestinyInventoryItemDefinition>(itemHash)).TryGetDefinition(out var item))
+            (new DefinitionHashPointer<DestinyInventoryItemDefinition>(itemHash)).TryGetDefinition(out var item, locale))
         {
             return (item.DisplayProperties.Name, item.DisplayProperties.Icon.AbsolutePath);
         }
         return (collectibleDefinition.DisplayProperties.Name, collectibleDefinition.DisplayProperties.Icon.AbsolutePath);
     }
 
-    public List<(string NodeFulleName, uint Hash)> FindNodes(string input)
+    public List<(string NodeFulleName, uint Hash)> FindNodes(string input, BungieLocales locale)
     {
-        return _presentationNodeWithCollectiblesNameMappings
+        return _presentationNodeWithCollectiblesNameMappings[locale]
             .Where(x => x.NodeFulleName.Contains(input, StringComparison.OrdinalIgnoreCase))
             .ToList();
     }
@@ -146,12 +162,12 @@ public class DestinyDefinitionDataService
             CacheExpirationType.Absolute);
     }
 
-    public async Task<List<DestinyRecordDefinition>> GetAllTitleDefinitionsAsync()
+    public async Task<List<DestinyRecordDefinition>> GetAllTitleDefinitionsAsync(BungieLocales locale)
     {
         var titles = new List<DestinyRecordDefinition>();
         var client = await _bungieClientProvider.GetClientAsync();
-        AddAddTitleRecordsFromPresentationNode(client, titles, DefinitionHashes.PresentationNodes.Titles);
-        AddAddTitleRecordsFromPresentationNode(client, titles, DefinitionHashes.PresentationNodes.LegacyTitles);
+        AddAddTitleRecordsFromPresentationNode(client, titles, DefinitionHashes.PresentationNodes.Titles, locale);
+        AddAddTitleRecordsFromPresentationNode(client, titles, DefinitionHashes.PresentationNodes.LegacyTitles, locale);
         return titles;
     }
 
@@ -230,22 +246,23 @@ public class DestinyDefinitionDataService
     private static void AddAddTitleRecordsFromPresentationNode(
         IBungieClient bungieClient,
         List<DestinyRecordDefinition> records,
-        uint presentationNodeHash)
+        uint presentationNodeHash,
+        BungieLocales locale)
     {
         if (!bungieClient.TryGetDefinition<DestinyPresentationNodeDefinition>(
                 presentationNodeHash,
-                BungieLocales.EN, out var sealsPresentationNodeDefinition))
+                locale, out var sealsPresentationNodeDefinition))
             return;
 
         foreach (var nodeSealEntry in sealsPresentationNodeDefinition.Children.PresentationNodes)
         {
-            if (!nodeSealEntry.PresentationNode.TryGetDefinition(out var sealDefinition))
+            if (!nodeSealEntry.PresentationNode.TryGetDefinition(out var sealDefinition, locale))
                 continue;
 
             if (sealDefinition.Redacted)
                 continue;
 
-            if (sealDefinition.CompletionRecord.TryGetDefinition(out var sealRecordDefinition))
+            if (sealDefinition.CompletionRecord.TryGetDefinition(out var sealRecordDefinition, locale))
             {
                 records.Add(sealRecordDefinition);
             }

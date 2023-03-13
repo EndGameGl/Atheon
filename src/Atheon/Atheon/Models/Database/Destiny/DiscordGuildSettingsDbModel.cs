@@ -6,6 +6,8 @@ using DotNetBungieAPI.Models.GroupsV2;
 using Atheon.Attributes;
 using Atheon.Options;
 using System.Text.Json.Serialization;
+using DotNetBungieAPI.Models;
+using Atheon.Models.DiscordModels;
 
 namespace Atheon.Models.Database.Destiny;
 
@@ -81,6 +83,9 @@ public class DiscordGuildSettingsDbModel
 
     [AutoColumn(nameof(ReportClanChanges), notNull: true, sqliteType: DatabaseOptions.SQLiteTypes.NUMERIC.BOOLEAN)]
     public bool ReportClanChanges { get; set; }
+
+    [AutoColumn(nameof(DestinyManifestLocale), sqliteType: DatabaseOptions.SQLiteTypes.INTEGER.DEFAULT_VALUE)]
+    public DiscordDestinyLanguageEnum DestinyManifestLocale { get; set; } = DiscordDestinyLanguageEnum.English;
 
     public static DiscordGuildSettingsDbModel CreateDefault(ulong guildId, string guildName)
     {

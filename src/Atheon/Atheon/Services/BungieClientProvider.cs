@@ -13,7 +13,7 @@ namespace Atheon.Services;
 public class BungieClientProvider : IBungieClientProvider
 {
     private readonly ISettingsStorage _settingsStorage;
-
+    private readonly IDestinyDb _destinyDb;
     private IBungieClient? _clientInstance;
     private IBungieClientConfiguration? _bungieClientConfiguration;
     private SqliteDefinitionProviderConfiguration? _providerConfiguration;
@@ -21,9 +21,11 @@ public class BungieClientProvider : IBungieClientProvider
     public bool IsReady { get; private set; }
 
     public BungieClientProvider(
-        ISettingsStorage settingsStorage)
+        ISettingsStorage settingsStorage,
+        IDestinyDb destinyDb)
     {
         _settingsStorage = settingsStorage;
+        _destinyDb = destinyDb;
     }
 
     private async Task<IBungieClient> ResolveClientInstance()
@@ -34,7 +36,23 @@ public class BungieClientProvider : IBungieClientProvider
 
         var manifestPath = await _settingsStorage.GetManifestPath();
 
-        Ensure.That(manifestPath).Is(path => path.IsNotNullOrEmpty(), errorMessage: "Manifest path can't be empty");
+        Ensure.That(manifestPath).Is(path => path.IsNotNullOrEmpty(), errorMessage: "Manifest path can't be empty");      
+
+        var client = await CreateClient(apiKey, manifestPath);
+
+        IsReady = true;
+
+        return client;
+    }
+
+    private async Task<IBungieClient> CreateClient(string apiKey, string manifestPath)
+    {
+        var languages = (await _destinyDb.GetAllGuildSettings()).Select(x => x.DestinyManifestLocale.ConvertToBungieLocale()).Distinct().ToList();
+
+        if (!languages.Contains(BungieLocales.EN))
+        {
+            languages.Add(BungieLocales.EN);
+        }
 
         var services = new ServiceCollection();
 
@@ -43,7 +61,7 @@ public class BungieClientProvider : IBungieClientProvider
         services.UseBungieApiClient((config) =>
         {
             config.ClientConfiguration.ApiKey = apiKey;
-            config.ClientConfiguration.UsedLocales.AddRange(new[] { BungieLocales.EN });
+            config.ClientConfiguration.UsedLocales.AddRange(languages);
             config.DefinitionProvider.UseSqliteDefinitionProvider(provider =>
             {
                 provider.ManifestFolderPath = manifestPath;
@@ -70,8 +88,6 @@ public class BungieClientProvider : IBungieClientProvider
 
         var client = serviceProvider.GetRequiredService<IBungieClient>();
 
-        IsReady = true;
-
         return client;
     }
 
@@ -95,5 +111,12 @@ public class BungieClientProvider : IBungieClientProvider
         {
             await _clientInstance.DefinitionProvider.ReadToRepository(_clientInstance.Repository);
         }
+    }
+
+    public async Task ReloadClient()
+    {
+        _clientInstance =  await ResolveClientInstance();
+        await _clientInstance.DefinitionProvider.Initialize();
+        await _clientInstance.DefinitionProvider.ReadToRepository(_clientInstance.Repository);
     }
 }

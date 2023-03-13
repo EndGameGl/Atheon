@@ -1,4 +1,5 @@
-﻿using Atheon.Models.Database.Destiny;
+﻿using Atheon.Extensions;
+using Atheon.Models.Database.Destiny;
 using Atheon.Models.Database.Destiny.Broadcasts;
 using Atheon.Services.BungieApi;
 using Atheon.Services.DiscordHandlers;
@@ -21,6 +22,7 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
     private readonly IBungieClientProvider _bungieClientProvider;
     private readonly EmbedBuilderService _embedBuilderService;
     private readonly DestinyDefinitionDataService _destinyDefinitionDataService;
+    private readonly IMemoryCache _memoryCache;
     private ConcurrentQueue<ClanBroadcastDbModel> _clanBroadcasts = new();
     private ConcurrentQueue<DestinyUserProfileBroadcastDbModel> _userBroadcasts = new();
 
@@ -33,7 +35,8 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
         BroadcastSaver broadcastSaver,
         IBungieClientProvider bungieClientProvider,
         EmbedBuilderService embedBuilderService,
-        DestinyDefinitionDataService destinyDefinitionDataService) : base(logger)
+        DestinyDefinitionDataService destinyDefinitionDataService,
+        IMemoryCache memoryCache) : base(logger)
     {
         _logger = logger;
         _clanBroadcastEventChannel = clanBroadcastEventChannel;
@@ -43,6 +46,7 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
         _bungieClientProvider = bungieClientProvider;
         _embedBuilderService = embedBuilderService;
         _destinyDefinitionDataService = destinyDefinitionDataService;
+        _memoryCache = memoryCache;
     }
 
     protected override Task BeforeExecutionAsync(CancellationToken stoppingToken)
@@ -183,6 +187,12 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
 
         var channel = guild.GetTextChannel(channelId.Value);
 
+        var lang = await _memoryCache.GetOrAddAsync(
+                $"guild_lang_{broadcasts.First().GuildId}",
+                async () => (await _destinyDb.GetGuildLanguageAsync(broadcasts.First().GuildId)).ConvertToBungieLocale(),
+                TimeSpan.FromSeconds(15),
+                Caching.CacheExpirationType.Absolute);
+
         if (channel is not null)
         {
             var embed = _embedBuilderService.BuildDestinyUserGroupedBroadcast(
@@ -191,7 +201,8 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
                 definitionHash,
                 clansDictionary,
                 bungieClient,
-                userNamesKeyedByMembershipId);
+                userNamesKeyedByMembershipId,
+                lang);
 
             await channel.SendMessageAsync(embed: embed);
 
@@ -250,6 +261,12 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
 
         var channel = guild.GetTextChannel(channelId.Value);
 
+        var lang = await _memoryCache.GetOrAddAsync(
+                $"guild_lang_{destinyUserBroadcast.GuildId}",
+                async () => (await _destinyDb.GetGuildLanguageAsync(destinyUserBroadcast.GuildId)).ConvertToBungieLocale(),
+                TimeSpan.FromSeconds(15),
+                Caching.CacheExpirationType.Absolute);
+
         if (channel is not null)
         {
             await channel.SendMessageAsync(
@@ -257,7 +274,8 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
                     destinyUserBroadcast,
                     clanData,
                     bungieClient,
-                    userName));
+                    userName,
+                    lang));
 
             await _destinyDb.MarkUserBroadcastSentAsync(destinyUserBroadcast);
         }

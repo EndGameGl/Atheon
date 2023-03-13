@@ -1,8 +1,10 @@
-﻿using Atheon.Services.BungieApi;
+﻿using Atheon.Extensions;
+using Atheon.Services.BungieApi;
 using Atheon.Services.Interfaces;
 using Discord;
 using Discord.Interactions;
 using DotNetBungieAPI.Extensions;
+using DotNetBungieAPI.Models;
 using DotNetBungieAPI.Models.Destiny.Definitions.Collectibles;
 
 namespace Atheon.Services.DiscordHandlers.Autocompleters.DestinyCollectibles;
@@ -13,17 +15,20 @@ public class DestinyExcludingCollectibleDefinitionAutocompleter : AutocompleteHa
     private readonly ILogger<DestinyCollectibleDefinitionAutocompleter> _logger;
     private readonly IDestinyDb _destinyDb;
     private readonly DestinyDefinitionDataService _destinyDefinitionDataService;
+    private readonly IMemoryCache _memoryCache;
 
     public DestinyExcludingCollectibleDefinitionAutocompleter(
         IBungieClientProvider bungieClientProvider,
         ILogger<DestinyCollectibleDefinitionAutocompleter> logger,
         IDestinyDb destinyDb,
-        DestinyDefinitionDataService destinyDefinitionDataService)
+        DestinyDefinitionDataService destinyDefinitionDataService,
+        IMemoryCache memoryCache)
     {
         _bungieClientProvider = bungieClientProvider;
         _logger = logger;
         _destinyDb = destinyDb;
         _destinyDefinitionDataService = destinyDefinitionDataService;
+        _memoryCache = memoryCache;
     }
 
     public override async Task<AutocompletionResult> GenerateSuggestionsAsync(
@@ -34,6 +39,12 @@ public class DestinyExcludingCollectibleDefinitionAutocompleter : AutocompleteHa
     {
         try
         {
+            var lang = await _memoryCache.GetOrAddAsync(
+                $"guild_lang_{context.Guild.Id}",
+                async () => (await _destinyDb.GetGuildLanguageAsync(context.Guild.Id)).ConvertToBungieLocale(),
+                TimeSpan.FromSeconds(15),
+                Caching.CacheExpirationType.Absolute);
+
             var client = await _bungieClientProvider.GetClientAsync();
             var searchEntry = (string)autocompleteInteraction.Data.Options.First(x => x.Focused).Value;
             var settings = await _destinyDb.GetGuildSettingsAsync(context.Guild.Id);
@@ -43,15 +54,15 @@ public class DestinyExcludingCollectibleDefinitionAutocompleter : AutocompleteHa
 
             var searchResults = client
                 .Repository
-                .GetAll<DestinyCollectibleDefinition>()
+                .GetAll<DestinyCollectibleDefinition>(lang)
                 .Where(x =>
                 {
                     if (x.DisplayProperties.Name.Contains(searchEntry, StringComparison.InvariantCultureIgnoreCase))
                     {
                         return true;
                     }
-                    
-                    var (name, _) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(x);
+
+                    var (name, _) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(x, lang);
 
                     return name.Contains(searchEntry, StringComparison.InvariantCultureIgnoreCase);
                 })
@@ -60,7 +71,7 @@ public class DestinyExcludingCollectibleDefinitionAutocompleter : AutocompleteHa
 
             var results = searchResults
                 .Where(x => x.DisplayProperties.Name.Length > 0)
-                .Select(x => new AutocompleteResult(GetCollectibleDisplayName(x), x.Hash.ToString()));
+                .Select(x => new AutocompleteResult(GetCollectibleDisplayName(x, lang), x.Hash.ToString()));
 
             return !results.Any() ? AutocompletionResult.FromSuccess() : AutocompletionResult.FromSuccess(results);
         }
@@ -71,9 +82,10 @@ public class DestinyExcludingCollectibleDefinitionAutocompleter : AutocompleteHa
         }
     }
 
-    private string GetCollectibleDisplayName(DestinyCollectibleDefinition destinyCollectible)
+    private string GetCollectibleDisplayName(DestinyCollectibleDefinition destinyCollectible,
+         BungieLocales locale)
     {
-        var (name, _) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(destinyCollectible);
+        var (name, _) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(destinyCollectible, locale);
 
         if (destinyCollectible.Item.HasValidHash)
         {

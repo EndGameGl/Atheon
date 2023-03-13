@@ -1,4 +1,5 @@
-﻿using Atheon.Services.BungieApi;
+﻿using Atheon.Extensions;
+using Atheon.Services.BungieApi;
 using Atheon.Services.DiscordHandlers.Autocompleters.DestinyCollectibles;
 using Atheon.Services.Interfaces;
 using Discord;
@@ -13,15 +14,21 @@ public class DestinyTitleAutocompleter : AutocompleteHandler
     private readonly IBungieClientProvider _bungieClientProvider;
     private readonly ILogger<DestinyCollectibleDefinitionAutocompleter> _logger;
     private readonly DestinyDefinitionDataService _destinyDefinitionDataService;
+    private readonly IDestinyDb _destinyDb;
+    private readonly IMemoryCache _memoryCache;
 
     public DestinyTitleAutocompleter(
         IBungieClientProvider bungieClientProvider,
         ILogger<DestinyCollectibleDefinitionAutocompleter> logger,
-        DestinyDefinitionDataService destinyDefinitionDataService)
+        DestinyDefinitionDataService destinyDefinitionDataService,
+        IDestinyDb destinyDb,
+        IMemoryCache memoryCache)
     {
         _bungieClientProvider = bungieClientProvider;
         _logger = logger;
         _destinyDefinitionDataService = destinyDefinitionDataService;
+        _destinyDb = destinyDb;
+        _memoryCache = memoryCache;
     }
 
     public override async Task<AutocompletionResult> GenerateSuggestionsAsync(
@@ -30,11 +37,17 @@ public class DestinyTitleAutocompleter : AutocompleteHandler
         IParameterInfo parameter,
         IServiceProvider services)
     {
+        var lang = await _memoryCache.GetOrAddAsync(
+                $"guild_lang_{context.Guild.Id}",
+                async () => (await _destinyDb.GetGuildLanguageAsync(context.Guild.Id)).ConvertToBungieLocale(),
+                TimeSpan.FromSeconds(15),
+                Caching.CacheExpirationType.Absolute);
+
         var searchEntry = (string)autocompleteInteraction.Data.Options.First(x => x.Focused).Value;
 
         var client = await _bungieClientProvider.GetClientAsync();
 
-        var titles = await _destinyDefinitionDataService.GetAllTitleDefinitionsAsync();
+        var titles = await _destinyDefinitionDataService.GetAllTitleDefinitionsAsync(lang);
 
         var searchResults = titles
             .Where(x =>

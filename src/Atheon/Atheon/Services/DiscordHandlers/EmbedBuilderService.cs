@@ -136,7 +136,8 @@ public class EmbedBuilderService
             DestinyUserProfileBroadcastDbModel destinyUserBroadcast,
             DestinyClanDbModel clanData,
             IBungieClient bungieClient,
-            string username)
+            string username,
+            BungieLocales locale)
     {
         var templateEmbed = GetTemplateEmbed();
 
@@ -145,16 +146,16 @@ public class EmbedBuilderService
         switch (destinyUserBroadcast.Type)
         {
             case ProfileBroadcastType.Collectible:
-                AddCollectibleDataToEmbed(templateEmbed, destinyUserBroadcast, bungieClient, username);
+                AddCollectibleDataToEmbed(templateEmbed, destinyUserBroadcast, bungieClient, username, locale);
                 break;
             case ProfileBroadcastType.Triumph:
-                AddTriumphDataToEmbed(templateEmbed, destinyUserBroadcast, bungieClient, username);
+                AddTriumphDataToEmbed(templateEmbed, destinyUserBroadcast, bungieClient, username, locale);
                 break;
             case ProfileBroadcastType.Title:
-                AddTitleDataToEmbed(templateEmbed, destinyUserBroadcast, bungieClient, username);
+                AddTitleDataToEmbed(templateEmbed, destinyUserBroadcast, bungieClient, username, locale);
                 break;
             case ProfileBroadcastType.GildedTitle:
-                AddTitleGildDataToEmbed(templateEmbed, destinyUserBroadcast, bungieClient, username);
+                AddTitleGildDataToEmbed(templateEmbed, destinyUserBroadcast, bungieClient, username, locale);
                 break;
         }
 
@@ -165,14 +166,15 @@ public class EmbedBuilderService
         EmbedBuilder embedBuilder,
         DestinyUserProfileBroadcastDbModel destinyUserBroadcast,
         IBungieClient bungieClient,
-        string username)
+        string username,
+        BungieLocales locale)
     {
         if (bungieClient.TryGetDefinition<DestinyCollectibleDefinition>(
                 destinyUserBroadcast.DefinitionHash,
-                BungieLocales.EN,
+                locale,
                 out var collectibleDefinition))
         {
-            var (name, icon) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(collectibleDefinition);
+            var (name, icon) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(collectibleDefinition, locale);
             embedBuilder.WithThumbnailUrl(icon);
 
             if (destinyUserBroadcast.AdditionalData is not null &&
@@ -197,11 +199,12 @@ public class EmbedBuilderService
         EmbedBuilder embedBuilder,
         DestinyUserProfileBroadcastDbModel destinyUserBroadcast,
         IBungieClient bungieClient,
-        string username)
+        string username,
+        BungieLocales locale)
     {
         if (bungieClient.TryGetDefinition<DestinyRecordDefinition>(
-                (uint)destinyUserBroadcast.DefinitionHash,
-                BungieLocales.EN,
+                destinyUserBroadcast.DefinitionHash,
+                locale,
                 out var recordDefinition))
         {
             embedBuilder.WithThumbnailUrl(recordDefinition.DisplayProperties.Icon.AbsolutePath);
@@ -218,11 +221,12 @@ public class EmbedBuilderService
         EmbedBuilder embedBuilder,
         DestinyUserProfileBroadcastDbModel destinyUserBroadcast,
         IBungieClient bungieClient,
-        string username)
+        string username,
+        BungieLocales locale)
     {
         if (bungieClient.TryGetDefinition<DestinyRecordDefinition>(
                 destinyUserBroadcast.DefinitionHash,
-                BungieLocales.EN,
+                locale,
                 out var recordDefinition))
         {
             if (recordDefinition.DisplayProperties.Icon.HasValue)
@@ -233,7 +237,7 @@ public class EmbedBuilderService
             {
                 var recordTitleNode = bungieClient
                     .Repository
-                    .GetAll<DestinyPresentationNodeDefinition>()
+                    .GetAll<DestinyPresentationNodeDefinition>(locale)
                     .FirstOrDefault(x => x.CompletionRecord.Hash == destinyUserBroadcast.DefinitionHash);
                 if (recordTitleNode is not null)
                     embedBuilder.WithThumbnailUrl(recordTitleNode.DisplayProperties.Icon.AbsolutePath);
@@ -248,11 +252,12 @@ public class EmbedBuilderService
         EmbedBuilder embedBuilder,
         DestinyUserProfileBroadcastDbModel destinyUserBroadcast,
         IBungieClient bungieClient,
-        string username)
+        string username,
+        BungieLocales locale)
     {
         if (bungieClient.TryGetDefinition<DestinyRecordDefinition>(
-                (uint)destinyUserBroadcast.DefinitionHash,
-                BungieLocales.EN,
+                destinyUserBroadcast.DefinitionHash,
+                locale,
                 out _))
         {
             var titleHash = uint.Parse(destinyUserBroadcast.AdditionalData["parentTitleHash"]);
@@ -260,7 +265,7 @@ public class EmbedBuilderService
 
             if (bungieClient.TryGetDefinition<DestinyRecordDefinition>(
                     titleHash,
-                    BungieLocales.EN,
+                    locale,
                     out var titleRecordDefinition))
             {
                 if (titleRecordDefinition.DisplayProperties.Icon.HasValue)
@@ -271,7 +276,7 @@ public class EmbedBuilderService
                 {
                     var recordTitleNode = bungieClient
                         .Repository
-                        .GetAll<DestinyPresentationNodeDefinition>()
+                        .GetAll<DestinyPresentationNodeDefinition>(locale)
                         .FirstOrDefault(x => x.CompletionRecord.Hash == titleHash);
                     if (recordTitleNode is not null)
                         embedBuilder.WithThumbnailUrl(recordTitleNode.DisplayProperties.Icon.AbsolutePath);
@@ -289,7 +294,8 @@ public class EmbedBuilderService
         uint definitionHash,
         Dictionary<long, DestinyClanDbModel> clansData,
         IBungieClient bungieClient,
-        Dictionary<long, string> usernames)
+        Dictionary<long, string> usernames,
+        BungieLocales locale)
     {
         var embedBuilder = GetTemplateEmbed();
 
@@ -304,7 +310,8 @@ public class EmbedBuilderService
                     definitionHash,
                     clansData,
                     bungieClient,
-                    usernames);
+                    usernames,
+                    locale);
                 break;
             case ProfileBroadcastType.Triumph:
                 AddGroupTriumphDataToEmbed(
@@ -313,7 +320,8 @@ public class EmbedBuilderService
                     definitionHash,
                     clansData,
                     bungieClient,
-                    usernames);
+                    usernames,
+                    locale);
                 break;
             case ProfileBroadcastType.Title:
                 AddGroupTitleDataToEmbed(
@@ -322,7 +330,8 @@ public class EmbedBuilderService
                     definitionHash,
                     clansData,
                     bungieClient,
-                    usernames);
+                    usernames,
+                    locale);
                 break;
             case ProfileBroadcastType.GildedTitle:
                 var broadcast = destinyUserBroadcasts.First();
@@ -336,7 +345,8 @@ public class EmbedBuilderService
                         parentTitleHash,
                         clansData,
                         bungieClient,
-                        usernames);
+                        usernames,
+                    locale);
                 break;
         }
 
@@ -349,14 +359,15 @@ public class EmbedBuilderService
         uint definitionHash,
         Dictionary<long, DestinyClanDbModel> clansData,
         IBungieClient bungieClient,
-        Dictionary<long, string> usernames)
+        Dictionary<long, string> usernames,
+        BungieLocales locale)
     {
         if (bungieClient.TryGetDefinition<DestinyCollectibleDefinition>(
                 definitionHash,
-                BungieLocales.EN,
+                locale,
                 out var collectibleDefinition))
         {
-            var (name, icon) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(collectibleDefinition);
+            var (name, icon) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(collectibleDefinition, locale);
             embedBuilder.WithDescription(
                 $"{usernames.Count} people have obtained [{name}](https://www.light.gg/db/items/{collectibleDefinition.Item.Hash.GetValueOrDefault()})!");
             embedBuilder.WithThumbnailUrl(icon);
@@ -393,11 +404,12 @@ public class EmbedBuilderService
         uint definitionHash,
         Dictionary<long, DestinyClanDbModel> clansData,
         IBungieClient bungieClient,
-        Dictionary<long, string> usernames)
+        Dictionary<long, string> usernames,
+        BungieLocales locale)
     {
         if (bungieClient.TryGetDefinition<DestinyRecordDefinition>(
                 definitionHash,
-                BungieLocales.EN,
+                locale,
                 out var recordDefinition))
         {
             embedBuilder.WithDescription(
@@ -432,11 +444,12 @@ public class EmbedBuilderService
         uint definitionHash,
         Dictionary<long, DestinyClanDbModel> clansData,
         IBungieClient bungieClient,
-        Dictionary<long, string> usernames)
+        Dictionary<long, string> usernames,
+        BungieLocales locale)
     {
         if (bungieClient.TryGetDefinition<DestinyRecordDefinition>(
                 definitionHash,
-                BungieLocales.EN,
+                locale,
                 out var recordDefinition))
         {
             if (recordDefinition.DisplayProperties.Icon.HasValue)
@@ -447,7 +460,7 @@ public class EmbedBuilderService
             {
                 var recordTitleNode = bungieClient
                     .Repository
-                    .GetAll<DestinyPresentationNodeDefinition>()
+                    .GetAll<DestinyPresentationNodeDefinition>(locale)
                     .FirstOrDefault(x => x.CompletionRecord.Hash == definitionHash);
                 if (recordTitleNode is not null)
                     embedBuilder.WithThumbnailUrl(recordTitleNode.DisplayProperties.Icon.AbsolutePath);
@@ -482,11 +495,12 @@ public class EmbedBuilderService
         uint parentTitleHash,
         Dictionary<long, DestinyClanDbModel> clansData,
         IBungieClient bungieClient,
-        Dictionary<long, string> usernames)
+        Dictionary<long, string> usernames,
+        BungieLocales locale)
     {
         if (bungieClient.TryGetDefinition<DestinyRecordDefinition>(
                 parentTitleHash,
-                BungieLocales.EN,
+                locale,
                 out var recordDefinition))
         {
             if (recordDefinition.DisplayProperties.Icon.HasValue)
@@ -497,7 +511,7 @@ public class EmbedBuilderService
             {
                 var recordTitleNode = bungieClient
                     .Repository
-                    .GetAll<DestinyPresentationNodeDefinition>()
+                    .GetAll<DestinyPresentationNodeDefinition>(locale)
                     .FirstOrDefault(x => x.CompletionRecord.Hash == parentTitleHash);
                 if (recordTitleNode is not null)
                     embedBuilder.WithThumbnailUrl(recordTitleNode.DisplayProperties.Icon.AbsolutePath);

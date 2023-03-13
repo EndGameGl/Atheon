@@ -6,6 +6,7 @@ using Atheon.Models.Database.Destiny.Guilds;
 using Atheon.Models.Database.Destiny.Links;
 using Atheon.Models.Database.Destiny.Profiles;
 using Atheon.Models.Database.Destiny.Tracking;
+using Atheon.Models.DiscordModels;
 
 namespace Atheon.Services.Interfaces;
 
@@ -18,6 +19,7 @@ public interface IDestinyDb
     Task DeleteGuildSettingsAsync(ulong guildId);
     Task<List<DiscordGuildSettingsDbModel>> GetAllGuildSettingsForClanAsync(long clanId);
     Task<List<ClanReference>> GetClanReferencesFromGuildAsync(ulong guildId);
+    Task<DiscordDestinyLanguageEnum> GetGuildLanguageAsync(ulong guildId);
 
     Task<List<long>> GetClanIdsAsync(bool isTracking, DateTime oldenThan);
     Task<DestinyClanDbModel?> GetClanModelAsync(long clanId);
