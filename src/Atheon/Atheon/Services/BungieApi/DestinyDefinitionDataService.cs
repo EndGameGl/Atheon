@@ -24,6 +24,8 @@ public class DestinyDefinitionDataService
     private readonly IDestinyDb _destinyDb;
     private readonly CuratedDefinitionInitialiser _curatedDefinitionInitialiser;
 
+    public List<DestinyRecordDefinition> LeaderboardValidRecords { get; private set; }
+
     public DestinyDefinitionDataService(
         IBungieClientProvider bungieClientProvider,
         IMemoryCache memoryCache,
@@ -75,6 +77,26 @@ public class DestinyDefinitionDataService
             sb.Append($" // {nodeWithCollectibles.DisplayProperties.Name}");
             _presentationNodeWithCollectiblesNameMappings.Add((sb.ToString(), nodeWithCollectibles.Hash));
         }
+
+        LeaderboardValidRecords = client.Repository.GetAll<DestinyRecordDefinition>().Where(x =>
+        {
+            if (x.Objectives.Count == 1 && x.Objectives[0].TryGetDefinition(out var objectiveDefinition) && objectiveDefinition.AllowOvercompletion)
+            {
+                return true;
+            }
+
+
+            if (x.IntervalInfo is not null &&
+                x.IntervalInfo.IntervalObjectives.Count > 0 &&
+                x.IntervalInfo.IntervalObjectives.Any(q => q.IntervalObjective.HasValidHash) &&
+                x.IntervalInfo.IntervalObjectives.Last().IntervalObjective.TryGetDefinition(out var intervalObjectiveDefinition) &&
+                intervalObjectiveDefinition.AllowOvercompletion)
+            {
+                return true;
+            }
+
+            return false;
+        }).ToList();
     }
 
     public (string CollectibleName, string CollectbleIcon) GetCollectibleDisplayProperties(DestinyCollectibleDefinition collectibleDefinition)

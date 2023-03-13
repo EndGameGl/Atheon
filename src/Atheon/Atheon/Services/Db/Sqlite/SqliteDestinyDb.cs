@@ -745,7 +745,7 @@ public class SqliteDestinyDb : IDestinyDb
             json_extract(ComputedData, '$.powerLevel') as FirstValue,
             json_extract(ComputedData, '$.artifactPowerLevel') as SecondValue
         FROM DestinyProfiles
-        WHERE ClanId IN @ClanIds
+        WHERE ClanId IN @ClanIds AND (FirstValue > 0 OR SecondValue > 0)
         ORDER BY (FirstValue + SecondValue) DESC
         """;
     public async Task<List<DestinyProfileLiteWithDoubleValues<int, int>>> GetGuardianPowerLevelAsync(long[] clanIds)
@@ -764,7 +764,7 @@ public class SqliteDestinyDb : IDestinyDb
             json_extract(ComputedData, '$.activeScore') as FirstValue,
             json_extract(ComputedData, '$.legacyScore') as SecondValue
         FROM DestinyProfiles
-        WHERE ClanId IN @ClanIds
+        WHERE ClanId IN @ClanIds AND (FirstValue > 0 OR SecondValue > 0) 
         ORDER BY (FirstValue + SecondValue) DESC
         """;
     public async Task<List<DestinyProfileLiteWithDoubleValues<int, int>>> GetGuardianTriumphScoreAsync(long[] clanIds)
@@ -782,13 +782,50 @@ public class SqliteDestinyDb : IDestinyDb
             ClanId,
             MinutesPlayedTotal as Value
         FROM DestinyProfiles
-        WHERE ClanId IN @ClanIds
+        WHERE ClanId IN @ClanIds AND Value > 0
         ORDER BY Value DESC
         """;
     public async Task<List<DestinyProfileLiteWithValue<int>>> GetTimePlayedLeaderboardAsync(long[] clanIds)
     {
         return await _dbAccess.QueryAsync<DestinyProfileLiteWithValue<int>>(
                 GetTimePlayedLeaderboardQuery,
+                new { ClanIds = clanIds });
+    }
+
+    private const string GetRecordObjectiveLeaderboardQuery =
+        """
+        SELECT
+            MembershipId,
+            Name,
+            ClanId,
+            json_extract(Records, '$.{0}.objectives[#-1].progress') as Value
+        FROM DestinyProfiles
+        WHERE ClanId IN @ClanIds AND Value > 0
+        ORDER BY Value DESC
+        """;
+    public async Task<List<DestinyProfileLiteWithValue<int>>> GetRecordObjectiveLeaderboardAsync(uint recordHash, long[] clanIds)
+    {
+        return await _dbAccess.QueryAsync<DestinyProfileLiteWithValue<int>>(
+                string.Format(GetRecordObjectiveLeaderboardQuery, recordHash),
+                new { ClanIds = clanIds });
+    }
+
+
+    private const string GetRecordIntervalObjectiveLeaderboardQuery =
+        """
+        SELECT
+            MembershipId,
+            Name,
+            ClanId,
+            json_extract(Records, '$.{0}.intervalObjectives[#-1].progress') as Value
+        FROM DestinyProfiles
+        WHERE ClanId IN @ClanIds AND Value > 0
+        ORDER BY Value DESC
+        """;
+    public async Task<List<DestinyProfileLiteWithValue<int>>> GetRecordIntervalObjectiveLeaderboardAsync(uint recordHash, long[] clanIds)
+    {
+        return await _dbAccess.QueryAsync<DestinyProfileLiteWithValue<int>>(
+                string.Format(GetRecordIntervalObjectiveLeaderboardQuery, recordHash),
                 new { ClanIds = clanIds });
     }
 }
