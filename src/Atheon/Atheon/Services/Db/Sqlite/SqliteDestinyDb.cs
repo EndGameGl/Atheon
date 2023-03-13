@@ -641,9 +641,9 @@ public class SqliteDestinyDb : IDestinyDb
         ORDER BY Value DESC
         """;
 
-    public async Task<List<DestinyProfileLiteWithValue>> GetProfileDrystreaksAsync(uint collectibleHash, long[] clanIds)
+    public async Task<List<DestinyProfileLiteWithValue<int>>> GetProfileDrystreaksAsync(uint collectibleHash, long[] clanIds)
     {
-        return await _dbAccess.QueryAsync<DestinyProfileLiteWithValue>(
+        return await _dbAccess.QueryAsync<DestinyProfileLiteWithValue<int>>(
             string.Format(GetProfileDrystreaksQuery, collectibleHash),
             new
             {
@@ -673,16 +673,16 @@ public class SqliteDestinyDb : IDestinyDb
         FROM DestinyProfiles
         WHERE ClanId IN @ClanIds AND Value IS NULL OR Value = 0
         """;
-    public async Task<List<DestinyProfileLiteWithValue>> GetProfileTitlesAsync(uint titleRecordHash, bool hasTitle, long[] clanIds)
+    public async Task<List<DestinyProfileLiteWithValue<int>>> GetProfileTitlesAsync(uint titleRecordHash, bool hasTitle, long[] clanIds)
     {
         if (hasTitle)
         {
-            return await _dbAccess.QueryAsync<DestinyProfileLiteWithValue>(
+            return await _dbAccess.QueryAsync<DestinyProfileLiteWithValue<int>>(
                 string.Format(GetProfilesWithTitleQuery, titleRecordHash),
                 new { ClanIds = clanIds });
         }
 
-        return await _dbAccess.QueryAsync<DestinyProfileLiteWithValue>(
+        return await _dbAccess.QueryAsync<DestinyProfileLiteWithValue<int>>(
                 string.Format(GetProfilesWithoutTitleQuery, titleRecordHash),
                 new { ClanIds = clanIds });
     }
@@ -708,12 +708,12 @@ public class SqliteDestinyDb : IDestinyDb
         WHERE ClanId IN @ClanIds AND Value != 0
         ORDER BY Value {1};
         """;
-    public async Task<List<DestinyProfileLiteWithValue>> GetProfileMetricsAsync(
+    public async Task<List<DestinyProfileLiteWithValue<int>>> GetProfileMetricsAsync(
         uint metricHash,
         bool descending,
         long[] clanIds)
     {
-        return await _dbAccess.QueryAsync<DestinyProfileLiteWithValue>(
+        return await _dbAccess.QueryAsync<DestinyProfileLiteWithValue<int>>(
                 string.Format(GetProfileMetricsQuery, metricHash, descending ? "DESC" : string.Empty),
                 new { ClanIds = clanIds });
     }
@@ -729,10 +729,66 @@ public class SqliteDestinyDb : IDestinyDb
         WHERE ClanId IN @ClanIds AND Value > 0
         ORDER BY Value DESC
         """;
-    public async Task<List<DestinyProfileLiteWithValue>> GetGuardianRanksLeaderboardAsync(long[] clanIds)
+    public async Task<List<DestinyProfileLiteWithValue<int>>> GetGuardianRanksLeaderboardAsync(long[] clanIds)
     {
-        return await _dbAccess.QueryAsync<DestinyProfileLiteWithValue>(
+        return await _dbAccess.QueryAsync<DestinyProfileLiteWithValue<int>>(
                 GetGuardianRanksLeaderboard,
+                new { ClanIds = clanIds });
+    }
+
+    private const string GetGuardianPowerLevelQuery =
+        $"""
+        SELECT
+            MembershipId,
+            Name,
+            ClanId,
+            json_extract(ComputedData, '$.powerLevel') as FirstValue,
+            json_extract(ComputedData, '$.artifactPowerLevel') as SecondValue
+        FROM DestinyProfiles
+        WHERE ClanId IN @ClanIds
+        ORDER BY (FirstValue + SecondValue) DESC
+        """;
+    public async Task<List<DestinyProfileLiteWithDoubleValues<int, int>>> GetGuardianPowerLevelAsync(long[] clanIds)
+    {
+        return await _dbAccess.QueryAsync<DestinyProfileLiteWithDoubleValues<int, int>>(
+                 GetGuardianPowerLevelQuery,
+                 new { ClanIds = clanIds });
+    }
+
+    private const string GetGuardianTriumphScoreQuery =
+        $"""
+        SELECT
+            MembershipId,
+            Name,
+            ClanId,
+            json_extract(ComputedData, '$.activeScore') as FirstValue,
+            json_extract(ComputedData, '$.legacyScore') as SecondValue
+        FROM DestinyProfiles
+        WHERE ClanId IN @ClanIds
+        ORDER BY (FirstValue + SecondValue) DESC
+        """;
+    public async Task<List<DestinyProfileLiteWithDoubleValues<int, int>>> GetGuardianTriumphScoreAsync(long[] clanIds)
+    {
+        return await _dbAccess.QueryAsync<DestinyProfileLiteWithDoubleValues<int, int>>(
+                 GetGuardianTriumphScoreQuery,
+                 new { ClanIds = clanIds });
+    }
+
+    private const string GetTimePlayedLeaderboardQuery =
+        """
+        SELECT
+            MembershipId,
+            Name,
+            ClanId,
+            MinutesPlayedTotal as Value
+        FROM DestinyProfiles
+        WHERE ClanId IN @ClanIds
+        ORDER BY Value DESC
+        """;
+    public async Task<List<DestinyProfileLiteWithValue<int>>> GetTimePlayedLeaderboardAsync(long[] clanIds)
+    {
+        return await _dbAccess.QueryAsync<DestinyProfileLiteWithValue<int>>(
+                GetTimePlayedLeaderboardQuery,
                 new { ClanIds = clanIds });
     }
 }

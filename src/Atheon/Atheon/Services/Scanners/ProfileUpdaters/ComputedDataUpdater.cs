@@ -2,6 +2,7 @@
 using Atheon.Models.Database.Destiny.Profiles;
 using Atheon.Services.BungieApi;
 using Atheon.Services.Interfaces;
+using DotNetBungieAPI.HashReferences;
 using DotNetBungieAPI.Models.Destiny;
 using DotNetBungieAPI.Models.Destiny.Responses;
 using DotNetBungieAPI.Service.Abstractions;
@@ -82,6 +83,20 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
 
                 dbModel.ComputedData.Titles[titleHash] = completions;
             }
+
+            if (dbModel.Records.TryGetValue(DefinitionHashes.Records.PathtoPower, out var powerRecord))
+            {
+                dbModel.ComputedData.PowerLevel = powerRecord.IntervalObjectives?.FirstOrDefault()?.Progress;
+            }
+
+            if (dbModel.Records.TryGetValue(DefinitionHashes.Records.ArtifactPowerBonus, out var artifactPowerRecord))
+            {
+                dbModel.ComputedData.ArtifactPowerLevel = artifactPowerRecord.Objectives?.FirstOrDefault()?.Progress;
+            }
+
+            dbModel.ComputedData.LifetimeScore = profileResponse.ProfileRecords.Data.LifetimeScore;
+            dbModel.ComputedData.ActiveScore = profileResponse.ProfileRecords.Data.ActiveScore;
+            dbModel.ComputedData.LegacyScore = profileResponse.ProfileRecords.Data.LegacyScore;
         }
     }
 }

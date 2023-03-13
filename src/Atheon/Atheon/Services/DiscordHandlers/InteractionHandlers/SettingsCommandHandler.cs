@@ -13,6 +13,7 @@ using Atheon.Services.DiscordHandlers.Preconditions;
 using Atheon.Services.Interfaces;
 using Discord;
 using Discord.Interactions;
+using DotNetBungieAPI.HashReferences;
 using DotNetBungieAPI.Models;
 using DotNetBungieAPI.Models.Destiny.Definitions.Collectibles;
 using DotNetBungieAPI.Models.Destiny.Definitions.PresentationNodes;

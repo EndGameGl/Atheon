@@ -32,10 +32,13 @@ public interface IDestinyDb
 
     Task<List<DestinyProfileLite>> GetProfilesCollectibleStatusAsync(uint collectibleHash, bool hasItem, long[] clandIds);
     Task<List<DestinyProfileLite>> GetProfilesRecordStatusAsync(uint recordHash, bool hasCompletedRecord, long[] clandIds);
-    Task<List<DestinyProfileLiteWithValue>> GetProfileDrystreaksAsync(uint collectibleHash, long[] clanIds);
-    Task<List<DestinyProfileLiteWithValue>> GetProfileTitlesAsync(uint titleRecordHash, bool hasTitle, long[] clanIds);
-    Task<List<DestinyProfileLiteWithValue>> GetProfileMetricsAsync(uint metricHash, bool descending, long[] clanIds);
-    Task<List<DestinyProfileLiteWithValue>> GetGuardianRanksLeaderboardAsync(long[] clanIds);
+    Task<List<DestinyProfileLiteWithValue<int>>> GetProfileDrystreaksAsync(uint collectibleHash, long[] clanIds);
+    Task<List<DestinyProfileLiteWithValue<int>>> GetProfileTitlesAsync(uint titleRecordHash, bool hasTitle, long[] clanIds);
+    Task<List<DestinyProfileLiteWithValue<int>>> GetProfileMetricsAsync(uint metricHash, bool descending, long[] clanIds);
+    Task<List<DestinyProfileLiteWithValue<int>>> GetGuardianRanksLeaderboardAsync(long[] clanIds);
+    Task<List<DestinyProfileLiteWithDoubleValues<int, int>>> GetGuardianPowerLevelAsync(long[] clanIds);
+    Task<List<DestinyProfileLiteWithDoubleValues<int, int>>> GetGuardianTriumphScoreAsync(long[] clanIds);
+    Task<List<DestinyProfileLiteWithValue<int>>> GetTimePlayedLeaderboardAsync(long[] clanIds);
 
     Task TryInsertClanBroadcastAsync(ClanBroadcastDbModel clanBroadcast);
     Task TryInsertProfileBroadcastAsync(DestinyUserProfileBroadcastDbModel profileBroadcast);

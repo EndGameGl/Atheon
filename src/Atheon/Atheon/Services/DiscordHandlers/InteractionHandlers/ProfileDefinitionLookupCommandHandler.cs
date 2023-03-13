@@ -201,12 +201,12 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
                 var reference = clanReferences[j];
                 var usersOfClan = drystreaks.Where(x => x.ClanId == reference.Id).ToList();
 
-                var formattedData = _embedBuilderService.FormatAsStringTable<DestinyProfileLiteWithValue, long>(
+                var formattedData = _embedBuilderService.FormatAsStringTable<DestinyProfileLiteWithValue<int>, long>(
                     usersOfClan.Count,
                     "No users",
                     usersOfClan,
                     (user) => user.MembershipId,
-                    new Func<DestinyProfileLiteWithValue, object>[]
+                    new Func<DestinyProfileLiteWithValue<int>, object>[]
                     {
                         user => user.Name,
                         user => user.Value
@@ -252,7 +252,7 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
             .GetTemplateEmbed()
                 .WithTitle($"Users who have {titleName} title");
 
-            var gettersList = new List<Func<DestinyProfileLiteWithValue, object>>()
+            var gettersList = new List<Func<DestinyProfileLiteWithValue<int>, object>>()
             {
                 user => user.Name
             };
@@ -269,7 +269,7 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
                 var reference = clanReferences[j];
                 var usersOfClan = titles.Where(x => x.ClanId == reference.Id).ToList();
 
-                var formattedData = _embedBuilderService.FormatAsStringTable<DestinyProfileLiteWithValue, long>(
+                var formattedData = _embedBuilderService.FormatAsStringTable<DestinyProfileLiteWithValue<int>, long>(
                     usersOfClan.Count,
                     "No users",
                     usersOfClan,

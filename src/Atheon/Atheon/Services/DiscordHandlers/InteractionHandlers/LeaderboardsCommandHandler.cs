@@ -52,12 +52,12 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
                 .WithTitle($"{metricDefinition.DisplayProperties.Name} Leaderboard")
                 .WithThumbnailUrl(metricDefinition.DisplayProperties.Icon.AbsolutePath);
 
-            var getters = new Func<DestinyProfileLiteWithValue, object>[]
+            var getters = new Func<DestinyProfileLiteWithValue<int>, object>[]
             {
                 user => user.Name,
                 user =>
                 {
-                    return user.Value.FormatUIDisplayValue(metricDefinition.TrackingObjective.GetValueOrNull()); 
+                    return user.Value.FormatUIDisplayValue(metricDefinition.TrackingObjective.GetValueOrNull());
                 }
             };
 
@@ -66,7 +66,7 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
                 var reference = clanReferences[j];
                 var usersOfClan = users.Where(x => x.ClanId == reference.Id).ToList();
 
-                var formattedData = _embedBuilderService.FormatAsStringTable<DestinyProfileLiteWithValue, long>(
+                var formattedData = _embedBuilderService.FormatAsStringTable<DestinyProfileLiteWithValue<int>, long>(
                     usersOfClan.Count,
                     "No users",
                     usersOfClan,
@@ -83,8 +83,8 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
         });
     }
 
-    [SlashCommand("guardian-ranks", "Shows leaderboard for a guardian ranks")]
-    public async Task CreateLeaderboardForMetricAsync(
+    [SlashCommand("guardian-ranks", "Shows leaderboard for guardian ranks")]
+    public async Task CreateLeaderboardForGuardianRanksAsync(
         [Summary(description: "Whether to hide this message")] bool hide = false)
     {
         await ExecuteAndHanldeErrors(async () =>
@@ -98,7 +98,7 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
                 .GetTemplateEmbed()
                 .WithTitle($"Guardian Ranks Leaderboard");
 
-            var getters = new Func<DestinyProfileLiteWithValue, object>[]
+            var getters = new Func<DestinyProfileLiteWithValue<int>, object>[]
             {
                 user => user.Name,
                 user =>
@@ -112,7 +112,144 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
                 var reference = clanReferences[j];
                 var usersOfClan = users.Where(x => x.ClanId == reference.Id).ToList();
 
-                var formattedData = _embedBuilderService.FormatAsStringTable<DestinyProfileLiteWithValue, long>(
+                var formattedData = _embedBuilderService.FormatAsStringTable<DestinyProfileLiteWithValue<int>, long>(
+                    usersOfClan.Count,
+                    "No users",
+                    usersOfClan,
+                    (user) => user.MembershipId,
+                    getters)
+                .LimitTo(1018);
+
+                embedBuilder.AddField(reference.Name, $"```{formattedData}```");
+            }
+
+            await Context.Interaction.RespondAsync(
+                embed: embedBuilder.Build(),
+                ephemeral: hide);
+        });
+    }
+
+    [SlashCommand("power", "Shows leaderboard for power")]
+    public async Task CreateLeaderboardForPowerLevelAsync(
+        [Summary(description: "Whether to hide this message")] bool hide = false)
+    {
+        await ExecuteAndHanldeErrors(async () =>
+        {
+            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var users = await _destinyDb.GetGuardianPowerLevelAsync(guildSettings.Clans.ToArray());
+            var clanIds = users.Select(x => x.ClanId).Distinct().ToArray();
+            var clanReferences = await _destinyDb.GetClanReferencesFromIdsAsync(clanIds);
+
+            var embedBuilder = _embedBuilderService
+                .GetTemplateEmbed()
+                .WithTitle($"Power Level Leaderboard");
+
+            var getters = new Func<DestinyProfileLiteWithDoubleValues<int, int>, object>[]
+            {
+                user => user.Name,
+                user => user.FirstValue + user.SecondValue,
+                user => user.FirstValue,
+                user => user.SecondValue
+            };
+
+            for (int j = 0; j < clanReferences.Count; j++)
+            {
+                var reference = clanReferences[j];
+                var usersOfClan = users.Where(x => x.ClanId == reference.Id).ToList();
+
+                var formattedData = _embedBuilderService.FormatAsStringTable<DestinyProfileLiteWithDoubleValues<int, int>, long>(
+                    usersOfClan.Count,
+                    "No users",
+                    usersOfClan,
+                    (user) => user.MembershipId,
+                    getters)
+                .LimitTo(1018);
+
+                embedBuilder.AddField(reference.Name, $"```{formattedData}```");
+            }
+
+            await Context.Interaction.RespondAsync(
+                embed: embedBuilder.Build(),
+                ephemeral: hide);
+        });
+    }
+
+    [SlashCommand("triumph-score", "Shows leaderboard for triumph score")]
+    public async Task CreateLeaderboardForTriumphScoreAsync(
+        [Summary(description: "Whether to hide this message")] bool hide = false)
+    {
+        await ExecuteAndHanldeErrors(async () =>
+        {
+            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var users = await _destinyDb.GetGuardianTriumphScoreAsync(guildSettings.Clans.ToArray());
+            var clanIds = users.Select(x => x.ClanId).Distinct().ToArray();
+            var clanReferences = await _destinyDb.GetClanReferencesFromIdsAsync(clanIds);
+
+            var embedBuilder = _embedBuilderService
+                .GetTemplateEmbed()
+                .WithTitle($"Triumph Score Leaderboard");
+
+            var getters = new Func<DestinyProfileLiteWithDoubleValues<int, int>, object>[]
+            {
+                user => user.Name,
+                user => user.FirstValue + user.SecondValue,
+                user => user.FirstValue,
+                user => user.SecondValue
+            };
+
+            for (int j = 0; j < clanReferences.Count; j++)
+            {
+                var reference = clanReferences[j];
+                var usersOfClan = users.Where(x => x.ClanId == reference.Id).ToList();
+
+                var formattedData = _embedBuilderService.FormatAsStringTable<DestinyProfileLiteWithDoubleValues<int, int>, long>(
+                    usersOfClan.Count,
+                    "No users",
+                    usersOfClan,
+                    (user) => user.MembershipId,
+                    getters)
+                .LimitTo(1018);
+
+                embedBuilder.AddField(reference.Name, $"```{formattedData}```");
+            }
+
+            await Context.Interaction.RespondAsync(
+                embed: embedBuilder.Build(),
+                ephemeral: hide);
+        });
+    }
+
+
+    [SlashCommand("time-played", "Shows leaderboard for time played")]
+    public async Task CreateLeaderboardForTimePlayedAsync(
+        [Summary(description: "Whether to hide this message")] bool hide = false)
+    {
+        await ExecuteAndHanldeErrors(async () =>
+        {
+            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var users = await _destinyDb.GetTimePlayedLeaderboardAsync(guildSettings.Clans.ToArray());
+            var clanIds = users.Select(x => x.ClanId).Distinct().ToArray();
+            var clanReferences = await _destinyDb.GetClanReferencesFromIdsAsync(clanIds);
+
+            var embedBuilder = _embedBuilderService
+                .GetTemplateEmbed()
+                .WithTitle($"Time played Leaderboard");
+
+            var getters = new Func<DestinyProfileLiteWithValue<int>, object>[]
+            {
+                user => user.Name,
+                user =>
+                {
+                    return TimeSpan.FromMinutes(user.Value).ToString("c");
+                }
+            };
+
+            for (int j = 0; j < clanReferences.Count; j++)
+            {
+                var reference = clanReferences[j];
+                var usersOfClan = users.Where(x => x.ClanId == reference.Id).ToList();
+
+                var formattedData = _embedBuilderService.FormatAsStringTable<DestinyProfileLiteWithValue<int>, long>(
                     usersOfClan.Count,
                     "No users",
                     usersOfClan,

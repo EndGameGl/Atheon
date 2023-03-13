@@ -1,9 +1,10 @@
 ﻿namespace Atheon.Models.Database.Destiny.Profiles;
 
-public class DestinyProfileLiteWithValue<TValue>
+public class DestinyProfileLiteWithDoubleValues<TFirstValue, TSecondValue>
 {
     public long MembershipId { get; set; }
     public string Name { get; set; }
     public long ClanId { get; set; }
-    public TValue Value { get; set; }
+    public TFirstValue FirstValue { get; set; }
+    public TSecondValue SecondValue { get; set; }
 }
