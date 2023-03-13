@@ -2,12 +2,9 @@
 using Atheon.Services.DiscordHandlers.InteractionHandlers.Base;
 using Atheon.Services.Interfaces;
 using Discord.Interactions;
-using DotNetBungieAPI.Models.Destiny.Definitions.Collectibles;
 using DotNetBungieAPI.Models;
 using DotNetBungieAPI.Models.Destiny.Definitions.Metrics;
-using System.Text;
 using Atheon.Models.Database.Destiny.Profiles;
-using static DotNetBungieAPI.HashReferences.DefinitionHashes;
 using Atheon.Extensions;
 using DotNetBungieAPI.Extensions;
 

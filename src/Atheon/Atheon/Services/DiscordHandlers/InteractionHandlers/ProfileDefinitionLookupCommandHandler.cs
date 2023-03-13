@@ -1,5 +1,4 @@
 ﻿using Atheon.Extensions;
-using Atheon.Models.Database.Destiny.Clans;
 using Atheon.Models.Database.Destiny.Profiles;
 using Atheon.Services.BungieApi;
 using Atheon.Services.DiscordHandlers.Autocompleters.DestinyCollectibles;
@@ -11,10 +10,8 @@ using Discord.Interactions;
 using DotNetBungieAPI.HashReferences;
 using DotNetBungieAPI.Models;
 using DotNetBungieAPI.Models.Destiny.Definitions.Collectibles;
-using DotNetBungieAPI.Models.Destiny.Definitions.Metrics;
 using DotNetBungieAPI.Models.Destiny.Definitions.PresentationNodes;
 using DotNetBungieAPI.Models.Destiny.Definitions.Records;
-using DotNetBungieAPI.Models.Tokens;
 using System.Text;
 
 namespace Atheon.Services.DiscordHandlers.InteractionHandlers;
