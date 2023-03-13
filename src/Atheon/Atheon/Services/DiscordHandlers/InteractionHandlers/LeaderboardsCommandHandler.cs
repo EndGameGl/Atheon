@@ -325,7 +325,7 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
         });
     }
 
-    [SlashCommand("titles", "Shows leaderboard for guardian ranks")]
+    [SlashCommand("titles", "Shows leaderboard for total titles")]
     public async Task CreateLeaderboardForTotalTitlesAsync(
         [Summary(description: "Whether to hide this message")] bool hide = false)
     {
