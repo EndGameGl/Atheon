@@ -80,11 +80,11 @@ public class DestinyDefinitionDataService
                 continue;
             }
 
-            var currentParentNode = currentParentNodePointer.Select(x => x);
+            var currentParentNode = currentParentNodePointer.Select(x => x, bungieLocales);
             sb.Append(currentParentNode.DisplayProperties.Name);
             while (currentParentNode.ParentNodes.Count > 0)
             {
-                currentParentNode = currentParentNode.ParentNodes.First().Select(x => x);
+                currentParentNode = currentParentNode.ParentNodes.First().Select(x => x, bungieLocales);
                 sb.Append($" // {currentParentNode.DisplayProperties.Name}");
             }
 

@@ -355,7 +355,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
             await Context.Interaction.RespondAsync(embed:
                 _embedBuilderService.CreateSimpleResponseEmbed(
                     $"Tracked items: {guildSettings.TrackedCollectibles.TrackedHashes.Count}",
-                    sb.ToString())
+                    sb.ToString().LimitTo(4096))
                 .Build());
         });
     }
@@ -480,7 +480,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
             await Context.Interaction.RespondAsync(embed:
                 _embedBuilderService.CreateSimpleResponseEmbed(
                     $"Tracked triumphs: {guildSettings.TrackedRecords.TrackedHashes.Count}",
-                    sb.ToString())
+                    sb.ToString().LimitTo(4096))
                 .Build());
         });
     }
