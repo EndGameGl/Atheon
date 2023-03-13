@@ -9,4 +9,5 @@ public class DestinyComputedData
     public int? LifetimeScore { get; set; }
     public int? LegacyScore { get; set; }
     public int? ActiveScore { get; set; }
+    public int? TotalTitlesEarned { get; set; }
 }

@@ -828,4 +828,22 @@ public class SqliteDestinyDb : IDestinyDb
                 string.Format(GetRecordIntervalObjectiveLeaderboardQuery, recordHash),
                 new { ClanIds = clanIds });
     }
+
+    private const string GetTotalTitlesLeaderboardQuery =
+        """
+        SELECT
+            MembershipId,
+            Name,
+            ClanId,
+            json_extract(ComputedData, '$.totalTitlesEarned') as Value
+        FROM DestinyProfiles
+        WHERE ClanId IN @ClanIds AND Value > 0
+        ORDER BY Value DESC
+        """;
+    public async Task<List<DestinyProfileLiteWithValue<int>>> GetTotalTitlesLeaderboardAsync(long[] clanIds)
+    {
+        return await _dbAccess.QueryAsync<DestinyProfileLiteWithValue<int>>(
+                GetTotalTitlesLeaderboardQuery,
+                new { ClanIds = clanIds });
+    }
 }

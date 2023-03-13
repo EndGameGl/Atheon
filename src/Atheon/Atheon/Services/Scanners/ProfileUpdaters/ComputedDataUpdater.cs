@@ -97,6 +97,7 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
             dbModel.ComputedData.LifetimeScore = profileResponse.ProfileRecords.Data.LifetimeScore;
             dbModel.ComputedData.ActiveScore = profileResponse.ProfileRecords.Data.ActiveScore;
             dbModel.ComputedData.LegacyScore = profileResponse.ProfileRecords.Data.LegacyScore;
+            dbModel.ComputedData.TotalTitlesEarned = dbModel.ComputedData.Titles.Count(x => x.Value > 0);
         }
     }
 }

@@ -324,4 +324,50 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
                 ephemeral: hide);
         });
     }
+
+    [SlashCommand("titles", "Shows leaderboard for guardian ranks")]
+    public async Task CreateLeaderboardForTotalTitlesAsync(
+        [Summary(description: "Whether to hide this message")] bool hide = false)
+    {
+        await ExecuteAndHanldeErrors(async () =>
+        {
+            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var users = await _destinyDb.GetTotalTitlesLeaderboardAsync(guildSettings.Clans.ToArray());
+            var clanIds = users.Select(x => x.ClanId).Distinct().ToArray();
+            var clanReferences = await _destinyDb.GetClanReferencesFromIdsAsync(clanIds);
+
+            var embedBuilder = _embedBuilderService
+                .GetTemplateEmbed()
+                .WithTitle($"Total Titles Leaderboard");
+
+            var getters = new Func<DestinyProfileLiteWithValue<int>, object>[]
+            {
+                user => user.Name,
+                user =>
+                {
+                    return user.Value;
+                }
+            };
+
+            for (int j = 0; j < clanReferences.Count; j++)
+            {
+                var reference = clanReferences[j];
+                var usersOfClan = users.Where(x => x.ClanId == reference.Id).ToList();
+
+                var formattedData = _embedBuilderService.FormatAsStringTable<DestinyProfileLiteWithValue<int>, long>(
+                    usersOfClan.Count,
+                    "No users",
+                    usersOfClan,
+                    (user) => user.MembershipId,
+                    getters)
+                .LimitTo(1018);
+
+                embedBuilder.AddField(reference.Name, $"```{formattedData}```");
+            }
+
+            await Context.Interaction.RespondAsync(
+                embed: embedBuilder.Build(),
+                ephemeral: hide);
+        });
+    }
 }
