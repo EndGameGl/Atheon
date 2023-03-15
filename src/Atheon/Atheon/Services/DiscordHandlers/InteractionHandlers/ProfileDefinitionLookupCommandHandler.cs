@@ -230,9 +230,10 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
                     {
                         user => user.Name,
                         user => user.Value
-                    });
+                    },
+                    limit: 1018);
 
-                embedBuilder.AddField(reference.Name, $"```{formattedData.LimitTo(1018)}```");
+                embedBuilder.AddField(reference.Name, $"```{formattedData}```");
             }
 
             await Context.Interaction.RespondAsync(

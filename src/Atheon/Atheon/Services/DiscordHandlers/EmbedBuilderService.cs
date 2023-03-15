@@ -549,7 +549,8 @@ public class EmbedBuilderService
         string emptySubtitle,
         List<TEntry> leaderboard,
         Func<TEntry, TKey> keyGetter,
-        Func<TEntry, object>[] valueGetter)
+        Func<TEntry, object>[] valueGetter,
+        int limit = 4096)
     {
         if (leaderboard.Count == 0)
         {
@@ -588,11 +589,16 @@ public class EmbedBuilderService
                 valueBuffer[j] = valueGetter[j](entry);
             }
 
-            var mainText = string.Join(
-                "   ",
-                valueBuffer.Select((x, inc) => x.ToString().PadRight(paddingBuffer[inc])));
+            var mainText = string.Join("   ", valueBuffer.Select((x, inc) => x.ToString().PadRight(paddingBuffer[inc])));
 
-            sb.AppendLine($"{paddedAmount}: {mainText}");
+            var finalText = $"{paddedAmount}: {mainText}";
+
+            if ((sb.Length + finalText.Length) > limit)
+            {
+                break;
+            }
+
+            sb.AppendLine(finalText);
         }
 
         return sb.ToString();
