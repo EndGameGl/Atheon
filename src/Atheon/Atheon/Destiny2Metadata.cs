@@ -21,7 +21,8 @@ public static class Destiny2Metadata
         DefinitionHashes.Metrics.DeepStoneCryptCompletions,
         DefinitionHashes.Metrics.VaultofGlassCompletions,
         DefinitionHashes.Metrics.VowoftheDiscipleCompletions,
-        DefinitionHashes.Metrics.KingsFallCompletions
+        DefinitionHashes.Metrics.KingsFallCompletions,
+        DefinitionHashes.Metrics.RootofNightmaresCompletions
     };
 
     public static ReadOnlyDictionary<uint, uint> DryStreakItemSettings { get; } = new(new Dictionary<uint, uint>
@@ -33,7 +34,8 @@ public static class Destiny2Metadata
         { DefinitionHashes.Collectibles.Heartshadow, DefinitionHashes.Metrics.DualityCompletions },
         { DefinitionHashes.Collectibles.InMemoriamShell, DefinitionHashes.Metrics.Wins_1365664208 },
         { DefinitionHashes.Collectibles.TouchofMalice, DefinitionHashes.Metrics.KingsFallCompletions },
-        { DefinitionHashes.Collectibles.HierarchyofNeeds, DefinitionHashes.Metrics.SpireoftheWatcherCompletions }
+        { DefinitionHashes.Collectibles.HierarchyofNeeds, DefinitionHashes.Metrics.SpireoftheWatcherCompletions },
+        { DefinitionHashes.Collectibles.ConditionalFinality, DefinitionHashes.Metrics.RootofNightmaresCompletions }
     });
 
     public static ReadOnlyDictionary<uint, string> DryStreakItemSources { get; } = new(new Dictionary<uint, string>
@@ -45,7 +47,8 @@ public static class Destiny2Metadata
         { DefinitionHashes.Collectibles.Heartshadow, "Source: Duality Dungeon" },
         { DefinitionHashes.Collectibles.InMemoriamShell, "Source: Trials of Osiris" },
         { DefinitionHashes.Collectibles.TouchofMalice, "Source: Kings Fall Raid" },
-        { DefinitionHashes.Collectibles.HierarchyofNeeds, "Source: Spire of the Watcher Dungeon" }
+        { DefinitionHashes.Collectibles.HierarchyofNeeds, "Source: Spire of the Watcher Dungeon" },
+        { DefinitionHashes.Collectibles.ConditionalFinality, "Source: Root of Nightmares Raid" }
     });
 
     public static DestinyComponentType[] GenericProfileComponents { get; } =
