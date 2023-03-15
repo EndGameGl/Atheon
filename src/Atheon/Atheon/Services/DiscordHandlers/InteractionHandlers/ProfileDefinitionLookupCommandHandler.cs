@@ -232,7 +232,7 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
                         user => user.Value
                     });
 
-                embedBuilder.AddField(reference.Name, $"```{formattedData}```");
+                embedBuilder.AddField(reference.Name, $"```{formattedData.LimitTo(1018)}```");
             }
 
             await Context.Interaction.RespondAsync(
