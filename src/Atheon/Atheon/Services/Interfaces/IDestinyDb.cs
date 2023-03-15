@@ -26,6 +26,8 @@ public interface IDestinyDb
     Task UpsertClanModelAsync(DestinyClanDbModel clanDbModel);
     Task<List<ClanMemberReference>> GetClanMemberReferencesAsync(long clanId);
     Task<List<ClanReference>> GetClanReferencesFromIdsAsync(long[] clanIds);
+    Task SetClanRescanAsync(long clanId);
+    Task SetClanRescanForAllTrackedClansAsync();
 
     Task<DestinyProfileDbModel?> GetDestinyProfileAsync(long membershipId);
     Task UpsertDestinyProfileAsync(DestinyProfileDbModel profileDbModel);

@@ -644,4 +644,37 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
                 .Build());
         });
     }
+
+    [AtheonBotAdminOrOwner]
+    [SlashCommand("rescan-clan", "Queues up clan for rescan, might not work if clan is already being scanned")]
+    public async Task SetClanRescan(
+        [Autocomplete(typeof(DestinyClanFromGuildAutocompleter)), Summary("Clan")] long clanToRescan)
+    {
+        await ExecuteAndHanldeErrors(async () =>
+        {
+            await _destinyDb.SetClanRescanAsync(clanToRescan);
+
+            await Context.Interaction.RespondAsync(embed:
+                _embedBuilderService.CreateSimpleResponseEmbed(
+                    "Success",
+                    $"Queued clan for rescan: {clanToRescan}")
+                .Build());
+        });
+    }
+
+    [AtheonBotAdminOrOwner]
+    [SlashCommand("rescan-clans-all", "Queues up all clans for rescan, might not work if some clans are already being scanned")]
+    public async Task SetClansAllRescan()
+    {
+        await ExecuteAndHanldeErrors(async () =>
+        {
+            await _destinyDb.SetClanRescanForAllTrackedClansAsync();
+
+            await Context.Interaction.RespondAsync(embed:
+                _embedBuilderService.CreateSimpleResponseEmbed(
+                    "Success",
+                    $"Queued up all clans for rescan:")
+                .Build());
+        });
+    }
 }

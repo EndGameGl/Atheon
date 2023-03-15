@@ -8,6 +8,7 @@ using Atheon.Models.Database.Destiny.Profiles;
 using Atheon.Models.Database.Destiny.Tracking;
 using Atheon.Models.DiscordModels;
 using Atheon.Services.Interfaces;
+using System.Security.Claims;
 
 namespace Atheon.Services.Db.Sqlite;
 
@@ -868,5 +869,24 @@ public class SqliteDestinyDb : IDestinyDb
             return DiscordDestinyLanguageEnum.English;
 
         return result.Value;
+    }
+
+    private const string SetClanRescanQuery =
+        $"""
+        UPDATE Clans SET {nameof(DestinyClanDbModel.ShouldRescan)} = 1 WHERE {nameof(DestinyClanDbModel.ClanId)} = @ClanId;
+        """;
+    public async Task SetClanRescanAsync(long clanId)
+    {
+        await _dbAccess.ExecuteAsync(SetClanRescanQuery, new { ClanId = clanId });
+    }
+
+
+    private const string SetClanRescanForAllTrackedClansQuery =
+        $"""
+        UPDATE Clans SET {nameof(DestinyClanDbModel.ShouldRescan)} = 1 WHERE {nameof(DestinyClanDbModel.IsTracking)} = 1;
+        """;
+    public async Task SetClanRescanForAllTrackedClansAsync()
+    {
+        await _dbAccess.ExecuteAsync(SetClanRescanForAllTrackedClansQuery);
     }
 }
