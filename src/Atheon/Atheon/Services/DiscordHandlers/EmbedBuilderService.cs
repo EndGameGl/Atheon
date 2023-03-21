@@ -11,6 +11,7 @@ using DotNetBungieAPI.Service.Abstractions;
 using System.Text;
 using Atheon.Extensions;
 using Atheon.Services.BungieApi;
+using Humanizer;
 
 namespace Atheon.Services.DiscordHandlers;
 
@@ -182,7 +183,7 @@ public class EmbedBuilderService
             {
                 if (int.TryParse(complString, out var activityCompletions))
                     embedBuilder.WithDescription(
-                        $"{username} has obtained [{name}](https://www.light.gg/db/items/{collectibleDefinition.Item.Hash.GetValueOrDefault()}) on their {activityCompletions}th clear");
+                        $"{username} has obtained [{name}](https://www.light.gg/db/items/{collectibleDefinition.Item.Hash.GetValueOrDefault()}) on their {activityCompletions.Ordinalize()} clear");
                 else
                     embedBuilder.WithDescription(
                         $"{username} has obtained [{name}](https://www.light.gg/db/items/{collectibleDefinition.Item.Hash.GetValueOrDefault()})");
@@ -387,7 +388,7 @@ public class EmbedBuilderService
                         if (broadcast.AdditionalData is not null &&
                             broadcast.AdditionalData.TryGetValue("completions", out var completionsUnparsed) &&
                             int.TryParse(completionsUnparsed, out var completions))
-                            stringBuilder.AppendLine($"{username} - on their {completions} clear");
+                            stringBuilder.AppendLine($"{username} - on their {completions.Ordinalize()} clear");
                         else
                             stringBuilder.AppendLine(username);
                     }
