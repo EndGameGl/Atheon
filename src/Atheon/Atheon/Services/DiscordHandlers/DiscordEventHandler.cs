@@ -1,4 +1,5 @@
-﻿using Atheon.Models.Database.Destiny;
+﻿using Atheon.DataAccess;
+using Atheon.DataAccess.Models.Destiny;
 using Atheon.Models.Destiny;
 using Atheon.Services.DiscordHandlers.TypeConverters;
 using Atheon.Services.Interfaces;

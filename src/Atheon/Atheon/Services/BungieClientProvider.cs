@@ -1,4 +1,5 @@
-﻿using Atheon.Extensions;
+﻿using Atheon.DataAccess;
+using Atheon.Extensions;
 using Atheon.Services.Interfaces;
 using DotNetBungieAPI;
 using DotNetBungieAPI.DefinitionProvider.Sqlite;

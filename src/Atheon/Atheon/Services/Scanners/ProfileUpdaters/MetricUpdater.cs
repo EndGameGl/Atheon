@@ -1,5 +1,5 @@
-﻿using Atheon.Models.Database.Destiny;
-using Atheon.Models.Database.Destiny.Profiles;
+﻿using Atheon.DataAccess.Models.Destiny;
+using Atheon.DataAccess.Models.Destiny.Profiles;
 using Atheon.Services.Interfaces;
 using DotNetBungieAPI.Models.Destiny.Responses;
 using DotNetBungieAPI.Service.Abstractions;

@@ -1,5 +1,6 @@
-﻿using Atheon.Models.Database.Destiny;
-using Atheon.Models.Database.Destiny.Broadcasts;
+﻿using Atheon.DataAccess.Models.Destiny;
+using Atheon.DataAccess.Models.Destiny.Broadcasts;
+using Atheon.Destiny2.Metadata;
 using Atheon.Services.Interfaces;
 using DotNetBungieAPI.Models;
 using DotNetBungieAPI.Models.Destiny.Components;

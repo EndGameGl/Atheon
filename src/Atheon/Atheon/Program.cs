@@ -1,19 +1,18 @@
-﻿using Atheon.Extensions;
-using Atheon.Options;
+﻿using Atheon.DataAccess.Options;
+using Atheon.DataAccess.Sqlite;
+using Atheon.Extensions;
 using Atheon.Services;
 using Atheon.Services.BungieApi;
 using Atheon.Services.Db.Sqlite;
 using Atheon.Services.EventBus;
 using Atheon.Services.Hosted;
 using Atheon.Services.Interfaces;
+using Atheon.Services.Localization;
 using Atheon.Services.Scanners.DestinyClanMemberScanner;
 using Atheon.Services.Scanners.DestinyClanScanner;
 using Atheon.Services.Scanners.ProfileUpdaters;
-using DotNetBungieAPI.HashReferences;
-using DotNetBungieAPI.Models.Destiny.Definitions.Collectibles;
 using Serilog;
 using Serilog.Exceptions;
-using System.Text.Json;
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
@@ -69,18 +68,13 @@ void ConfigureServices(WebApplicationBuilder applicationBuilder)
         applicationBuilder.Configuration.GetSection("Database").Bind(settings);
     });
 
+    applicationBuilder.Services.AddSingleton<IDbDataValidator, DbDataValidator>();
+    applicationBuilder.Services.AddSingleton<IClansToScanProvider, ClansToScanProvider>();
     switch (applicationBuilder.Configuration.GetSection("Database:CurrentMode").Value)
     {
         case DatabaseOptions.SqliteKey:
             {
-                applicationBuilder.Services.AddSingleton<IDbConnectionFactory, SqliteDbConnectionFactory>();
-                applicationBuilder.Services.AddSingleton<IDbBootstrap, SqliteDbBootstrap>();
-                applicationBuilder.Services.AddSingleton<ISettingsStorage, SqliteSettingsStorage>();
-                applicationBuilder.Services.AddSingleton<IDbAccess, SqliteDbAccess>();
-                applicationBuilder.Services.AddSingleton<IDbDataValidator, SqliteDbDataValidator>();
-                applicationBuilder.Services.AddSingleton<IClansToScanProvider, ClansToScanProvider>();
-
-                applicationBuilder.Services.AddSingleton<IDestinyDb, SqliteDestinyDb>();
+                applicationBuilder.Services.AddSqliteDbAccess();
                 break;
             }
     }
@@ -90,6 +84,8 @@ void ConfigureServices(WebApplicationBuilder applicationBuilder)
     applicationBuilder.Services.AddSingleton<BroadcastSaver>();
     applicationBuilder.Services.AddSingleton<DestinyDefinitionDataService>();
     applicationBuilder.Services.AddSingleton<CuratedDefinitionInitialiser>();
+
+    applicationBuilder.Services.AddSingleton<ILocalizationService, LocalizationService>();
 
     applicationBuilder.Services.AddSingleton<DestinyInitialClanScanner>();
     applicationBuilder.Services.AddSingleton<DestinyClanScanner>();

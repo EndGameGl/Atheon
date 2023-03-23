@@ -1,6 +1,7 @@
-﻿using Atheon.Extensions;
-using Atheon.Models.Database.Destiny;
-using Atheon.Models.Database.Destiny.Broadcasts;
+﻿using Atheon.DataAccess;
+using Atheon.DataAccess.Models.Destiny;
+using Atheon.DataAccess.Models.Destiny.Broadcasts;
+using Atheon.Extensions;
 using Atheon.Services.BungieApi;
 using Atheon.Services.DiscordHandlers;
 using Atheon.Services.EventBus;

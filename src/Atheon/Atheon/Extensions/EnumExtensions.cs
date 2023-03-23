@@ -1,4 +1,4 @@
-﻿using Atheon.Models.DiscordModels;
+﻿using Atheon.DataAccess.Models.Discord;
 using DotNetBungieAPI.Models;
 
 namespace Atheon.Extensions;

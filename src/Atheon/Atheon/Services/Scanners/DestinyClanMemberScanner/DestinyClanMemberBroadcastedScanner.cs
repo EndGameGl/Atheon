@@ -5,8 +5,10 @@ using DotNetBungieAPI.Models;
 using Atheon.Extensions;
 using Atheon.Services.BungieApi;
 using System.Text.Json;
-using Atheon.Models.Database.Destiny;
 using Atheon.Services.Interfaces;
+using Atheon.Destiny2.Metadata;
+using Atheon.DataAccess;
+using Atheon.DataAccess.Models.Destiny;
 
 namespace Atheon.Services.Scanners.DestinyClanMemberScanner;
 
@@ -143,11 +145,12 @@ public class DestinyClanMemberBroadcastedScanner : EntityScannerBase<DestinyClan
 
         if (profile is null)
         {
+            var titleHashes = await _destinyDefinitionDataService.GetTitleHashesCachedAsync();
             profile = await DestinyProfileDbModel.CreateFromApiResponse(
                 input.GroupMember.GroupId,
                 context.DestinyProfileResponse!,
                 input.BungieClient,
-                _destinyDefinitionDataService);
+                titleHashes);
             profile.ClanId = input.ClanScannerContext.ClanId;
             profile.LastUpdated = DateTime.UtcNow;
             await _destinyDb.UpsertDestinyProfileAsync(profile);

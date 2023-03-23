@@ -1,4 +1,5 @@
 ﻿using Atheon.Controllers.Base;
+using Atheon.DataAccess;
 using Atheon.Models.Api;
 using Atheon.Services.BungieApi;
 using Atheon.Services.Interfaces;

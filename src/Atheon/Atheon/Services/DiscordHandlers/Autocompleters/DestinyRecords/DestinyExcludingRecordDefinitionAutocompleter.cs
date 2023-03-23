@@ -4,6 +4,7 @@ using Discord.Interactions;
 using Discord;
 using DotNetBungieAPI.Models.Destiny.Definitions.Records;
 using Atheon.Extensions;
+using Atheon.DataAccess;
 
 namespace Atheon.Services.DiscordHandlers.Autocompleters.DestinyRecords;
 

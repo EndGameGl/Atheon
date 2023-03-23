@@ -1,6 +1,4 @@
-﻿using Atheon.Models.Database.Destiny.Broadcasts;
-using Atheon.Models.Database.Destiny;
-using Discord;
+﻿using Discord;
 using Color = Discord.Color;
 using DotNetBungieAPI.HashReferences;
 using DotNetBungieAPI.Models.Destiny.Definitions.Collectibles;
@@ -12,6 +10,8 @@ using System.Text;
 using Atheon.Extensions;
 using Atheon.Services.BungieApi;
 using Humanizer;
+using Atheon.DataAccess.Models.Destiny.Broadcasts;
+using Atheon.DataAccess.Models.Destiny;
 
 namespace Atheon.Services.DiscordHandlers;
 

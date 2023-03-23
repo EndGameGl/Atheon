@@ -1,7 +1,7 @@
-﻿using Atheon.Extensions;
-using Atheon.Models.Database.Destiny;
-using Atheon.Models.Database.Destiny.Broadcasts;
-using Atheon.Models.Database.Destiny.Profiles;
+﻿using Atheon.DataAccess.Models.Destiny;
+using Atheon.DataAccess.Models.Destiny.Broadcasts;
+using Atheon.DataAccess.Models.Destiny.Profiles;
+using Atheon.Destiny2.Metadata;
 using Atheon.Services.BungieApi;
 using Atheon.Services.Interfaces;
 using DotNetBungieAPI.Models;

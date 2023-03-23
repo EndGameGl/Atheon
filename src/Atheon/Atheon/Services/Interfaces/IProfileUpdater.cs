@@ -1,4 +1,4 @@
-﻿using Atheon.Models.Database.Destiny;
+﻿using Atheon.DataAccess.Models.Destiny;
 using DotNetBungieAPI.Models.Destiny.Responses;
 using DotNetBungieAPI.Service.Abstractions;
 

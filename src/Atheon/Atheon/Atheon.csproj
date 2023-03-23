@@ -32,6 +32,12 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Models\Events\" />
+    <Folder Include="Options\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Atheon.DataAccess.Sqlite\Atheon.DataAccess.Sqlite.csproj" />
+    <ProjectReference Include="..\Atheon.DataAccess\Atheon.DataAccess.csproj" />
+    <ProjectReference Include="..\Atheon.Destiny2.Metadata\Atheon.Destiny2.Metadata.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Update="Properties\launchSettings.json">

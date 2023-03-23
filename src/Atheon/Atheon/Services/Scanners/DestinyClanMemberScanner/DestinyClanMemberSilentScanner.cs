@@ -6,7 +6,9 @@ using DotNetBungieAPI.Models;
 using System.Text.Json;
 using Atheon.Services.BungieApi;
 using Atheon.Services.Interfaces;
-using Atheon.Models.Database.Destiny;
+using Atheon.Destiny2.Metadata;
+using Atheon.DataAccess;
+using Atheon.DataAccess.Models.Destiny;
 
 namespace Atheon.Services.Scanners.DestinyClanMemberScanner;
 
@@ -143,11 +145,13 @@ public class DestinyClanMemberSilentScanner : EntityScannerBase<DestinyClanMembe
 
         if (profile is null)
         {
+            var titleHashes = await _destinyDefinitionDataService.GetTitleHashesCachedAsync();
+
             profile = await DestinyProfileDbModel.CreateFromApiResponse(
-                input.GroupMember.GroupId, 
-                context.DestinyProfileResponse!, 
+                input.GroupMember.GroupId,
+                context.DestinyProfileResponse!,
                 input.BungieClient,
-                _destinyDefinitionDataService);
+                titleHashes);
             profile.ClanId = input.ClanScannerContext.ClanId;
             profile.LastUpdated = DateTime.UtcNow;
             await _destinyDb.UpsertDestinyProfileAsync(profile);

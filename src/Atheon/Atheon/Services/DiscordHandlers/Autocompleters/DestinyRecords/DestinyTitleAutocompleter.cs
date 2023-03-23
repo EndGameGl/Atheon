@@ -1,9 +1,9 @@
-﻿using Atheon.Extensions;
+﻿using Atheon.DataAccess;
+using Atheon.Extensions;
 using Atheon.Services.BungieApi;
 using Atheon.Services.DiscordHandlers.Autocompleters.DestinyCollectibles;
 using Atheon.Services.Interfaces;
 using Discord;
-using Discord.Commands;
 using Discord.Interactions;
 using DotNetBungieAPI.HashReferences;
 

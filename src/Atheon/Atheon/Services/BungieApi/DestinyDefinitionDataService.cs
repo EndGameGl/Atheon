@@ -6,12 +6,13 @@ using DotNetBungieAPI.Extensions;
 using DotNetBungieAPI.HashReferences;
 using IMemoryCache = Atheon.Services.Interfaces.IMemoryCache;
 using Atheon.Services.Caching;
-using Atheon.Models.Database.Destiny.Tracking;
 using DotNetBungieAPI.Models.Destiny.Definitions.Records;
 using DotNetBungieAPI.Models.Destiny.Definitions.InventoryItems;
 using DotNetBungieAPI.Models.Destiny.Definitions.Collectibles;
 using System.Text;
 using Atheon.Extensions;
+using Atheon.DataAccess;
+using Atheon.DataAccess.Models.Destiny.Tracking;
 
 namespace Atheon.Services.BungieApi;
 

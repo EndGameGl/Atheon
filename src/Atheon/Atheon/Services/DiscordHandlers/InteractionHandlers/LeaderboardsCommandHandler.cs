@@ -2,13 +2,13 @@
 using Atheon.Services.DiscordHandlers.InteractionHandlers.Base;
 using Atheon.Services.Interfaces;
 using Discord.Interactions;
-using DotNetBungieAPI.Models;
 using DotNetBungieAPI.Models.Destiny.Definitions.Metrics;
-using Atheon.Models.Database.Destiny.Profiles;
 using Atheon.Extensions;
 using DotNetBungieAPI.Extensions;
 using Atheon.Services.DiscordHandlers.Autocompleters.DestinyRecords;
 using DotNetBungieAPI.Models.Destiny.Definitions.Records;
+using Atheon.DataAccess;
+using Atheon.DataAccess.Models.Destiny.Profiles;
 
 namespace Atheon.Services.DiscordHandlers.InteractionHandlers;
 

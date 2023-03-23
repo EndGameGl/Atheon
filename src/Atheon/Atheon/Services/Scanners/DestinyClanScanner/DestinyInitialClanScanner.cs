@@ -1,8 +1,8 @@
 ﻿using Atheon.Attributes;
-using Atheon.Models.Database.Destiny;
-using Atheon.Models.Database.Destiny.Broadcasts;
+using Atheon.DataAccess;
+using Atheon.DataAccess.Models.Destiny;
+using Atheon.DataAccess.Models.Destiny.Broadcasts;
 using Atheon.Services.BungieApi;
-using Atheon.Services.EventBus;
 using Atheon.Services.Interfaces;
 using Atheon.Services.Scanners.Entities;
 using DotNetBungieAPI.Models;

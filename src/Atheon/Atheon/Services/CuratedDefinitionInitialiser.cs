@@ -1,5 +1,5 @@
-﻿using Atheon.Models.Database.Destiny.Tracking;
-using Atheon.Services.Interfaces;
+﻿using Atheon.DataAccess;
+using Atheon.DataAccess.Models.Destiny.Tracking;
 using DotNetBungieAPI.HashReferences;
 using System.Collections.ObjectModel;
 

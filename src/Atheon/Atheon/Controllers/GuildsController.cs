@@ -1,7 +1,8 @@
 ﻿using Atheon.Controllers.Base;
+using Atheon.DataAccess;
+using Atheon.DataAccess.Models.Destiny;
+using Atheon.DataAccess.Models.Destiny.Guilds;
 using Atheon.Models.Api;
-using Atheon.Models.Database.Destiny;
-using Atheon.Models.Database.Destiny.Guilds;
 using Atheon.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 

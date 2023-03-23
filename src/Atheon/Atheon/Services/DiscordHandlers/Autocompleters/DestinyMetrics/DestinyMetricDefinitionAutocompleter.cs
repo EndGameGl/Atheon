@@ -1,12 +1,9 @@
-﻿using Atheon.Extensions;
-using Atheon.Services.Interfaces;
+﻿using Atheon.Services.Interfaces;
 using Discord;
 using Discord.Interactions;
 using DotNetBungieAPI.Extensions;
-using DotNetBungieAPI.HashReferences;
 using DotNetBungieAPI.Models;
 using DotNetBungieAPI.Models.Destiny.Definitions.Metrics;
-using System.Linq;
 
 namespace Atheon.Services.DiscordHandlers.Autocompleters.DestinyMetrics
 {
@@ -14,19 +11,16 @@ namespace Atheon.Services.DiscordHandlers.Autocompleters.DestinyMetrics
     {
         private readonly IBungieClientProvider _bungieClientProvider;
         private readonly ILogger<DestinyMetricDefinitionAutocompleter> _logger;
-        private readonly IDestinyDb _destinyDb;
-        private readonly IMemoryCache _memoryCache;
+        private readonly ILocalizationService _localizationService;
 
         public DestinyMetricDefinitionAutocompleter(
             IBungieClientProvider bungieClientProvider,
             ILogger<DestinyMetricDefinitionAutocompleter> logger,
-            IDestinyDb destinyDb,
-            IMemoryCache memoryCache)
+            ILocalizationService localizationService)
         {
             _bungieClientProvider = bungieClientProvider;
             _logger = logger;
-            _destinyDb = destinyDb;
-            _memoryCache = memoryCache;
+            _localizationService = localizationService;
         }
 
         public override async Task<AutocompletionResult> GenerateSuggestionsAsync(
@@ -36,11 +30,7 @@ namespace Atheon.Services.DiscordHandlers.Autocompleters.DestinyMetrics
         {
             try
             {
-                var lang = await _memoryCache.GetOrAddAsync(
-                    $"guild_lang_{context.Guild.Id}",
-                    async () => (await _destinyDb.GetGuildLanguageAsync(context.Guild.Id)).ConvertToBungieLocale(),
-                    TimeSpan.FromSeconds(15),
-                    Caching.CacheExpirationType.Absolute);
+                var lang = await _localizationService.GetGuildLocale(context.Guild.Id);
 
                 var client = await _bungieClientProvider.GetClientAsync();
                 var searchEntry = (string)autocompleteInteraction.Data.Options.First(x => x.Focused).Value;
