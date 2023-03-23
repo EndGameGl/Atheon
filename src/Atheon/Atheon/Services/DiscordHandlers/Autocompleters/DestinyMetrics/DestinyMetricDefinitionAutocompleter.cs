@@ -2,7 +2,11 @@
 using Atheon.Services.Interfaces;
 using Discord;
 using Discord.Interactions;
+using DotNetBungieAPI.Extensions;
+using DotNetBungieAPI.HashReferences;
+using DotNetBungieAPI.Models;
 using DotNetBungieAPI.Models.Destiny.Definitions.Metrics;
+using System.Linq;
 
 namespace Atheon.Services.DiscordHandlers.Autocompleters.DestinyMetrics
 {
@@ -43,8 +47,7 @@ namespace Atheon.Services.DiscordHandlers.Autocompleters.DestinyMetrics
 
                 var searchResults = client
                     .Repository
-                    .GetAll<DestinyMetricDefinition>(lang)
-                    .Where(x =>
+                    .Search<DestinyMetricDefinition>(lang, x =>
                     {
                         return x.DisplayProperties.Name.Contains(searchEntry, StringComparison.InvariantCultureIgnoreCase);
                     })
@@ -52,7 +55,7 @@ namespace Atheon.Services.DiscordHandlers.Autocompleters.DestinyMetrics
 
                 var results = searchResults
                     .Where(x => x.DisplayProperties.Name.Length > 0)
-                    .Select(x => new AutocompleteResult(x.DisplayProperties.Name, x.Hash.ToString()));
+                    .Select(x => new AutocompleteResult(CreateDisplayNameForMetric(x, lang), x.Hash.ToString()));
 
                 return !results.Any() ? AutocompletionResult.FromSuccess() : AutocompletionResult.FromSuccess(results);
             }
@@ -61,6 +64,21 @@ namespace Atheon.Services.DiscordHandlers.Autocompleters.DestinyMetrics
                 _logger.LogError(ex, "Failed to form collectibles for query");
                 return AutocompletionResult.FromSuccess();
             }
+        }
+
+        private static string CreateDisplayNameForMetric(DestinyMetricDefinition metricDefinition, BungieLocales lang)
+        {
+            if (metricDefinition.Traits.Count != 2)
+                return metricDefinition.DisplayProperties.Name;
+
+            var metricTrait = metricDefinition.Traits.Last();
+
+            if (metricTrait.TryGetDefinition(out var traitDefinition, lang))
+            {
+                return $"{metricDefinition.DisplayProperties.Name} ({traitDefinition.DisplayProperties.Name})";
+            }
+
+            return metricDefinition.DisplayProperties.Name;
         }
     }
 }
