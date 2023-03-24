@@ -54,9 +54,16 @@ public static class Destiny2Metadata
     public static DestinyComponentType[] GenericProfileComponents { get; } =
     {
         DestinyComponentType.Profiles,
+        DestinyComponentType.ProfileInventories,
+
         DestinyComponentType.Characters,
         DestinyComponentType.CharacterProgressions,
         DestinyComponentType.CharacterActivities,
+        DestinyComponentType.CharacterInventories,
+        DestinyComponentType.CharacterEquipment,
+
+        DestinyComponentType.ItemInstances,
+
         DestinyComponentType.Collectibles,
         DestinyComponentType.Records,
         DestinyComponentType.Metrics
