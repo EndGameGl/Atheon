@@ -53,7 +53,6 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
     {
         await ExecuteAndHanldeErrors(async () =>
         {
-
             var itemHash = uint.Parse(collectibleHash);
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
             var users = await _destinyDb.GetProfilesCollectibleStatusAsync(itemHash, hasItem, guildSettings.Clans.ToArray());
@@ -62,11 +61,7 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
 
             var bungieClient = await _bungieClientProvider.GetClientAsync();
 
-            var lang = await _memoryCache.GetOrAddAsync(
-                $"guild_lang_{GuildId}",
-                async () => (await _destinyDb.GetGuildLanguageAsync(GuildId)).ConvertToBungieLocale(),
-                TimeSpan.FromSeconds(15),
-                Caching.CacheExpirationType.Absolute);
+            var lang = await _localizationService.GetGuildLocale(GuildId);
 
             bungieClient.TryGetDefinition<DestinyCollectibleDefinition>(itemHash, lang, out var colDef);
 
@@ -126,11 +121,7 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
             var clanReferences = await _destinyDb.GetClanReferencesFromIdsAsync(clanIds);
             var bungieClient = await _bungieClientProvider.GetClientAsync();
 
-            var lang = await _memoryCache.GetOrAddAsync(
-                $"guild_lang_{GuildId}",
-                async () => (await _destinyDb.GetGuildLanguageAsync(GuildId)).ConvertToBungieLocale(),
-                TimeSpan.FromSeconds(15),
-                Caching.CacheExpirationType.Absolute);
+            var lang = await _localizationService.GetGuildLocale(GuildId);
 
             bungieClient.TryGetDefinition<DestinyRecordDefinition>(itemHash, lang, out var recordDef);
 
@@ -194,11 +185,7 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
         {
             var client = await _bungieClientProvider.GetClientAsync();
 
-            var lang = await _memoryCache.GetOrAddAsync(
-                $"guild_lang_{GuildId}",
-                async () => (await _destinyDb.GetGuildLanguageAsync(GuildId)).ConvertToBungieLocale(),
-                TimeSpan.FromSeconds(15),
-                Caching.CacheExpirationType.Absolute);
+            var lang = await _localizationService.GetGuildLocale(GuildId);
 
             if (!client.TryGetDefinition<DestinyCollectibleDefinition>(collectibleHash, lang, out var collectibleDefinition))
             {
@@ -261,11 +248,7 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
             var titleRecordHash = uint.Parse(titleRecordHashString);
             var client = await _bungieClientProvider.GetClientAsync();
 
-            var lang = await _memoryCache.GetOrAddAsync(
-                $"guild_lang_{GuildId}",
-                async () => (await _destinyDb.GetGuildLanguageAsync(GuildId)).ConvertToBungieLocale(),
-                TimeSpan.FromSeconds(15),
-                Caching.CacheExpirationType.Absolute);
+            var lang = await _localizationService.GetGuildLocale(GuildId);
 
             if (!client.TryGetDefinition<DestinyRecordDefinition>(titleRecordHash, lang, out var titleDefinition))
             {
@@ -307,8 +290,8 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
                     "No users",
                     usersOfClan,
                     (user) => user.MembershipId,
-                    getters)
-                .LimitTo(1018);
+                    getters,
+                    1018);
 
                 embedBuilder.AddField(reference.Name, $"```{formattedData}```");
             }
@@ -372,8 +355,8 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
                     "No users",
                     usersOfClan,
                     (user) => user.MembershipId,
-                    getters)
-                .LimitTo(1018);
+                    getters,
+                    1018);
 
                 embedBuilder.AddField(reference.Name, $"```{formattedData}```");
             }

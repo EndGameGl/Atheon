@@ -19,18 +19,21 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
     private readonly IDestinyDb _destinyDb;
     private readonly IBungieClientProvider _bungieClientProvider;
     private readonly IMemoryCache _memoryCache;
+    private readonly ILocalizationService _localizationService;
 
     public LeaderboardsCommandHandler(
         ILogger<LeaderboardsCommandHandler> logger,
         EmbedBuilderService embedBuilderService,
         IDestinyDb destinyDb,
         IBungieClientProvider bungieClientProvider,
-        IMemoryCache memoryCache) : base(logger, embedBuilderService)
+        IMemoryCache memoryCache,
+        ILocalizationService localizationService) : base(logger, embedBuilderService)
     {
         _embedBuilderService = embedBuilderService;
         _destinyDb = destinyDb;
         _bungieClientProvider = bungieClientProvider;
         _memoryCache = memoryCache;
+        _localizationService = localizationService;
     }
 
     [SlashCommand("metric", "Shows leaderboard for a certain metric")]
@@ -43,11 +46,7 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
             var metricHash = uint.Parse(metricHashString);
             var bungieClient = await _bungieClientProvider.GetClientAsync();
 
-            var lang = await _memoryCache.GetOrAddAsync(
-                $"guild_lang_{GuildId}",
-                async () => (await _destinyDb.GetGuildLanguageAsync(GuildId)).ConvertToBungieLocale(),
-                TimeSpan.FromSeconds(15),
-                Caching.CacheExpirationType.Absolute);
+            var lang = await _localizationService.GetGuildLocale(GuildId);
 
             bungieClient.TryGetDefinition<DestinyMetricDefinition>(metricHash, lang, out var metricDefinition);
 
@@ -80,8 +79,8 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
                     "No users",
                     usersOfClan,
                     (user) => user.MembershipId,
-                    getters)
-                .LimitTo(1018);
+                    getters, 
+                    1018);
 
                 embedBuilder.AddField(reference.Name, $"```{formattedData}```");
             }
@@ -126,8 +125,8 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
                     "No users",
                     usersOfClan,
                     (user) => user.MembershipId,
-                    getters)
-                .LimitTo(1018);
+                    getters,
+                    1018);
 
                 embedBuilder.AddField(reference.Name, $"```{formattedData}```");
             }
@@ -171,8 +170,8 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
                     "No users",
                     usersOfClan,
                     (user) => user.MembershipId,
-                    getters)
-                .LimitTo(1018);
+                    getters, 
+                    1018);
 
                 embedBuilder.AddField(reference.Name, $"```{formattedData}```");
             }
@@ -216,8 +215,8 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
                     "No users",
                     usersOfClan,
                     (user) => user.MembershipId,
-                    getters)
-                .LimitTo(1018);
+                    getters,
+                    1018);
 
                 embedBuilder.AddField(reference.Name, $"```{formattedData}```");
             }
@@ -262,8 +261,8 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
                     "No users",
                     usersOfClan,
                     (user) => user.MembershipId,
-                    getters)
-                .LimitTo(1018);
+                    getters,
+                    1018);
 
                 embedBuilder.AddField(reference.Name, $"```{formattedData}```");
             }
@@ -284,11 +283,7 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
             var recordHash = uint.Parse(triumphHashString);
             var bungieClient = await _bungieClientProvider.GetClientAsync();
 
-            var lang = await _memoryCache.GetOrAddAsync(
-                $"guild_lang_{GuildId}",
-                async () => (await _destinyDb.GetGuildLanguageAsync(GuildId)).ConvertToBungieLocale(),
-                TimeSpan.FromSeconds(15),
-                Caching.CacheExpirationType.Absolute);
+            var lang = await _localizationService.GetGuildLocale(GuildId);
 
             bungieClient.TryGetDefinition<DestinyRecordDefinition>(recordHash, lang, out var recordDefinition);
 
@@ -330,8 +325,8 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
                     "No users",
                     usersOfClan,
                     (user) => user.MembershipId,
-                    getters)
-                .LimitTo(1018);
+                    getters,
+                    1018);
 
                 embedBuilder.AddField(reference.Name, $"```{formattedData}```");
             }
@@ -376,8 +371,8 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
                     "No users",
                     usersOfClan,
                     (user) => user.MembershipId,
-                    getters)
-                .LimitTo(1018);
+                    getters,
+                    1018);
 
                 embedBuilder.AddField(reference.Name, $"```{formattedData}```");
             }
