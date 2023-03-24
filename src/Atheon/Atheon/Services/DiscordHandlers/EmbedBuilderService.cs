@@ -579,6 +579,8 @@ public class EmbedBuilderService
 
         var valueBuffer = new object[valueGetter.Length];
 
+        var textLength = 0;
+
         for (var i = 0; i < cutLeaderboard.Length; i++)
         {
             var entry = cutLeaderboard[i];
@@ -592,14 +594,15 @@ public class EmbedBuilderService
 
             var mainText = string.Join("   ", valueBuffer.Select((x, inc) => x.ToString().PadRight(paddingBuffer[inc])));
 
-            var finalText = $"{paddedAmount}: {mainText}";
+            var finalText = $"{paddedAmount}: {mainText}\n";
 
-            if ((sb.Length + finalText.Length) > limit)
+            if ((textLength + finalText.Length) > limit)
             {
                 break;
             }
 
-            sb.AppendLine(finalText);
+            sb.Append(finalText);
+            textLength += finalText.Length;
         }
 
         return sb.ToString();
