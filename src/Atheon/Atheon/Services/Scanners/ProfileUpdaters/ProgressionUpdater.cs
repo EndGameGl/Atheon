@@ -1,17 +1,18 @@
-﻿using Atheon.Models.Database.Destiny;
-using Atheon.Services.Interfaces;
+﻿using Atheon.Services.Interfaces;
 using DotNetBungieAPI.Models.Destiny.Responses;
 using DotNetBungieAPI.Service.Abstractions;
-using Atheon.Extensions;
-using Atheon.Models.Database.Destiny.Profiles;
+using Atheon.Destiny2.Metadata;
+using Atheon.DataAccess.Models.Destiny;
+using Atheon.DataAccess.Models.Destiny.Profiles;
 
 namespace Atheon.Services.Scanners.ProfileUpdaters;
 
 public class ProgressionUpdater : IProfileUpdater
 {
     public bool ReliesOnSecondaryComponents => false;
+    public int Priority => 0;
 
-    public void Update(
+    public async Task Update(
         IBungieClient bungieClient,
         DestinyProfileDbModel dbProfile,
         DestinyProfileResponse profileResponse,
@@ -36,7 +37,7 @@ public class ProgressionUpdater : IProfileUpdater
         }
     }
 
-    public void UpdateSilent(
+    public async Task UpdateSilent(
         IBungieClient bungieClient,
         DestinyProfileDbModel dbProfile,
         DestinyProfileResponse profileResponse)

@@ -1,4 +1,5 @@
-﻿using Atheon.Services.Interfaces;
+﻿using Atheon.DataAccess;
+using Atheon.Services.Interfaces;
 using Discord;
 using Discord.WebSocket;
 

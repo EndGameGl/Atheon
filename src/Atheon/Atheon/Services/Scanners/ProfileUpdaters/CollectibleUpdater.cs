@@ -1,5 +1,6 @@
-﻿using Atheon.Models.Database.Destiny;
-using Atheon.Models.Database.Destiny.Broadcasts;
+﻿using Atheon.DataAccess.Models.Destiny;
+using Atheon.DataAccess.Models.Destiny.Broadcasts;
+using Atheon.Destiny2.Metadata;
 using Atheon.Services.Interfaces;
 using DotNetBungieAPI.Models;
 using DotNetBungieAPI.Models.Destiny.Components;
@@ -14,6 +15,7 @@ public class CollectibleUpdater : IProfileUpdater
     private readonly ICommonEvents _commonEvents;
 
     public bool ReliesOnSecondaryComponents => true;
+    public int Priority => 0;
 
     public CollectibleUpdater(
         ICommonEvents commonEvents)
@@ -21,7 +23,7 @@ public class CollectibleUpdater : IProfileUpdater
         _commonEvents = commonEvents;
     }
 
-    public void Update(
+    public async Task Update(
         IBungieClient bungieClient,
         DestinyProfileDbModel dbProfile,
         DestinyProfileResponse profileResponse,
@@ -29,14 +31,14 @@ public class CollectibleUpdater : IProfileUpdater
     {
         foreach (var (collectiblePointer, collectibleComponent) in profileResponse.ProfileCollectibles.Data.Collectibles)
         {
-            ProcessAndAnnounceCollectible(dbProfile, collectiblePointer, collectibleComponent, guildSettings);
+            ProcessAndAnnounceCollectible(dbProfile, collectiblePointer, collectibleComponent, guildSettings, profileResponse);
         }
 
         foreach (var (characterId, collectibleComponents) in profileResponse.CharacterCollectibles.Data)
         {
             foreach (var (collectiblePointer, collectibleComponent) in collectibleComponents.Collectibles)
             {
-                ProcessAndAnnounceCollectible(dbProfile, collectiblePointer, collectibleComponent, guildSettings);
+                ProcessAndAnnounceCollectible(dbProfile, collectiblePointer, collectibleComponent, guildSettings, profileResponse);
             }
         }
     }
@@ -45,7 +47,8 @@ public class CollectibleUpdater : IProfileUpdater
         DestinyProfileDbModel dbProfile,
         DefinitionHashPointer<DestinyCollectibleDefinition> collectiblePointer,
         DestinyCollectibleComponent collectibleComponent,
-        List<DiscordGuildSettingsDbModel> guildSettings)
+        List<DiscordGuildSettingsDbModel> guildSettings,
+        DestinyProfileResponse profileResponse)
     {
         if (collectibleComponent.State.HasFlag(DotNetBungieAPI.Models.Destiny.DestinyCollectibleState.NotAcquired))
             return;
@@ -60,21 +63,45 @@ public class CollectibleUpdater : IProfileUpdater
             if (!guildSetting.TrackedCollectibles.IsReported)
                 continue;
 
-            _commonEvents.ProfileBroadcasts.Publish(new DestinyUserProfileBroadcastDbModel()
+            if (!guildSetting.TrackedCollectibles.TrackedHashes.Contains(collectibleHashValue))
+                continue;
+
+            if (Destiny2Metadata.DryStreakItemSettings.TryGetValue(collectibleHashValue, out var metricHash) &&
+                profileResponse.Metrics.Data.Metrics.TryGetValue(metricHash, out var metricComponent))
             {
-                Date = DateTime.UtcNow,
-                ClanId = dbProfile.ClanId.GetValueOrDefault(),
-                WasAnnounced = false,
-                DefinitionHash = collectibleHashValue,
-                GuildId = guildSetting.GuildId,
-                MembershipId = dbProfile.MembershipId,
-                Type = ProfileBroadcastType.Collectible,
-                AdditionalData = null
-            });
+                _commonEvents.ProfileBroadcasts.Publish(new DestinyUserProfileBroadcastDbModel()
+                {
+                    Date = DateTime.UtcNow,
+                    ClanId = dbProfile.ClanId.GetValueOrDefault(),
+                    WasAnnounced = false,
+                    DefinitionHash = collectibleHashValue,
+                    GuildId = guildSetting.GuildId,
+                    MembershipId = dbProfile.MembershipId,
+                    Type = ProfileBroadcastType.Collectible,
+                    AdditionalData = new Dictionary<string, string>()
+                    {
+                        { "completions", (metricComponent.ObjectiveProgress.Progress ?? 0).ToString() }
+                    }
+                });
+            }
+            else
+            {
+                _commonEvents.ProfileBroadcasts.Publish(new DestinyUserProfileBroadcastDbModel()
+                {
+                    Date = DateTime.UtcNow,
+                    ClanId = dbProfile.ClanId.GetValueOrDefault(),
+                    WasAnnounced = false,
+                    DefinitionHash = collectibleHashValue,
+                    GuildId = guildSetting.GuildId,
+                    MembershipId = dbProfile.MembershipId,
+                    Type = ProfileBroadcastType.Collectible,
+                    AdditionalData = null
+                });
+            }
         }
     }
 
-    public void UpdateSilent(
+    public async Task UpdateSilent(
         IBungieClient bungieClient,
         DestinyProfileDbModel dbProfile,
         DestinyProfileResponse profileResponse)

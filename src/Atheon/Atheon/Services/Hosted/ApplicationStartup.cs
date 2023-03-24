@@ -1,5 +1,8 @@
-﻿using Atheon.Extensions;
+﻿using Atheon.DataAccess;
+using Atheon.Extensions;
+using Atheon.Services.BungieApi;
 using Atheon.Services.Interfaces;
+using Discord;
 
 namespace Atheon.Services.Hosted
 {
@@ -12,6 +15,8 @@ namespace Atheon.Services.Hosted
         private readonly ILogger<ApplicationStartup> _logger;
         private readonly IDiscordEventHandler _discordEventHandler;
         private readonly IDbDataValidator _dbDataValidator;
+        private readonly CuratedDefinitionInitialiser _curatedDefinitionInitialiser;
+        private readonly DestinyDefinitionDataService _destinyDefinitionDataService;
 
         public ApplicationStartup(
             IDiscordClientProvider discordClientProvider,
@@ -20,7 +25,9 @@ namespace Atheon.Services.Hosted
             IBungieClientProvider bungieClientProvider,
             ILogger<ApplicationStartup> logger,
             IDiscordEventHandler discordEventHandler,
-            IDbDataValidator dbDataValidator)
+            IDbDataValidator dbDataValidator,
+            CuratedDefinitionInitialiser curatedDefinitionInitialiser,
+            DestinyDefinitionDataService destinyDefinitionDataService)
         {
             _discordClientProvider = discordClientProvider;
             _dbBootstrap = dbBootstrap;
@@ -29,6 +36,8 @@ namespace Atheon.Services.Hosted
             _logger = logger;
             _discordEventHandler = discordEventHandler;
             _dbDataValidator = dbDataValidator;
+            _curatedDefinitionInitialiser = curatedDefinitionInitialiser;
+            _destinyDefinitionDataService = destinyDefinitionDataService;
         }
 
         private async Task RunInitialWarnings()
@@ -61,15 +70,58 @@ namespace Atheon.Services.Hosted
 
             await RunInitialWarnings();
 
-            var client = await _bungieClientProvider.GetClientAsync();
 
-            await client.DefinitionProvider.Initialize();
+            var client = await TryExecuteValue(async () => await _bungieClientProvider.GetClientAsync());
 
-            await _discordClientProvider.ConnectAsync();
+            await TryExecute(async () =>
+            {
+                if (client is null)
+                    return;
+                await client.DefinitionProvider.Initialize();
+                await client.DefinitionProvider.ReadToRepository(client.Repository);
+                await _destinyDefinitionDataService.MapLookupTables();
 
-            await _dbDataValidator.ValidateDbData();
+            });
+            await TryExecute(async () =>
+            {
+                await _discordClientProvider.ConnectAsync();
+            });
 
-            _discordEventHandler.SubscribeToEvents();
+            await TryExecute(async () =>
+            {
+                await _dbDataValidator.ValidateDbData();
+                await _curatedDefinitionInitialiser.Initialise();
+            });
+
+            await TryExecute(async () =>
+            {
+                _discordEventHandler.SubscribeToEvents();
+            });
+        }
+
+        private async Task TryExecute(Func<Task> taskToExecute)
+        {
+            try
+            {
+                await taskToExecute();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to run task on startup");
+            }
+        }
+
+        private async Task<T?> TryExecuteValue<T>(Func<Task<T>> taskToExecute)
+        {
+            try
+            {
+                return await taskToExecute();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to run task on startup");
+                return default;
+            }
         }
     }
 }

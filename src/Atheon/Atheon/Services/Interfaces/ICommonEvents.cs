@@ -1,4 +1,4 @@
-﻿using Atheon.Models.Database.Destiny.Broadcasts;
+﻿using Atheon.DataAccess.Models.Destiny.Broadcasts;
 using Atheon.Services.EventBus;
 
 namespace Atheon.Services.Interfaces;

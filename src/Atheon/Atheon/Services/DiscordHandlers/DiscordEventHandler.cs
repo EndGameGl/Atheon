@@ -1,7 +1,12 @@
-﻿using Atheon.Models.Database.Destiny;
+﻿using Atheon.DataAccess;
+using Atheon.DataAccess.Models.Destiny;
+using Atheon.Models.Destiny;
+using Atheon.Services.DiscordHandlers.TypeConverters;
 using Atheon.Services.Interfaces;
+using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using System.Diagnostics;
 using System.Reflection;
 
 namespace Atheon.Services.DiscordHandlers;
@@ -12,6 +17,7 @@ public class DiscordEventHandler : IDiscordEventHandler
     private readonly IDestinyDb _destinyDb;
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<DiscordEventHandler> _logger;
+    private readonly EmbedBuilderService _embedBuilderService;
 
     private InteractionService _interactionService;
     private DiscordShardedClient _discordClient;
@@ -20,32 +26,35 @@ public class DiscordEventHandler : IDiscordEventHandler
         IDiscordClientProvider discordClientProvider,
         IDestinyDb destinyDb,
         IServiceProvider serviceProvider,
-        ILogger<DiscordEventHandler> logger)
+        ILogger<DiscordEventHandler> logger,
+        EmbedBuilderService embedBuilderService)
     {
         _discordClientProvider = discordClientProvider;
         _destinyDb = destinyDb;
         _serviceProvider = serviceProvider;
         _logger = logger;
+        _embedBuilderService = embedBuilderService;
     }
 
     private async Task RegisterInteractions()
     {
         try
         {
+            _interactionService.AddTypeConverter<DestinyProfilePointer>(new DestinyProfilePointerTypeConverter());
             // This does some magic and finds all references of [SlashCommand("name", "description")] in the project and links them to the interaction service.
             await _interactionService.AddModulesAsync(Assembly.GetEntryAssembly(), _serviceProvider);
 
-            await _interactionService.RegisterCommandsGloballyAsync();
+            await _interactionService.RegisterCommandsGloballyAsync(deleteMissing: true);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to register discord interactions");
+            _logger.LogError(ex, "[Discord] Failed to register interactions");
         }
     }
 
     public void SubscribeToEvents()
     {
-        _logger.LogInformation("Setting up discord event handlers...");
+        _logger.LogInformation("[Discord] Setting up event handlers...");
         if (!_discordClientProvider.IsReady)
         {
             return;
@@ -55,8 +64,9 @@ public class DiscordEventHandler : IDiscordEventHandler
 
         _interactionService = new InteractionService(_discordClient, new InteractionServiceConfig()
         {
-
         });
+
+        _discordClient.Log += OnDiscordLog;
 
         _discordClient.JoinedGuild += OnGuildJoin;
         _discordClient.LeftGuild += OnGuildLeft;
@@ -71,9 +81,19 @@ public class DiscordEventHandler : IDiscordEventHandler
 
     private async Task HandleCommand<TInteraction>(TInteraction interaction) where TInteraction : SocketInteraction
     {
-        _logger.LogInformation("Executing discord interaction: {InteractionType}", interaction.Type);
+        _logger.LogInformation("[Discord] Executing interaction: {InteractionType}", interaction.Type);
         var context = new ShardedInteractionContext<TInteraction>(_discordClient, interaction);
-        await _interactionService.ExecuteCommandAsync(context, _serviceProvider);
+        var sw = Stopwatch.StartNew();
+        var result = await _interactionService.ExecuteCommandAsync(context, _serviceProvider);
+        sw.Stop();
+        if (!result.IsSuccess)
+        {
+            _logger.LogError("[Discord] Failed to run command in {Time} ms due to {ErrorType}: {ErrorReason}", sw.ElapsedMilliseconds, result.Error, result.ErrorReason);
+        }
+        else
+        {
+            _logger.LogInformation("[Discord] Completed command in {Time} ms", sw.ElapsedMilliseconds);
+        }
     }
 
     private async Task OnGuildJoin(SocketGuild socketGuild)
@@ -86,5 +106,61 @@ public class DiscordEventHandler : IDiscordEventHandler
     private async Task OnGuildLeft(SocketGuild socketGuild)
     {
         await _destinyDb.DeleteGuildSettingsAsync(socketGuild.Id);
+    }
+
+    private async Task OnDiscordLog(LogMessage logMessage)
+    {
+        switch (logMessage.Severity)
+        {
+            case LogSeverity.Critical:
+                _logger.LogCritical(logMessage.Exception, "[Discord] {Source}: {Message}", logMessage.Source, logMessage.Message);
+                break;
+            case LogSeverity.Error:
+                _logger.LogError(logMessage.Exception, "[Discord] {Source}: {Message}", logMessage.Source, logMessage.Message);
+                break;
+            case LogSeverity.Warning:
+                _logger.LogWarning("[Discord] {Source}: {Message}", logMessage.Source, logMessage.Message);
+                break;
+            case LogSeverity.Info:
+                _logger.LogInformation("[Discord] {Source}: {Message}", logMessage.Source, logMessage.Message);
+                break;
+            case LogSeverity.Verbose:
+                _logger.LogDebug("[Discord] {Source}: {Message}", logMessage.Source, logMessage.Message);
+                break;
+            case LogSeverity.Debug:
+                _logger.LogDebug("[Discord] {Source}: {Message}", logMessage.Source, logMessage.Message);
+                break;
+        }
+    }
+
+    public async Task ReportToSystemChannelAsync(string message)
+    {
+        var guildSettings = await _destinyDb.GetAllGuildSettings();
+
+        var embed = _embedBuilderService.CreateSimpleResponseEmbed("System alert", message, Color.Orange).Build();
+        foreach (var guildSetting in guildSettings)
+        {
+            if (guildSetting is not null && guildSetting.SystemReportsEnabled)
+            {
+                var channelToReportTo = guildSetting.SystemReportsOverrideChannel ?? guildSetting.DefaultReportChannel;
+                if (channelToReportTo is null)
+                {
+                    continue;
+                }
+
+                if (!_discordClientProvider.IsReady)
+                {
+                    continue;
+                }
+
+                var client = _discordClientProvider.Client!;
+                var guild = client.GetGuild(guildSetting.GuildId);
+                if (guild is null)
+                    continue;
+
+                var textChannel = guild.GetTextChannel(channelToReportTo.Value);
+                await textChannel.SendMessageAsync(embed: embed);
+            }
+        }
     }
 }

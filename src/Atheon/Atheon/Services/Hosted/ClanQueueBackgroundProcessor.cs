@@ -17,6 +17,8 @@ public class ClanQueueBackgroundProcessor : PeriodicBackgroundService, IClanQueu
     private readonly DestinyInitialClanScanner _destinyInitialClanScanner;
     private readonly IBungieClientProvider _bungieClientProvider;
     private readonly IDiscordClientProvider _discordClientProvider;
+    private readonly IBungieApiStatus _bungieApiStatus;
+    private readonly IDestinyManifestHandler _destinyManifestHandler;
     private readonly ConcurrentDictionary<long, OngoingScan> _ongoingScans;
 
     private readonly UniqueConcurrentQueue<long> _firstTimeScanQueue;
@@ -27,7 +29,9 @@ public class ClanQueueBackgroundProcessor : PeriodicBackgroundService, IClanQueu
         DestinyClanScanner destinyClanScanner,
         DestinyInitialClanScanner destinyInitialClanScanner,
         IBungieClientProvider bungieClientProvider,
-        IDiscordClientProvider discordClientProvider) : base(logger)
+        IDiscordClientProvider discordClientProvider,
+        IBungieApiStatus bungieApiStatus,
+        IDestinyManifestHandler destinyManifestHandler) : base(logger)
     {
         _logger = logger;
         _clansToScanProvider = clansToScanProvider;
@@ -35,6 +39,8 @@ public class ClanQueueBackgroundProcessor : PeriodicBackgroundService, IClanQueu
         _destinyInitialClanScanner = destinyInitialClanScanner;
         _bungieClientProvider = bungieClientProvider;
         _discordClientProvider = discordClientProvider;
+        _bungieApiStatus = bungieApiStatus;
+        _destinyManifestHandler = destinyManifestHandler;
         _ongoingScans = new ConcurrentDictionary<long, OngoingScan>();
         _firstTimeScanQueue = new UniqueConcurrentQueue<long>();
     }
@@ -47,7 +53,7 @@ public class ClanQueueBackgroundProcessor : PeriodicBackgroundService, IClanQueu
 
     protected override async Task OnTimerExecuted(CancellationToken cancellationToken)
     {
-        if (!_bungieClientProvider.IsReady || !_discordClientProvider.IsReady)
+        if (!_bungieClientProvider.IsReady || !_discordClientProvider.IsReady || !_bungieApiStatus.IsLive || _destinyManifestHandler.IsUpdating)
         {
             await Task.Delay(1000);
             return;

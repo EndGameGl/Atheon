@@ -1,10 +1,13 @@
-﻿using Atheon.Extensions;
-using Atheon.Models.Database.Destiny;
-using Atheon.Models.Database.Destiny.Broadcasts;
-using Atheon.Models.Database.Destiny.Profiles;
+﻿using Atheon.DataAccess.Models.Destiny;
+using Atheon.DataAccess.Models.Destiny.Broadcasts;
+using Atheon.DataAccess.Models.Destiny.Profiles;
+using Atheon.Destiny2.Metadata;
+using Atheon.Services.BungieApi;
 using Atheon.Services.Interfaces;
+using DotNetBungieAPI.Models;
 using DotNetBungieAPI.Models.Destiny;
 using DotNetBungieAPI.Models.Destiny.Components;
+using DotNetBungieAPI.Models.Destiny.Definitions.Records;
 using DotNetBungieAPI.Models.Destiny.Quests;
 using DotNetBungieAPI.Models.Destiny.Responses;
 using DotNetBungieAPI.Service.Abstractions;
@@ -14,20 +17,26 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
     public class RecordUpdater : IProfileUpdater
     {
         private readonly ICommonEvents _commonEvents;
+        private readonly DestinyDefinitionDataService _destinyDefinitionDataService;
 
-        public RecordUpdater(ICommonEvents commonEvents)
+        public RecordUpdater(
+            ICommonEvents commonEvents,
+            DestinyDefinitionDataService destinyDefinitionDataService)
         {
             _commonEvents = commonEvents;
+            _destinyDefinitionDataService = destinyDefinitionDataService;
         }
 
         public bool ReliesOnSecondaryComponents => true;
+        public int Priority => 0;
 
-        public void Update(
+        public async Task Update(
             IBungieClient bungieClient,
             DestinyProfileDbModel dbProfile,
             DestinyProfileResponse profileResponse,
             List<DiscordGuildSettingsDbModel> guildSettings)
-        {
+        {          
+            var titleAndGildHashes = _destinyDefinitionDataService.GetTitleHashesCachedAsync().GetAwaiter().GetResult()!;
             foreach (var (recordHash, recordComponent) in profileResponse.ProfileRecords.Data.Records)
             {
                 if (dbProfile.Records.TryGetValue(recordHash, out var dbRecord))
@@ -35,10 +44,81 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
                     if (dbRecord.State.HasFlag(DestinyRecordState.ObjectiveNotCompleted) &&
                         !recordComponent.State.HasFlag(DestinyRecordState.ObjectiveNotCompleted))
                     {
-                        //_commonEvents.ProfileBroadcasts.Publish(new DestinyUserProfileBroadcastDbModel()
-                        //{
-                             
-                        //});
+                        if (titleAndGildHashes.Any(x => x.TitleRecordHash == recordHash))
+                        {
+                            foreach (var guildSetting in guildSettings)
+                            {
+                                if (!guildSetting.TrackedRecords.IsReported)
+                                    continue;
+
+                                _commonEvents.ProfileBroadcasts.Publish(new DestinyUserProfileBroadcastDbModel()
+                                {
+                                    Type = ProfileBroadcastType.Title,
+                                    ClanId = dbProfile.ClanId.GetValueOrDefault(),
+                                    Date = DateTime.UtcNow,
+                                    GuildId = guildSetting.GuildId,
+                                    DefinitionHash = recordHash,
+                                    MembershipId = dbProfile.MembershipId,
+                                    WasAnnounced = false
+                                });
+                            }
+                        }
+                        else if (titleAndGildHashes.Any(x => x.TitleGildRecordHash == recordHash))
+                        {
+                            var parentTitleRecord = bungieClient
+                                .Repository
+                                .Search<DestinyRecordDefinition>(
+                                    BungieLocales.EN,
+                                    def => ((DestinyRecordDefinition)def).TitleInfo?.GildingTrackingRecord.Hash == recordHash)
+                                .FirstOrDefault();
+
+                            if (parentTitleRecord is null)
+                                continue;
+
+                            foreach (var guildSetting in guildSettings)
+                            {
+                                if (!guildSetting.TrackedRecords.IsReported)
+                                    continue;
+
+                                _commonEvents.ProfileBroadcasts.Publish(new DestinyUserProfileBroadcastDbModel()
+                                {
+                                    Type = ProfileBroadcastType.GildedTitle,
+                                    ClanId = dbProfile.ClanId.GetValueOrDefault(),
+                                    Date = DateTime.UtcNow,
+                                    GuildId = guildSetting.GuildId,
+                                    DefinitionHash = recordHash,
+                                    MembershipId = dbProfile.MembershipId,
+                                    WasAnnounced = false,
+                                    AdditionalData = new Dictionary<string, string>
+                                    {
+                                        { "parentTitleHash", parentTitleRecord.Hash.ToString() },
+                                        { "gildedCount", recordComponent.CompletedCount.ToString() }
+                                    }
+                                });
+                            }
+                        }
+                        else
+                        {
+                            foreach (var guildSetting in guildSettings)
+                            {
+                                if (!guildSetting.TrackedRecords.IsReported)
+                                    continue;
+
+                                if (!guildSetting.TrackedRecords.TrackedHashes.Contains(recordHash))
+                                    continue;
+
+                                _commonEvents.ProfileBroadcasts.Publish(new DestinyUserProfileBroadcastDbModel()
+                                {
+                                    Type = ProfileBroadcastType.Triumph,
+                                    ClanId = dbProfile.ClanId.GetValueOrDefault(),
+                                    Date = DateTime.UtcNow,
+                                    GuildId = guildSetting.GuildId,
+                                    DefinitionHash = recordHash,
+                                    MembershipId = dbProfile.MembershipId,
+                                    WasAnnounced = false
+                                });
+                            }
+                        }
                     }
                     UpdateRecordDataSilent(dbRecord, recordComponent);
                 }
@@ -68,7 +148,7 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
             }
         }
 
-        public void UpdateSilent(
+        public async Task UpdateSilent(
             IBungieClient bungieClient,
             DestinyProfileDbModel dbProfile,
             DestinyProfileResponse profileResponse)

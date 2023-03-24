@@ -6,7 +6,9 @@ using DotNetBungieAPI.Models;
 using System.Text.Json;
 using Atheon.Services.BungieApi;
 using Atheon.Services.Interfaces;
-using Atheon.Models.Database.Destiny;
+using Atheon.Destiny2.Metadata;
+using Atheon.DataAccess;
+using Atheon.DataAccess.Models.Destiny;
 
 namespace Atheon.Services.Scanners.DestinyClanMemberScanner;
 
@@ -14,18 +16,21 @@ public class DestinyClanMemberSilentScanner : EntityScannerBase<DestinyClanMembe
 {
     private readonly BungieNetApiCallHandler _bungieNetApiCallHandler;
     private readonly IDestinyDb _destinyDb;
+    private readonly DestinyDefinitionDataService _destinyDefinitionDataService;
     private readonly IProfileUpdater[] _profileUpdaters;
 
     public DestinyClanMemberSilentScanner(
         ILogger<DestinyClanMemberSilentScanner> logger,
         BungieNetApiCallHandler bungieNetApiCallHandler,
         IDestinyDb destinyDb,
-        IEnumerable<IProfileUpdater> profileUpdaters) : base(logger)
+        IEnumerable<IProfileUpdater> profileUpdaters,
+        DestinyDefinitionDataService destinyDefinitionDataService) : base(logger)
     {
         Initialize();
         _bungieNetApiCallHandler = bungieNetApiCallHandler;
         _destinyDb = destinyDb;
-        _profileUpdaters = profileUpdaters.ToArray();
+        _destinyDefinitionDataService = destinyDefinitionDataService;
+        _profileUpdaters = profileUpdaters.OrderBy(x => x.Priority).ToArray();
     }
 
     [ScanStep(nameof(CheckIfMemberIsOnline), 1)]
@@ -140,10 +145,13 @@ public class DestinyClanMemberSilentScanner : EntityScannerBase<DestinyClanMembe
 
         if (profile is null)
         {
-            profile = DestinyProfileDbModel.CreateFromApiResponse(
-                input.GroupMember.GroupId, 
-                context.DestinyProfileResponse!, 
-                input.BungieClient);
+            var titleHashes = await _destinyDefinitionDataService.GetTitleHashesCachedAsync();
+
+            profile = await DestinyProfileDbModel.CreateFromApiResponse(
+                input.GroupMember.GroupId,
+                context.DestinyProfileResponse!,
+                input.BungieClient,
+                titleHashes);
             profile.ClanId = input.ClanScannerContext.ClanId;
             profile.LastUpdated = DateTime.UtcNow;
             await _destinyDb.UpsertDestinyProfileAsync(profile);
@@ -173,7 +181,7 @@ public class DestinyClanMemberSilentScanner : EntityScannerBase<DestinyClanMembe
             if ((!updater.ReliesOnSecondaryComponents && shouldUpdatePrimary) ||
                 (updater.ReliesOnSecondaryComponents && shouldUpdateSecondary))
             {
-                updater.UpdateSilent(input.BungieClient, context.ProfileDbModel!, context.DestinyProfileResponse!);
+                await updater.UpdateSilent(input.BungieClient, context.ProfileDbModel!, context.DestinyProfileResponse!);
             }
         }
 
@@ -186,7 +194,6 @@ public class DestinyClanMemberSilentScanner : EntityScannerBase<DestinyClanMembe
         DestinyClanMemberScannerContext context,
         CancellationToken cancellationToken)
     {
-        context.ProfileDbModel.LastUpdated = DateTime.UtcNow;
         await _destinyDb.UpsertDestinyProfileAsync(context.ProfileDbModel!);
         return true;
     }

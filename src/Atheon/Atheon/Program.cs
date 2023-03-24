@@ -1,17 +1,18 @@
-﻿using Atheon.Extensions;
-using Atheon.Options;
+﻿using Atheon.DataAccess.Options;
+using Atheon.DataAccess.Sqlite;
+using Atheon.Extensions;
 using Atheon.Services;
 using Atheon.Services.BungieApi;
 using Atheon.Services.Db.Sqlite;
 using Atheon.Services.EventBus;
 using Atheon.Services.Hosted;
 using Atheon.Services.Interfaces;
+using Atheon.Services.Localization;
 using Atheon.Services.Scanners.DestinyClanMemberScanner;
 using Atheon.Services.Scanners.DestinyClanScanner;
 using Atheon.Services.Scanners.ProfileUpdaters;
 using Serilog;
 using Serilog.Exceptions;
-
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
@@ -67,18 +68,13 @@ void ConfigureServices(WebApplicationBuilder applicationBuilder)
         applicationBuilder.Configuration.GetSection("Database").Bind(settings);
     });
 
+    applicationBuilder.Services.AddSingleton<IDbDataValidator, DbDataValidator>();
+    applicationBuilder.Services.AddSingleton<IClansToScanProvider, ClansToScanProvider>();
     switch (applicationBuilder.Configuration.GetSection("Database:CurrentMode").Value)
     {
         case DatabaseOptions.SqliteKey:
             {
-                applicationBuilder.Services.AddSingleton<IDbConnectionFactory, SqliteDbConnectionFactory>();
-                applicationBuilder.Services.AddSingleton<IDbBootstrap, SqliteDbBootstrap>();
-                applicationBuilder.Services.AddSingleton<ISettingsStorage, SqliteSettingsStorage>();
-                applicationBuilder.Services.AddSingleton<IDbAccess, SqliteDbAccess>();
-                applicationBuilder.Services.AddSingleton<IDbDataValidator, SqliteDbDataValidator>();
-                applicationBuilder.Services.AddSingleton<IClansToScanProvider, SqliteClansToScanProvider>();
-
-                applicationBuilder.Services.AddSingleton<IDestinyDb, SqliteDestinyDb>();
+                applicationBuilder.Services.AddSqliteDbAccess();
                 break;
             }
     }
@@ -86,18 +82,27 @@ void ConfigureServices(WebApplicationBuilder applicationBuilder)
     applicationBuilder.Services.AddSingleton<IBungieClientProvider, BungieClientProvider>();
     applicationBuilder.Services.AddSingleton<BungieNetApiCallHandler>();
     applicationBuilder.Services.AddSingleton<BroadcastSaver>();
+    applicationBuilder.Services.AddSingleton<DestinyDefinitionDataService>();
+    applicationBuilder.Services.AddSingleton<CuratedDefinitionInitialiser>();
+
+    applicationBuilder.Services.AddSingleton<ILocalizationService, LocalizationService>();
 
     applicationBuilder.Services.AddSingleton<DestinyInitialClanScanner>();
     applicationBuilder.Services.AddSingleton<DestinyClanScanner>();
     applicationBuilder.Services.AddSingleton<DestinyClanMemberBroadcastedScanner>();
     applicationBuilder.Services.AddSingleton<DestinyClanMemberSilentScanner>();
 
+    applicationBuilder.Services.AddSingleton<IProfileUpdater, MainProfileDataUpdater>();
     applicationBuilder.Services.AddSingleton<IProfileUpdater, CollectibleUpdater>();
     applicationBuilder.Services.AddSingleton<IProfileUpdater, ProgressionUpdater>();
     applicationBuilder.Services.AddSingleton<IProfileUpdater, RecordUpdater>();
+    applicationBuilder.Services.AddSingleton<IProfileUpdater, MetricUpdater>();
+    applicationBuilder.Services.AddSingleton<IProfileUpdater, ComputedDataUpdater>();
 
     applicationBuilder.Services.AddHostedService<ApplicationStartup>();
 
+    applicationBuilder.Services.AddHostedServiceWithInterface<IDestinyManifestHandler, DestinyManifestHandler>();
+    applicationBuilder.Services.AddHostedServiceWithInterface<IBungieApiStatus, BungieLifecheckService>();
     applicationBuilder.Services.AddHostedServiceWithInterface<IUserQueue, UserQueueBackgroundProcessor>();
     applicationBuilder.Services.AddHostedServiceWithInterface<IClanQueue, ClanQueueBackgroundProcessor>();
     applicationBuilder.Services.AddHostedService<BroadcastBackgroundProcessor>();

@@ -11,4 +11,9 @@ public static class StringExtensions
     {
         return string.IsNullOrEmpty(value);
     }
+
+    public static string LimitTo(this string str, int length)
+    {
+        return new string(str.Take(length).ToArray());
+    }
 }

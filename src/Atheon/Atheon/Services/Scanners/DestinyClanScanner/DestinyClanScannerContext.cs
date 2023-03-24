@@ -1,4 +1,4 @@
-﻿using Atheon.Models.Database.Destiny;
+﻿using Atheon.DataAccess.Models.Destiny;
 using DotNetBungieAPI.Models.GroupsV2;
 using DotNetBungieAPI.Service.Abstractions;
 using System.Collections.ObjectModel;
