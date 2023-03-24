@@ -4,7 +4,6 @@ using DotNetBungieAPI.Models.Destiny.Progressions;
 using DotNetBungieAPI.Models;
 using DotNetBungieAPI.Models.Destiny.Responses;
 using DotNetBungieAPI.Service.Abstractions;
-using DotNetBungieAPI.Models.Destiny.Definitions.Records;
 using DotNetBungieAPI.Models.GroupsV2;
 using Atheon.Extensions;
 
@@ -125,5 +124,17 @@ public static class DestinyExtensions
             BungieMembershipType.TigerSteam => "Steam",
             _ => $"Unknown {(int)bungieMembershipType}"
         };
+    }
+
+    public static long? GetLastPlayedCharacterId(this DestinyProfileResponse destinyProfileResponse)
+    {
+        if (destinyProfileResponse.Characters is null)
+            return null;
+
+        if (destinyProfileResponse.Characters.Data.Count == 0)
+            return null;
+
+        var dateLastPlayed = destinyProfileResponse.Characters.Data.MaxBy(x => x.Value.DateLastPlayed);
+        return dateLastPlayed.Key;
     }
 }

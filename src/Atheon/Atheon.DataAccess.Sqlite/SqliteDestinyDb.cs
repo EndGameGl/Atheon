@@ -7,6 +7,8 @@ using Atheon.DataAccess.Models.Destiny.Links;
 using Atheon.DataAccess.Models.Destiny.Profiles;
 using Atheon.DataAccess.Models.Destiny.Tracking;
 using Atheon.DataAccess.Models.Discord;
+using DotNetBungieAPI.Models.Destiny;
+using System.Security.Claims;
 
 namespace Atheon.DataAccess.Sqlite;
 
@@ -219,7 +221,9 @@ public class SqliteDestinyDb : IDestinyDb
             {nameof(DestinyProfileDbModel.LastUpdated)},
             {nameof(DestinyProfileDbModel.ComputedData)},
             {nameof(DestinyProfileDbModel.Metrics)},
-            {nameof(DestinyProfileDbModel.CurrentGuardianRank)}
+            {nameof(DestinyProfileDbModel.CurrentGuardianRank)},
+            {nameof(DestinyProfileDbModel.CurrentActivityData)},
+            {nameof(DestinyProfileDbModel.GameVersionsOwned)}
         )
         VALUES 
         (
@@ -237,7 +241,9 @@ public class SqliteDestinyDb : IDestinyDb
             @{nameof(DestinyProfileDbModel.LastUpdated)},
             @{nameof(DestinyProfileDbModel.ComputedData)},
             @{nameof(DestinyProfileDbModel.Metrics)},
-            @{nameof(DestinyProfileDbModel.CurrentGuardianRank)}
+            @{nameof(DestinyProfileDbModel.CurrentGuardianRank)},
+            @{nameof(DestinyProfileDbModel.CurrentActivityData)},
+            @{nameof(DestinyProfileDbModel.GameVersionsOwned)}
         )
         ON CONFLICT ({nameof(DestinyProfileDbModel.MembershipId)}) DO UPDATE SET 
             {nameof(DestinyProfileDbModel.MembershipType)} = @{nameof(DestinyProfileDbModel.MembershipType)},
@@ -253,7 +259,9 @@ public class SqliteDestinyDb : IDestinyDb
             {nameof(DestinyProfileDbModel.LastUpdated)} = @{nameof(DestinyProfileDbModel.LastUpdated)},
             {nameof(DestinyProfileDbModel.ComputedData)} = @{nameof(DestinyProfileDbModel.ComputedData)},
             {nameof(DestinyProfileDbModel.Metrics)} = @{nameof(DestinyProfileDbModel.Metrics)},
-            {nameof(DestinyProfileDbModel.CurrentGuardianRank)} = @{nameof(DestinyProfileDbModel.CurrentGuardianRank)};
+            {nameof(DestinyProfileDbModel.CurrentGuardianRank)} = @{nameof(DestinyProfileDbModel.CurrentGuardianRank)},
+            {nameof(DestinyProfileDbModel.CurrentActivityData)} = @{nameof(DestinyProfileDbModel.CurrentActivityData)},
+            {nameof(DestinyProfileDbModel.GameVersionsOwned)} = @{nameof(DestinyProfileDbModel.GameVersionsOwned)};
         """;
     public async Task UpsertDestinyProfileAsync(DestinyProfileDbModel profileDbModel)
     {
@@ -886,5 +894,47 @@ public class SqliteDestinyDb : IDestinyDb
     public async Task SetClanRescanForAllTrackedClansAsync()
     {
         await _dbAccess.ExecuteAsync(SetClanRescanForAllTrackedClansQuery);
+    }
+
+    private const string GetPlayersWithoutGameVersionQuery =
+        $"""
+        SELECT
+            MembershipId,
+            Name,
+            ClanId
+        FROM DestinyProfiles
+        WHERE ClanId IN @ClanIds AND GameVersionsOwned & (@Version) == 0
+        """;
+
+    private const string GetPlayersWithGameVersionQuery =
+        $"""
+        SELECT
+            MembershipId,
+            Name,
+            ClanId
+        FROM DestinyProfiles
+        WHERE ClanId IN @ClanIds AND GameVersionsOwned & (@Version) != 0
+        """;
+    public async Task<List<DestinyProfileLite>> GetPlayersWithGameVersionAsync(
+        DestinyGameVersions gameVersion,
+        bool hasVersion,
+        long[] clanIds)
+    {
+        if (hasVersion)
+        {
+            return await _dbAccess.QueryAsync<DestinyProfileLite>(GetPlayersWithGameVersionQuery,
+                new
+                {
+                    ClanIds = clanIds,
+                    Version = gameVersion
+                });
+        }
+
+        return await _dbAccess.QueryAsync<DestinyProfileLite>(GetPlayersWithoutGameVersionQuery,
+            new
+            {
+                ClanIds = clanIds,
+                Version = gameVersion
+            });
     }
 }

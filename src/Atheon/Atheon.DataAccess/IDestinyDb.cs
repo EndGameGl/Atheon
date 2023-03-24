@@ -7,6 +7,7 @@ using Atheon.DataAccess.Models.Destiny.Links;
 using Atheon.DataAccess.Models.Destiny.Profiles;
 using Atheon.DataAccess.Models.Destiny.Tracking;
 using Atheon.DataAccess.Models.Discord;
+using DotNetBungieAPI.Models.Destiny;
 
 namespace Atheon.DataAccess;
 
@@ -46,6 +47,7 @@ public interface IDestinyDb
     Task<List<DestinyProfileLiteWithValue<int>>> GetRecordObjectiveLeaderboardAsync(uint recordHash, long[] clanIds);
     Task<List<DestinyProfileLiteWithValue<int>>> GetRecordIntervalObjectiveLeaderboardAsync(uint recordHash, long[] clanIds);
     Task<List<DestinyProfileLiteWithValue<int>>> GetTotalTitlesLeaderboardAsync(long[] clanIds);
+    Task<List<DestinyProfileLite>> GetPlayersWithGameVersionAsync(DestinyGameVersions gameVersion, bool hasVersion, long[] clanIds);
 
     Task TryInsertClanBroadcastAsync(ClanBroadcastDbModel clanBroadcast);
     Task TryInsertProfileBroadcastAsync(DestinyUserProfileBroadcastDbModel profileBroadcast);

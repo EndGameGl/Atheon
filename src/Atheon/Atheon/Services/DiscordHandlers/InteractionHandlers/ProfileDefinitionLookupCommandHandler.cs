@@ -2,6 +2,7 @@
 using Atheon.DataAccess.Models.Destiny.Profiles;
 using Atheon.Destiny2.Metadata;
 using Atheon.Extensions;
+using Atheon.Models.DiscordModels;
 using Atheon.Services.BungieApi;
 using Atheon.Services.DiscordHandlers.Autocompleters.DestinyCollectibles;
 using Atheon.Services.DiscordHandlers.Autocompleters.DestinyRecords;
@@ -25,6 +26,7 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
     private readonly EmbedBuilderService _embedBuilderService;
     private readonly DestinyDefinitionDataService _destinyDefinitionDataService;
     private readonly IMemoryCache _memoryCache;
+    private readonly ILocalizationService _localizationService;
 
     public ProfileDefinitionLookupCommandHandler(
         ILogger<ProfileDefinitionLookupCommandHandler> logger,
@@ -32,13 +34,15 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
         IBungieClientProvider bungieClientProvider,
         EmbedBuilderService embedBuilderService,
         DestinyDefinitionDataService destinyDefinitionDataService,
-        IMemoryCache memoryCache) : base(logger, embedBuilderService)
+        IMemoryCache memoryCache,
+        ILocalizationService localizationService) : base(logger, embedBuilderService)
     {
         _destinyDb = destinyDb;
         _bungieClientProvider = bungieClientProvider;
         _embedBuilderService = embedBuilderService;
         _destinyDefinitionDataService = destinyDefinitionDataService;
         _memoryCache = memoryCache;
+        _localizationService = localizationService;
     }
 
     [SlashCommand("item-check", "Checks who has items")]
@@ -49,7 +53,7 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
     {
         await ExecuteAndHanldeErrors(async () =>
         {
-            
+
             var itemHash = uint.Parse(collectibleHash);
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
             var users = await _destinyDb.GetProfilesCollectibleStatusAsync(itemHash, hasItem, guildSettings.Clans.ToArray());
@@ -328,6 +332,55 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
                 embed: embedBuilder
                     .WithThumbnailUrl(icon ?? titleDefinition.DisplayProperties.Icon.AbsolutePath)
                     .Build(),
+                ephemeral: hide);
+        });
+    }
+
+    [SlashCommand("game-version", "Checks who has game version")]
+    public async Task GetUsersWithGameVersion(
+        [Summary("game-version", "Game version to look up")] DestinyGameVersionEnum gameVersion,
+        [Summary(description: "Whether user has title or not")] bool hasVersion,
+        [Summary(description: "Whether to hide this message")] bool hide = false)
+    {
+        await ExecuteAndHanldeErrors(async () =>
+        {
+            var lang = await _localizationService.GetGuildLocale(GuildId);
+
+            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var playersWithGameVersion = await _destinyDb.GetPlayersWithGameVersionAsync(gameVersion.ConvertToDestinyGameVersion(), hasVersion, guildSettings.Clans.ToArray());
+            var clanIds = playersWithGameVersion.Select(x => x.ClanId).Distinct().ToArray();
+            var clanReferences = await _destinyDb.GetClanReferencesFromIdsAsync(clanIds);
+
+            var embedBuilder = _embedBuilderService
+            .GetTemplateEmbed()
+                .WithTitle($"Users who {(hasVersion is false ? "don't " : "")}have {gameVersion}");
+
+            var gettersList = new List<Func<DestinyProfileLite, object>>()
+            {
+                user => user.Name
+            };
+
+            var getters = gettersList.ToArray();
+
+            for (int j = 0; j < clanReferences.Count; j++)
+            {
+                var reference = clanReferences[j];
+                var usersOfClan = playersWithGameVersion.Where(x => x.ClanId == reference.Id).ToList();
+
+                var formattedData = _embedBuilderService.FormatAsStringTable<DestinyProfileLite, long>(
+                    usersOfClan.Count,
+                    "No users",
+                    usersOfClan,
+                    (user) => user.MembershipId,
+                    getters)
+                .LimitTo(1018);
+
+                embedBuilder.AddField(reference.Name, $"```{formattedData}```");
+            }
+
+
+            await Context.Interaction.RespondAsync(
+                embed: embedBuilder.Build(),
                 ephemeral: hide);
         });
     }

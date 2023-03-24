@@ -82,6 +82,7 @@ public class SqliteDbBootstrap : IDbBootstrap
         DapperExtensions.RegisterJsonHandler<Dictionary<string, string>>(_jsonOptions.Value.SerializerOptions);
         DapperExtensions.RegisterJsonHandler<DestinyComputedData>(_jsonOptions.Value.SerializerOptions);
         DapperExtensions.RegisterJsonHandler<Dictionary<uint, DestinyMetricDbModel>>(_jsonOptions.Value.SerializerOptions);
+        DapperExtensions.RegisterJsonHandler<PlayerActivityData>(_jsonOptions.Value.SerializerOptions);
     }
 
     public async Task InitialiseDb(CancellationToken cancellationToken = default)
