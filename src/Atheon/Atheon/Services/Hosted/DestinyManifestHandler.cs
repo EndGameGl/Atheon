@@ -1,8 +1,6 @@
 ﻿using Atheon.Services.BungieApi;
-using Atheon.Services.DiscordHandlers;
 using Atheon.Services.Hosted.Utilities;
 using Atheon.Services.Interfaces;
-using System.ComponentModel;
 
 namespace Atheon.Services.Hosted;
 

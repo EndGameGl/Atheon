@@ -609,4 +609,29 @@ public class EmbedBuilderService
     }
 
     #endregion
+
+    #region Custom user embeds 
+
+    public Embed BuildDestinyCustomUserBroadcast(
+        DestinyUserProfileCustomBroadcastDbModel destinyUserBroadcast,
+        DestinyClanDbModel clanData,
+        IBungieClient bungieClient,
+        string username,
+        BungieLocales locale)
+    {
+        var templateEmbed = GetTemplateEmbed();
+
+        templateEmbed.WithTitle($"Clan Broadcast - {clanData.ClanName}");
+
+        switch (destinyUserBroadcast.Type)
+        {
+            case ProfileCustomBroadcastType.GuardianRank:
+                templateEmbed.WithDescription($"{username} guardian rank changed: {destinyUserBroadcast.OldValue} to {destinyUserBroadcast.NewValue}");
+                break;
+        }
+
+        return templateEmbed.Build();
+    }
+
+    #endregion
 }

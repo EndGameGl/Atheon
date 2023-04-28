@@ -22,6 +22,10 @@ namespace Atheon.Services.BungieApi
             {
                 _ = _destinyDb.TryInsertProfileBroadcastAsync(e);
             };
+            _commonEvents.CustomProfileBroadcasts.Published += (e) =>
+            {
+                _ = _destinyDb.TryInsertProfileCustomBroadcastAsync(e);
+            };
         }
     }
 }
