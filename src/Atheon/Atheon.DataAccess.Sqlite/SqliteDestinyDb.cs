@@ -989,4 +989,30 @@ public class SqliteDestinyDb : IDestinyDb
     {
         await _dbAccess.ExecuteAsync(MarkUserCustomBroadcastSentQuery, profileCustomBroadcast);
     }
+
+    private const string GetGuardianSeasonPassLevelsQuery =
+       """
+        SELECT
+            MembershipId,
+            Name,
+            ClanId,
+            json_extract(Progressions, '$.{0}.level') as FirstValue,
+            json_extract(Progressions, '$.{1}.level') as SecondValue
+        FROM DestinyProfiles
+        WHERE ClanId IN @ClanIds AND (FirstValue > 0 OR SecondValue > 0) 
+        ORDER BY (FirstValue + SecondValue) DESC
+        """;
+
+    public async Task<List<DestinyProfileLiteWithDoubleValues<int, int>>> GetGuardianSeasonPassLevelsAsync(
+        uint pass, 
+        uint prestigePass, 
+        long[] clanIds)
+    {
+        return await _dbAccess.QueryAsync<DestinyProfileLiteWithDoubleValues<int, int>>(
+            string.Format(GetGuardianSeasonPassLevelsQuery, pass, prestigePass),
+            new
+            {
+                ClanIds = clanIds
+            });
+    }
 }

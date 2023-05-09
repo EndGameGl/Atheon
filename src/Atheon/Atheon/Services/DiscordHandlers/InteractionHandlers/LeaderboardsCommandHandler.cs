@@ -3,12 +3,13 @@ using Atheon.Services.DiscordHandlers.InteractionHandlers.Base;
 using Atheon.Services.Interfaces;
 using Discord.Interactions;
 using DotNetBungieAPI.Models.Destiny.Definitions.Metrics;
-using Atheon.Extensions;
 using DotNetBungieAPI.Extensions;
 using Atheon.Services.DiscordHandlers.Autocompleters.DestinyRecords;
 using DotNetBungieAPI.Models.Destiny.Definitions.Records;
 using Atheon.DataAccess;
 using Atheon.DataAccess.Models.Destiny.Profiles;
+using Atheon.Services.DiscordHandlers.Autocompleters.DestinySeasonPasses;
+using DotNetBungieAPI.Models.Destiny.Definitions.SeasonPasses;
 
 namespace Atheon.Services.DiscordHandlers.InteractionHandlers;
 
@@ -41,16 +42,20 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
         [Autocomplete(typeof(DestinyMetricDefinitionAutocompleter))][Summary("metric", "Metric to show")] string metricHashString,
         [Summary(description: "Whether to hide this message")] bool hide = false)
     {
-        await ExecuteAndHanldeErrors(async () =>
+        await ExecuteAndHandleErrors(async () =>
         {
-            var metricHash = uint.Parse(metricHashString);
+            if (!uint.TryParse(metricHashString, out var metricHash))
+                return Error($"Couldn't parse metric hash");
+
             var bungieClient = await _bungieClientProvider.GetClientAsync();
-
             var lang = await _localizationService.GetGuildLocale(GuildId);
-
-            bungieClient.TryGetDefinition<DestinyMetricDefinition>(metricHash, lang, out var metricDefinition);
+            if (!bungieClient.TryGetDefinition<DestinyMetricDefinition>(metricHash, lang, out var metricDefinition))
+                return Error($"DestinyMetricDefinition {metricHash} not found");
 
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            if (guildSettings is null)
+                return Error($"Failed to get load guild settings");
+
             var users = await _destinyDb.GetProfileMetricsAsync(metricHash, !metricDefinition.LowerValueIsBetter, guildSettings.Clans.ToArray());
             var clanIds = users.Select(x => x.ClanId).Distinct().ToArray();
             var clanReferences = await _destinyDb.GetClanReferencesFromIdsAsync(clanIds);
@@ -79,15 +84,13 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
                     "No users",
                     usersOfClan,
                     (user) => user.MembershipId,
-                    getters, 
+                    getters,
                     1018);
 
                 embedBuilder.AddField(reference.Name, $"```{formattedData}```");
             }
 
-            await Context.Interaction.RespondAsync(
-                embed: embedBuilder.Build(),
-                ephemeral: hide);
+            return Success(embedBuilder.Build(), hide);
         });
     }
 
@@ -95,9 +98,12 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
     public async Task CreateLeaderboardForGuardianRanksAsync(
         [Summary(description: "Whether to hide this message")] bool hide = false)
     {
-        await ExecuteAndHanldeErrors(async () =>
+        await ExecuteAndHandleErrors(async () =>
         {
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            if (guildSettings is null)
+                return Error($"Failed to get load guild settings");
+
             var users = await _destinyDb.GetGuardianRanksLeaderboardAsync(guildSettings.Clans.ToArray());
             var clanIds = users.Select(x => x.ClanId).Distinct().ToArray();
             var clanReferences = await _destinyDb.GetClanReferencesFromIdsAsync(clanIds);
@@ -131,9 +137,7 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
                 embedBuilder.AddField(reference.Name, $"```{formattedData}```");
             }
 
-            await Context.Interaction.RespondAsync(
-                embed: embedBuilder.Build(),
-                ephemeral: hide);
+            return Success(embedBuilder.Build(), hide);
         });
     }
 
@@ -141,9 +145,12 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
     public async Task CreateLeaderboardForPowerLevelAsync(
         [Summary(description: "Whether to hide this message")] bool hide = false)
     {
-        await ExecuteAndHanldeErrors(async () =>
+        await ExecuteAndHandleErrors(async () =>
         {
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            if (guildSettings is null)
+                return Error($"Failed to get load guild settings");
+
             var users = await _destinyDb.GetGuardianPowerLevelAsync(guildSettings.Clans.ToArray());
             var clanIds = users.Select(x => x.ClanId).Distinct().ToArray();
             var clanReferences = await _destinyDb.GetClanReferencesFromIdsAsync(clanIds);
@@ -170,15 +177,13 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
                     "No users",
                     usersOfClan,
                     (user) => user.MembershipId,
-                    getters, 
+                    getters,
                     1018);
 
                 embedBuilder.AddField(reference.Name, $"```{formattedData}```");
             }
 
-            await Context.Interaction.RespondAsync(
-                embed: embedBuilder.Build(),
-                ephemeral: hide);
+            return Success(embedBuilder.Build(), hide);
         });
     }
 
@@ -186,9 +191,12 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
     public async Task CreateLeaderboardForTriumphScoreAsync(
         [Summary(description: "Whether to hide this message")] bool hide = false)
     {
-        await ExecuteAndHanldeErrors(async () =>
+        await ExecuteAndHandleErrors(async () =>
         {
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            if (guildSettings is null)
+                return Error($"Failed to get load guild settings");
+
             var users = await _destinyDb.GetGuardianTriumphScoreAsync(guildSettings.Clans.ToArray());
             var clanIds = users.Select(x => x.ClanId).Distinct().ToArray();
             var clanReferences = await _destinyDb.GetClanReferencesFromIdsAsync(clanIds);
@@ -221,9 +229,7 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
                 embedBuilder.AddField(reference.Name, $"```{formattedData}```");
             }
 
-            await Context.Interaction.RespondAsync(
-                embed: embedBuilder.Build(),
-                ephemeral: hide);
+            return Success(embedBuilder.Build(), hide);
         });
     }
 
@@ -231,9 +237,12 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
     public async Task CreateLeaderboardForTimePlayedAsync(
         [Summary(description: "Whether to hide this message")] bool hide = false)
     {
-        await ExecuteAndHanldeErrors(async () =>
+        await ExecuteAndHandleErrors(async () =>
         {
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            if (guildSettings is null)
+                return Error($"Failed to get load guild settings");
+
             var users = await _destinyDb.GetTimePlayedLeaderboardAsync(guildSettings.Clans.ToArray());
             var clanIds = users.Select(x => x.ClanId).Distinct().ToArray();
             var clanReferences = await _destinyDb.GetClanReferencesFromIdsAsync(clanIds);
@@ -267,9 +276,7 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
                 embedBuilder.AddField(reference.Name, $"```{formattedData}```");
             }
 
-            await Context.Interaction.RespondAsync(
-                embed: embedBuilder.Build(),
-                ephemeral: hide);
+            return Success(embedBuilder.Build(), hide);
         });
     }
 
@@ -278,16 +285,21 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
         [Autocomplete(typeof(DestinyLeaderboardValidRecordDefinitionAutocompleter))][Summary("triumph", "Triumph")] string triumphHashString,
         [Summary(description: "Whether to hide this message")] bool hide = false)
     {
-        await ExecuteAndHanldeErrors(async () =>
+        await ExecuteAndHandleErrors(async () =>
         {
-            var recordHash = uint.Parse(triumphHashString);
+            if (!uint.TryParse(triumphHashString, out var recordHash))
+                return Error("Failed to parse triumph hash");
+
             var bungieClient = await _bungieClientProvider.GetClientAsync();
 
             var lang = await _localizationService.GetGuildLocale(GuildId);
 
-            bungieClient.TryGetDefinition<DestinyRecordDefinition>(recordHash, lang, out var recordDefinition);
+            if (!bungieClient.TryGetDefinition<DestinyRecordDefinition>(recordHash, lang, out var recordDefinition))
+                return Error($"Failed get DestinyRecordDefinition {recordHash}");
 
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            if (guildSettings is null)
+                return Error($"Failed to get load guild settings");
 
             List<DestinyProfileLiteWithValue<int>> users;
 
@@ -331,9 +343,7 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
                 embedBuilder.AddField(reference.Name, $"```{formattedData}```");
             }
 
-            await Context.Interaction.RespondAsync(
-                embed: embedBuilder.Build(),
-                ephemeral: hide);
+            return Success(embedBuilder.Build(), hide);
         });
     }
 
@@ -341,9 +351,11 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
     public async Task CreateLeaderboardForTotalTitlesAsync(
         [Summary(description: "Whether to hide this message")] bool hide = false)
     {
-        await ExecuteAndHanldeErrors(async () =>
+        await ExecuteAndHandleErrors(async () =>
         {
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            if (guildSettings is null)
+                return Error($"Failed to get load guild settings");
             var users = await _destinyDb.GetTotalTitlesLeaderboardAsync(guildSettings.Clans.ToArray());
             var clanIds = users.Select(x => x.ClanId).Distinct().ToArray();
             var clanReferences = await _destinyDb.GetClanReferencesFromIdsAsync(clanIds);
@@ -377,9 +389,67 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
                 embedBuilder.AddField(reference.Name, $"```{formattedData}```");
             }
 
-            await Context.Interaction.RespondAsync(
-                embed: embedBuilder.Build(),
-                ephemeral: hide);
+            return Success(embedBuilder.Build(), hide);
+        });
+    }
+
+    [SlashCommand("season-pass", "Shows leaderboard for selected season")]
+    public async Task CreateLeaderboardForSeasonPassLevelAsync(
+        [Autocomplete(typeof(DestinySeasonPassDefinitionAutocompleter))][Summary("season", "Season pass")] string seasonPassHashString,
+        [Summary(description: "Whether to hide this message")] bool hide = false)
+    {
+        await ExecuteAndHandleErrors(async () =>
+        {
+            if (!uint.TryParse(seasonPassHashString, out var seasonPassHash))
+                return Error("Failed to parse season pass hash");
+
+            var bungieClient = await _bungieClientProvider.GetClientAsync();
+
+            var lang = await _localizationService.GetGuildLocale(GuildId);
+
+            if (!bungieClient.TryGetDefinition<DestinySeasonPassDefinition>(seasonPassHash, lang, out var seasonPassDefinition))
+                return Error($"Failed get DestinySeasonPassDefinition {seasonPassHash}");
+
+            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            if (guildSettings is null)
+                return Error($"Failed to get load guild settings");
+
+            var users = await _destinyDb.GetGuardianSeasonPassLevelsAsync(
+                seasonPassDefinition.RewardProgression.Hash.GetValueOrDefault(),
+                seasonPassDefinition.PrestigeProgression.Hash.GetValueOrDefault(),
+                guildSettings.Clans.ToArray());
+
+            var clanIds = users.Select(x => x.ClanId).Distinct().ToArray();
+            var clanReferences = await _destinyDb.GetClanReferencesFromIdsAsync(clanIds);
+
+            var embedBuilder = _embedBuilderService
+                .GetTemplateEmbed()
+                .WithTitle($"Season Pass Levels Leaderboard")
+                .WithDescription(seasonPassDefinition.DisplayProperties.Name);
+
+            var getters = new Func<DestinyProfileLiteWithDoubleValues<int, int>, object>[]
+            {
+                user => user.Name,
+                user => user.FirstValue + user.SecondValue
+            };
+
+            for (int j = 0; j < clanReferences.Count; j++)
+            {
+                var reference = clanReferences[j];
+                var usersOfClan = users.Where(x => x.ClanId == reference.Id).ToList();
+
+                var formattedData = _embedBuilderService.FormatAsStringTable<DestinyProfileLiteWithDoubleValues<int, int>, long>(
+                    usersOfClan.Count,
+                    "No users",
+                    usersOfClan,
+                    (user) => user.MembershipId,
+                    getters,
+                    1018);
+
+                embedBuilder.AddField(reference.Name, $"```{formattedData}```");
+            }
+
+            return Success(embedBuilder.Build(), hide);
         });
     }
 }

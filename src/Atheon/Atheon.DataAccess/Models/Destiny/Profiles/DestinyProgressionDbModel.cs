@@ -11,11 +11,15 @@ public class DestinyProgressionDbModel
     [JsonPropertyName("currentResetCount"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public int? CurrentResetCount { get; set; }
 
+    [JsonPropertyName("level"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? Level { get; set; }
+
     public DestinyProgressionDbModel() { }
 
     public DestinyProgressionDbModel(DestinyProgression destinyProgression)
     {
         CurrentProgress = destinyProgression.CurrentProgress;
         CurrentResetCount = destinyProgression.CurrentResetCount;
+        Level = destinyProgression.Level;
     }
 }

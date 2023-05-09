@@ -29,6 +29,7 @@ public class ProgressionUpdater : IProfileUpdater
             {
                 savedProgressionData.CurrentProgress = progressionData.CurrentProgress;
                 savedProgressionData.CurrentResetCount = progressionData.CurrentResetCount;
+                savedProgressionData.Level = progressionData.Level;
             }
             else
             {
@@ -53,6 +54,7 @@ public class ProgressionUpdater : IProfileUpdater
             {
                 savedProgressionData.CurrentProgress = progressionData.CurrentProgress;
                 savedProgressionData.CurrentResetCount = progressionData.CurrentResetCount;
+                savedProgressionData.Level = progressionData.Level;
             }
             else
             {
