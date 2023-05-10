@@ -13,9 +13,9 @@ using Atheon.Services.DiscordHandlers.Autocompleters.DestinyRecords;
 using Atheon.Services.DiscordHandlers.InteractionHandlers.Base;
 using Atheon.Services.DiscordHandlers.Preconditions;
 using Atheon.Services.Interfaces;
+using Atheon.Services.Localization;
 using Discord;
 using Discord.Interactions;
-using DotNetBungieAPI.Models;
 using DotNetBungieAPI.Models.Destiny.Definitions.Collectibles;
 using DotNetBungieAPI.Models.Destiny.Definitions.PresentationNodes;
 using DotNetBungieAPI.Models.Destiny.Definitions.Records;
@@ -31,7 +31,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
     private readonly EmbedBuilderService _embedBuilderService;
     private readonly IBungieClientProvider _bungieClientProvider;
     private readonly DestinyDefinitionDataService _destinyDefinitionDataService;
-    private readonly IMemoryCache _memoryCache;
+    private readonly ILocalizationService _localizationService;
 
     public SettingsCommandHandler(
         ILogger<SettingsCommandHandler> logger,
@@ -40,14 +40,14 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
         EmbedBuilderService embedBuilderService,
         IBungieClientProvider bungieClientProvider,
         DestinyDefinitionDataService destinyDefinitionDataService,
-        IMemoryCache memoryCache) : base(logger, embedBuilderService)
+        ILocalizationService localizationService) : base(logger, embedBuilderService)
     {
         _destinyDb = destinyDb;
         _clanQueue = clanQueue;
         _embedBuilderService = embedBuilderService;
         _bungieClientProvider = bungieClientProvider;
         _destinyDefinitionDataService = destinyDefinitionDataService;
-        _memoryCache = memoryCache;
+        _localizationService = localizationService;
     }
 
     [AtheonBotAdminOrOwner]
@@ -55,18 +55,23 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
     public async Task AddClanToGuildAsync(
         [Autocomplete(typeof(DestinyClanByIdAutocompleter)), Summary("Clan")] long clanId)
     {
-        await ExecuteAndHanldeErrors(async () =>
+        await ExecuteAndHandleErrors(async () =>
         {
             var settings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            if (settings is null)
+                return GuildSettingsNotFound();
 
             if (settings.Clans.Contains(clanId))
             {
-                var embedTemplate = _embedBuilderService.CreateSimpleResponseEmbed("Add new clan failed", "Clan is already added to this discord guild");
-                var existingGuildClan = await _destinyDb.GetClanModelAsync(clanId)!;
+                var existingGuildClan = await _destinyDb.GetClanModelAsync(clanId);
+                if (existingGuildClan is null)
+                    return Error($"Clan {clanId} not found in database");
+
                 existingGuildClan.IsTracking = true;
                 await _destinyDb.UpsertClanModelAsync(existingGuildClan);
-                await Context.Interaction.RespondAsync(embed: embedTemplate.Build());
-                return;
+
+                var embedTemplate = _embedBuilderService.CreateSimpleResponseEmbed("Add new clan failed", "Clan is already added to this discord guild");
+                return Success(embedTemplate.Build());
             }
 
             var existingClan = await _destinyDb.GetClanModelAsync(clanId);
@@ -76,15 +81,13 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
                 settings.Clans.Add(clanId);
                 await _destinyDb.UpsertGuildSettingsAsync(settings);
                 var embedTemplate = _embedBuilderService.CreateSimpleResponseEmbed("Add new clan success", "Added clan to this guild");
-                await Context.Interaction.RespondAsync(embed: embedTemplate.Build());
-                return;
+                return Success(embedTemplate.Build());
             }
 
             _clanQueue.EnqueueFirstTimeScan(clanId);
             settings.Clans.Add(clanId);
             await _destinyDb.UpsertGuildSettingsAsync(settings);
-            await Context.Interaction.RespondAsync(embed:
-                _embedBuilderService.CreateSimpleResponseEmbed(
+            return Success(_embedBuilderService.CreateSimpleResponseEmbed(
                     "Add new clan success",
                     "New clan will be ready when scan message pops up")
                 .Build());
@@ -96,23 +99,23 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
     public async Task RemoveClanFromGuildAsync(
         [Autocomplete(typeof(DestinyClanFromGuildAutocompleter)), Summary("Clan")] long clanIdToRemove)
     {
-        await ExecuteAndHanldeErrors(async () =>
+        await ExecuteAndHandleErrors(async () =>
         {
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(Context.Guild.Id);
             if (guildSettings is null)
-                return;
+                return GuildSettingsNotFound();
 
             guildSettings.Clans.Remove(clanIdToRemove);
             var clanModel = await _destinyDb.GetClanModelAsync(clanIdToRemove);
             if (clanModel is null)
-                return;
+                return Error("Clan not found");
 
             clanModel.IsTracking = false;
 
             await _destinyDb.UpsertClanModelAsync(clanModel);
             await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
 
-            await Context.Interaction.RespondAsync(embed: _embedBuilderService.CreateSimpleResponseEmbed($"Removed clan {clanIdToRemove}", "Success").Build());
+            return Success(_embedBuilderService.CreateSimpleResponseEmbed($"Removed clan {clanIdToRemove}", "Success").Build());
         });
     }
 
@@ -122,7 +125,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
         [Autocomplete(typeof(SearchDestinyUserByNameAutocompleter))][Summary("User")] DestinyProfilePointer user,
         [Summary("link-to", "User to link to")] IUser? linkTo = null)
     {
-        await ExecuteAndHanldeErrors(async () =>
+        await ExecuteAndHandleErrors(async () =>
         {
             var userToLinkTo = linkTo is null ? Context.User : linkTo;
 
@@ -135,8 +138,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
 
             await _destinyDb.UpsertProfileLinkAsync(link);
 
-            await Context.Interaction.RespondAsync(embed:
-                _embedBuilderService.CreateSimpleResponseEmbed(
+            return Success(_embedBuilderService.CreateSimpleResponseEmbed(
                     "User updated",
                     $"{userToLinkTo.Mention} is now linked to {user.MembershipId}").Build());
         });
@@ -147,7 +149,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
     public async Task AddServerAdminAsync(
         [Summary("user", "New server admin")] IUser user)
     {
-        await ExecuteAndHanldeErrors(async () =>
+        await ExecuteAndHandleErrors(async () =>
         {
             await _destinyDb.AddServerAdministratorAsync(new ServerBotAdministrator()
             {
@@ -155,8 +157,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
                 DiscordUserId = user.Id
             });
 
-            await Context.Interaction.RespondAsync(embed:
-                _embedBuilderService.CreateSimpleResponseEmbed(
+            return Success(_embedBuilderService.CreateSimpleResponseEmbed(
                     "Admin added",
                     $"{user.Mention} is now bot admin").Build());
         });
@@ -167,7 +168,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
     public async Task RemoveServerAdminAsync(
         [Summary("user", "Server admin to remove")] IUser user)
     {
-        await ExecuteAndHanldeErrors(async () =>
+        await ExecuteAndHandleErrors(async () =>
         {
             await _destinyDb.RemoveServerAdministratorAsync(new ServerBotAdministrator()
             {
@@ -175,8 +176,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
                 DiscordUserId = user.Id
             });
 
-            await Context.Interaction.RespondAsync(embed:
-                _embedBuilderService.CreateSimpleResponseEmbed(
+            return Success(_embedBuilderService.CreateSimpleResponseEmbed(
                     "Admin removed",
                     $"{user.Mention} is not bot admin anymore").Build());
         });
@@ -187,14 +187,16 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
     public async Task SetReportChannelAsync(
         [Summary("channel", "Channel to send reports to")][ChannelTypes(ChannelType.Text)] IChannel channel)
     {
-        await ExecuteAndHanldeErrors(async () =>
+        await ExecuteAndHandleErrors(async () =>
         {
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            if (guildSettings is null)
+                return GuildSettingsNotFound();
+
             guildSettings.DefaultReportChannel = channel.Id;
             await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
 
-            await Context.Interaction.RespondAsync(embed:
-                _embedBuilderService.CreateSimpleResponseEmbed(
+            return Success(_embedBuilderService.CreateSimpleResponseEmbed(
                     "Success",
                     $"Default report channel is now <#{channel.Id}>")
                 .Build());
@@ -207,9 +209,11 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
         [Summary(description: "Whether to report new items")] DiscordNullableBoolean reportItems = DiscordNullableBoolean.None,
         [Summary(description: "Whether to report completed triumphs")] DiscordNullableBoolean reportTriumphs = DiscordNullableBoolean.None)
     {
-        await ExecuteAndHanldeErrors(async () =>
+        await ExecuteAndHandleErrors(async () =>
         {
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            if (guildSettings is null)
+                return GuildSettingsNotFound();
 
             if (reportItems != DiscordNullableBoolean.None)
             {
@@ -223,8 +227,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
 
             await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
 
-            await Context.Interaction.RespondAsync(embed:
-                _embedBuilderService.CreateSimpleResponseEmbed(
+            return Success(_embedBuilderService.CreateSimpleResponseEmbed(
                     "Success",
                     $"Updated report settings")
                 .Build());
@@ -236,35 +239,25 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
     public async Task AddCollectibleToTrackingAsync(
        [Summary("item", "Item to add to tracking")][Autocomplete(typeof(DestinyExcludingCollectibleDefinitionAutocompleter))] uint itemHash)
     {
-        await ExecuteAndHanldeErrors(async () =>
+        await ExecuteAndHandleErrors(async () =>
         {
             var client = await _bungieClientProvider.GetClientAsync();
 
-            var lang = await _memoryCache.GetOrAddAsync(
-                $"guild_lang_{GuildId}",
-                async () => (await _destinyDb.GetGuildLanguageAsync(GuildId)).ConvertToBungieLocale(),
-                TimeSpan.FromSeconds(15),
-                Caching.CacheExpirationType.Absolute);
+            var lang = await _localizationService.GetGuildLocale(GuildId);
 
             if (!client.TryGetDefinition<DestinyCollectibleDefinition>(itemHash, lang, out var collectibleDefinition))
-            {
-                await Context.Interaction.RespondAsync(embed:
-                    _embedBuilderService.CreateSimpleResponseEmbed(
-                        "Failure",
-                        $"Couldn't find definition in database",
-                        Color.Red)
-                    .Build());
-                return;
-            }
+                return DestinyDefinitionNotFound<DestinyCollectibleDefinition>(itemHash);
 
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            if (guildSettings is null)
+                return GuildSettingsNotFound();
+
             guildSettings.TrackedCollectibles.TrackedHashes.Add(itemHash);
             await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
 
             var (name, icon) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(collectibleDefinition, lang);
 
-            await Context.Interaction.RespondAsync(embed:
-                _embedBuilderService.CreateSimpleResponseEmbed(
+            return Success(_embedBuilderService.CreateSimpleResponseEmbed(
                     "Success",
                     $"Added **{name}** to tracking")
                 .WithThumbnailUrl(icon)
@@ -277,35 +270,27 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
     public async Task RemoveCollectibleFromTrackingAsync(
        [Summary("item", "Item to remove from tracking")][Autocomplete(typeof(DestinyDbCollectibleDefinitionAutocompleter))] uint itemHash)
     {
-        await ExecuteAndHanldeErrors(async () =>
+        await ExecuteAndHandleErrors(async () =>
         {
             var client = await _bungieClientProvider.GetClientAsync();
 
-            var lang = await _memoryCache.GetOrAddAsync(
-                $"guild_lang_{GuildId}",
-                async () => (await _destinyDb.GetGuildLanguageAsync(GuildId)).ConvertToBungieLocale(),
-                TimeSpan.FromSeconds(15),
-                Caching.CacheExpirationType.Absolute);
+            var lang = await _localizationService.GetGuildLocale(GuildId);
 
             if (!client.TryGetDefinition<DestinyCollectibleDefinition>(itemHash, lang, out var collectibleDefinition))
             {
-                await Context.Interaction.RespondAsync(embed:
-                    _embedBuilderService.CreateSimpleResponseEmbed(
-                        "Failure",
-                        $"Couldn't find definition in database",
-                        Color.Red)
-                    .Build());
-                return;
+                return DestinyDefinitionNotFound<DestinyCollectibleDefinition>(itemHash);
             }
 
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            if (guildSettings is null)
+                return GuildSettingsNotFound();
+
             guildSettings.TrackedCollectibles.TrackedHashes.Remove(itemHash);
             await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
 
             var (name, icon) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(collectibleDefinition, lang);
 
-            await Context.Interaction.RespondAsync(embed:
-                _embedBuilderService.CreateSimpleResponseEmbed(
+            return Success(_embedBuilderService.CreateSimpleResponseEmbed(
                     "Success",
                     $"Removed **{name}** from tracking")
                 .WithThumbnailUrl(icon)
@@ -316,27 +301,23 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
     [SlashCommand("items-show", "Shows all tracked items")]
     public async Task ShowTrackedItemsAsync()
     {
-        await ExecuteAndHanldeErrors(async () =>
+        await ExecuteAndHandleErrors(async () =>
         {
             var client = await _bungieClientProvider.GetClientAsync();
 
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            if (guildSettings is null)
+                return GuildSettingsNotFound();
 
             if (!guildSettings.TrackedCollectibles.TrackedHashes.Any())
             {
-                await Context.Interaction.RespondAsync(embed:
-                    _embedBuilderService.CreateSimpleResponseEmbed(
+                return Success(_embedBuilderService.CreateSimpleResponseEmbed(
                         "Tracked items",
                         $"Currently there's no tracked items")
                     .Build());
-                return;
             }
 
-            var lang = await _memoryCache.GetOrAddAsync(
-                $"guild_lang_{GuildId}",
-                async () => (await _destinyDb.GetGuildLanguageAsync(GuildId)).ConvertToBungieLocale(),
-                TimeSpan.FromSeconds(15),
-                Caching.CacheExpirationType.Absolute);
+            var lang = await _localizationService.GetGuildLocale(GuildId);
 
             var sb = new StringBuilder();
 
@@ -353,8 +334,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
                 }
             }
 
-            await Context.Interaction.RespondAsync(embed:
-                _embedBuilderService.CreateSimpleResponseEmbed(
+            return Success(_embedBuilderService.CreateSimpleResponseEmbed(
                     $"Tracked items: {guildSettings.TrackedCollectibles.TrackedHashes.Count}",
                     sb.ToString().LimitTo(4096))
                 .Build());
@@ -366,33 +346,24 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
     public async Task AddRecordToTrackingAsync(
        [Summary("triumph", "Item to add to tracking")][Autocomplete(typeof(DestinyExcludingRecordDefinitionAutocompleter))] uint recordHash)
     {
-        await ExecuteAndHanldeErrors(async () =>
+        await ExecuteAndHandleErrors(async () =>
         {
             var client = await _bungieClientProvider.GetClientAsync();
 
-            var lang = await _memoryCache.GetOrAddAsync(
-                $"guild_lang_{GuildId}",
-                async () => (await _destinyDb.GetGuildLanguageAsync(GuildId)).ConvertToBungieLocale(),
-                TimeSpan.FromSeconds(15),
-                Caching.CacheExpirationType.Absolute);
+            var lang = await _localizationService.GetGuildLocale(GuildId);
 
             if (!client.TryGetDefinition<DestinyRecordDefinition>(recordHash, lang, out var recordDefinition))
-            {
-                await Context.Interaction.RespondAsync(embed:
-                    _embedBuilderService.CreateSimpleResponseEmbed(
-                        "Failure",
-                        $"Couldn't find definition in database",
-                        Color.Red)
-                    .Build());
-                return;
-            }
+                return DestinyDefinitionNotFound<DestinyRecordDefinition>(recordHash);
 
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            if (guildSettings is null)
+                return GuildSettingsNotFound();
+
             guildSettings.TrackedRecords.TrackedHashes.Add(recordHash);
+
             await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
 
-            await Context.Interaction.RespondAsync(embed:
-                _embedBuilderService.CreateSimpleResponseEmbed(
+            return Success(_embedBuilderService.CreateSimpleResponseEmbed(
                     "Success",
                     $"Added **{recordDefinition.DisplayProperties.Name}** to tracking")
                 .WithThumbnailUrl(recordDefinition.DisplayProperties.Icon.AbsolutePath)
@@ -405,33 +376,22 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
     public async Task RemoveRecordFromTrackingAsync(
        [Summary("triumph", "Triumph to remove from tracking")][Autocomplete(typeof(DestinyDbRecordDefinitionAutocompleter))] uint recordHash)
     {
-        await ExecuteAndHanldeErrors(async () =>
+        await ExecuteAndHandleErrors(async () =>
         {
             var client = await _bungieClientProvider.GetClientAsync();
-
-            var lang = await _memoryCache.GetOrAddAsync(
-                $"guild_lang_{GuildId}",
-                async () => (await _destinyDb.GetGuildLanguageAsync(GuildId)).ConvertToBungieLocale(),
-                TimeSpan.FromSeconds(15),
-                Caching.CacheExpirationType.Absolute);
+            var lang = await _localizationService.GetGuildLocale(GuildId);
 
             if (!client.TryGetDefinition<DestinyRecordDefinition>(recordHash, lang, out var recordDefinition))
-            {
-                await Context.Interaction.RespondAsync(embed:
-                    _embedBuilderService.CreateSimpleResponseEmbed(
-                        "Failure",
-                        $"Couldn't find definition in database",
-                        Color.Red)
-                    .Build());
-                return;
-            }
+                return DestinyDefinitionNotFound<DestinyRecordDefinition>(recordHash);
 
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            if (guildSettings is null)
+                return GuildSettingsNotFound();
+
             guildSettings.TrackedRecords.TrackedHashes.Remove(recordHash);
             await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
 
-            await Context.Interaction.RespondAsync(embed:
-                _embedBuilderService.CreateSimpleResponseEmbed(
+            return Success(_embedBuilderService.CreateSimpleResponseEmbed(
                     "Success",
                     $"Removed **{recordDefinition.DisplayProperties.Name}** from tracking")
                 .WithThumbnailUrl(recordDefinition.DisplayProperties.Icon.AbsolutePath)
@@ -442,27 +402,23 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
     [SlashCommand("triumphs-show", "Shows all tracked triumphs")]
     public async Task ShowTrackedRecordsAsync()
     {
-        await ExecuteAndHanldeErrors(async () =>
+        await ExecuteAndHandleErrors(async () =>
         {
             var client = await _bungieClientProvider.GetClientAsync();
 
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            if (guildSettings is null)
+                return GuildSettingsNotFound();
 
             if (!guildSettings.TrackedRecords.TrackedHashes.Any())
             {
-                await Context.Interaction.RespondAsync(embed:
-                    _embedBuilderService.CreateSimpleResponseEmbed(
+                return Success(_embedBuilderService.CreateSimpleResponseEmbed(
                         "Tracked triumphs",
                         $"Currently there's no tracked triumphs")
                     .Build());
-                return;
             }
 
-            var lang = await _memoryCache.GetOrAddAsync(
-                $"guild_lang_{GuildId}",
-                async () => (await _destinyDb.GetGuildLanguageAsync(GuildId)).ConvertToBungieLocale(),
-                TimeSpan.FromSeconds(15),
-                Caching.CacheExpirationType.Absolute);
+            var lang = await _localizationService.GetGuildLocale(GuildId);
 
             var sb = new StringBuilder();
 
@@ -478,8 +434,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
                 }
             }
 
-            await Context.Interaction.RespondAsync(embed:
-                _embedBuilderService.CreateSimpleResponseEmbed(
+            return Success(_embedBuilderService.CreateSimpleResponseEmbed(
                     $"Tracked triumphs: {guildSettings.TrackedRecords.TrackedHashes.Count}",
                     sb.ToString().LimitTo(4096))
                 .Build());
@@ -492,9 +447,11 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
         [Summary(description: "Whether to report system notifications")] DiscordNullableBoolean enableSystemReports = DiscordNullableBoolean.None,
         [Summary(description: "Channel to report them to")] IChannel? channel = null)
     {
-        await ExecuteAndHanldeErrors(async () =>
+        await ExecuteAndHandleErrors(async () =>
         {
             var currentGuildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            if (currentGuildSettings is null)
+                return GuildSettingsNotFound();
 
             var anyChanges = false;
             if (enableSystemReports != DiscordNullableBoolean.None)
@@ -523,9 +480,11 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
                 await _destinyDb.UpsertGuildSettingsAsync(currentGuildSettings);
             }
 
-            var embed = _embedBuilderService.CreateSimpleResponseEmbed("Success", "Guild settings updated").Build();
+            var embed = _embedBuilderService
+                .CreateSimpleResponseEmbed("Success", "Guild settings updated")
+                .Build();
 
-            await Context.Interaction.RespondAsync(embed: embed);
+            return Success(embed);
         });
     }
 
@@ -534,44 +493,35 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
     public async Task AddAllCollectiblesFromNode(
         [Summary("presentation-node")][Autocomplete(typeof(DestinyPresentationNodeWithCollectiblesAutocompleter))] string presentationNodeHashString)
     {
-        await ExecuteAndHanldeErrors(async () =>
+        await ExecuteAndHandleErrors(async () =>
         {
-            var presentationNodeHash = uint.Parse(presentationNodeHashString);
+            if (!uint.TryParse(presentationNodeHashString, out var presentationNodeHash))
+                return Error($"Failed to parse presentation node hash");
 
             var client = await _bungieClientProvider.GetClientAsync();
-
-            var lang = await _memoryCache.GetOrAddAsync(
-                $"guild_lang_{GuildId}",
-                async () => (await _destinyDb.GetGuildLanguageAsync(GuildId)).ConvertToBungieLocale(),
-                TimeSpan.FromSeconds(15),
-                Caching.CacheExpirationType.Absolute);
+            var lang = await _localizationService.GetGuildLocale(GuildId);
 
             if (!client.TryGetDefinition<DestinyPresentationNodeDefinition>(presentationNodeHash, lang, out var presentationNodeDefinition))
-            {
-                await Context.Interaction.RespondAsync(embed:
-                    _embedBuilderService.CreateSimpleResponseEmbed(
-                        "Failure",
-                        $"Couldn't find definition in database",
-                        Color.Red)
-                    .Build());
-                return;
-            }
+                return DestinyDefinitionNotFound<DestinyPresentationNodeDefinition>(presentationNodeHash);
 
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            if (guildSettings is null)
+                return GuildSettingsNotFound();
 
             foreach (var collectibleHash in presentationNodeDefinition.Children.Collectibles)
             {
                 guildSettings.TrackedCollectibles.TrackedHashes.Add(collectibleHash.Collectible.Hash.GetValueOrDefault());
             }
-            
+
             await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
 
-            await Context.Interaction.RespondAsync(embed:
-                _embedBuilderService.CreateSimpleResponseEmbed(
+            var embed = _embedBuilderService.CreateSimpleResponseEmbed(
                     "Success",
                     $"Added **{presentationNodeDefinition.DisplayProperties.Name}** ({presentationNodeDefinition.Children.Collectibles.Count} item(s)) to tracking")
                 .WithThumbnailUrl(presentationNodeDefinition.DisplayProperties.Icon.AbsolutePath)
-                .Build());
+                .Build();
+
+            return Success(embed);
         });
     }
 
@@ -580,30 +530,20 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
     public async Task RemoveAllCollectiblesFromNode(
         [Summary("presentation-node")][Autocomplete(typeof(DestinyPresentationNodeWithCollectiblesAutocompleter))] string presentationNodeHashString)
     {
-        await ExecuteAndHanldeErrors(async () =>
+        await ExecuteAndHandleErrors(async () =>
         {
-            var presentationNodeHash = uint.Parse(presentationNodeHashString);
+            if (!uint.TryParse(presentationNodeHashString, out var presentationNodeHash))
+                return Error($"Failed to parse presentation node hash");
 
             var client = await _bungieClientProvider.GetClientAsync();
-
-            var lang = await _memoryCache.GetOrAddAsync(
-                $"guild_lang_{GuildId}",
-                async () => (await _destinyDb.GetGuildLanguageAsync(GuildId)).ConvertToBungieLocale(),
-                TimeSpan.FromSeconds(15),
-                Caching.CacheExpirationType.Absolute);
+            var lang = await _localizationService.GetGuildLocale(GuildId);
 
             if (!client.TryGetDefinition<DestinyPresentationNodeDefinition>(presentationNodeHash, lang, out var presentationNodeDefinition))
-            {
-                await Context.Interaction.RespondAsync(embed:
-                    _embedBuilderService.CreateSimpleResponseEmbed(
-                        "Failure",
-                        $"Couldn't find definition in database",
-                        Color.Red)
-                    .Build());
-                return;
-            }
+                return DestinyDefinitionNotFound<DestinyPresentationNodeDefinition>(presentationNodeHash);
 
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            if (guildSettings is null)
+                return GuildSettingsNotFound();
 
             foreach (var collectibleHash in presentationNodeDefinition.Children.Collectibles)
             {
@@ -612,12 +552,13 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
 
             await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
 
-            await Context.Interaction.RespondAsync(embed:
-                _embedBuilderService.CreateSimpleResponseEmbed(
+            var embed = _embedBuilderService.CreateSimpleResponseEmbed(
                     "Success",
                     $"Removed **{presentationNodeDefinition.DisplayProperties.Name}** ({presentationNodeDefinition.Children.Collectibles.Count} item(s)) from tracking")
                 .WithThumbnailUrl(presentationNodeDefinition.DisplayProperties.Icon.AbsolutePath)
-                .Build());
+                .Build();
+
+            return Success(embed);
         });
     }
 
@@ -626,11 +567,13 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
     public async Task SetGuildDestinyLocale(
         [Summary("locale", "Locale to use")] DiscordDestinyLanguageEnum locale)
     {
-        await ExecuteAndHanldeErrors(async () =>
+        await ExecuteAndHandleErrors(async () =>
         {
             await Context.Interaction.DeferAsync();
 
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            if (guildSettings is null)
+                return GuildSettingsNotFound();
 
             guildSettings.DestinyManifestLocale = locale;
 
@@ -638,8 +581,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
 
             await _bungieClientProvider.ReloadClient();
 
-            await Context.Interaction.FollowupAsync(embed:
-                _embedBuilderService.CreateSimpleResponseEmbed(
+            return Success(_embedBuilderService.CreateSimpleResponseEmbed(
                     "Success",
                     $"Changed locale language to {locale}")
                 .Build());
@@ -651,12 +593,11 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
     public async Task SetClanRescan(
         [Autocomplete(typeof(DestinyClanFromGuildAutocompleter)), Summary("Clan")] long clanToRescan)
     {
-        await ExecuteAndHanldeErrors(async () =>
+        await ExecuteAndHandleErrors(async () =>
         {
             await _destinyDb.SetClanRescanAsync(clanToRescan);
 
-            await Context.Interaction.RespondAsync(embed:
-                _embedBuilderService.CreateSimpleResponseEmbed(
+            return Success(_embedBuilderService.CreateSimpleResponseEmbed(
                     "Success",
                     $"Queued clan for rescan: {clanToRescan}")
                 .Build());
@@ -667,14 +608,13 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
     [SlashCommand("rescan-clans-all", "Queues up all clans for rescan, might not work if some clans are already being scanned")]
     public async Task SetClansAllRescan()
     {
-        await ExecuteAndHanldeErrors(async () =>
+        await ExecuteAndHandleErrors(async () =>
         {
             await _destinyDb.SetClanRescanForAllTrackedClansAsync();
 
-            await Context.Interaction.RespondAsync(embed:
-                _embedBuilderService.CreateSimpleResponseEmbed(
+            return Success(_embedBuilderService.CreateSimpleResponseEmbed(
                     "Success",
-                    $"Queued up all clans for rescan:")
+                    $"Queued up all clans for rescan")
                 .Build());
         });
     }

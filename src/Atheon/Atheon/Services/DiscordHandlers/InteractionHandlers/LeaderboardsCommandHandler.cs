@@ -19,7 +19,6 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
     private readonly EmbedBuilderService _embedBuilderService;
     private readonly IDestinyDb _destinyDb;
     private readonly IBungieClientProvider _bungieClientProvider;
-    private readonly IMemoryCache _memoryCache;
     private readonly ILocalizationService _localizationService;
 
     public LeaderboardsCommandHandler(
@@ -27,13 +26,11 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
         EmbedBuilderService embedBuilderService,
         IDestinyDb destinyDb,
         IBungieClientProvider bungieClientProvider,
-        IMemoryCache memoryCache,
         ILocalizationService localizationService) : base(logger, embedBuilderService)
     {
         _embedBuilderService = embedBuilderService;
         _destinyDb = destinyDb;
         _bungieClientProvider = bungieClientProvider;
-        _memoryCache = memoryCache;
         _localizationService = localizationService;
     }
 
@@ -50,11 +47,11 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
             var bungieClient = await _bungieClientProvider.GetClientAsync();
             var lang = await _localizationService.GetGuildLocale(GuildId);
             if (!bungieClient.TryGetDefinition<DestinyMetricDefinition>(metricHash, lang, out var metricDefinition))
-                return Error($"DestinyMetricDefinition {metricHash} not found");
+                return DestinyDefinitionNotFound<DestinyMetricDefinition>(metricHash);
 
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
-                return Error($"Failed to get load guild settings");
+                return GuildSettingsNotFound();
 
             var users = await _destinyDb.GetProfileMetricsAsync(metricHash, !metricDefinition.LowerValueIsBetter, guildSettings.Clans.ToArray());
             var clanIds = users.Select(x => x.ClanId).Distinct().ToArray();
@@ -102,7 +99,7 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
         {
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
-                return Error($"Failed to get load guild settings");
+                return GuildSettingsNotFound();
 
             var users = await _destinyDb.GetGuardianRanksLeaderboardAsync(guildSettings.Clans.ToArray());
             var clanIds = users.Select(x => x.ClanId).Distinct().ToArray();
@@ -149,7 +146,7 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
         {
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
-                return Error($"Failed to get load guild settings");
+                return GuildSettingsNotFound();
 
             var users = await _destinyDb.GetGuardianPowerLevelAsync(guildSettings.Clans.ToArray());
             var clanIds = users.Select(x => x.ClanId).Distinct().ToArray();
@@ -195,7 +192,7 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
         {
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
-                return Error($"Failed to get load guild settings");
+                return GuildSettingsNotFound();
 
             var users = await _destinyDb.GetGuardianTriumphScoreAsync(guildSettings.Clans.ToArray());
             var clanIds = users.Select(x => x.ClanId).Distinct().ToArray();
@@ -241,7 +238,7 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
         {
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
-                return Error($"Failed to get load guild settings");
+                return GuildSettingsNotFound();
 
             var users = await _destinyDb.GetTimePlayedLeaderboardAsync(guildSettings.Clans.ToArray());
             var clanIds = users.Select(x => x.ClanId).Distinct().ToArray();
@@ -295,11 +292,11 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
             var lang = await _localizationService.GetGuildLocale(GuildId);
 
             if (!bungieClient.TryGetDefinition<DestinyRecordDefinition>(recordHash, lang, out var recordDefinition))
-                return Error($"Failed get DestinyRecordDefinition {recordHash}");
+                return DestinyDefinitionNotFound<DestinyRecordDefinition>(recordHash);
 
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
-                return Error($"Failed to get load guild settings");
+                return GuildSettingsNotFound();
 
             List<DestinyProfileLiteWithValue<int>> users;
 
@@ -355,7 +352,7 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
         {
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
-                return Error($"Failed to get load guild settings");
+                return GuildSettingsNotFound();
             var users = await _destinyDb.GetTotalTitlesLeaderboardAsync(guildSettings.Clans.ToArray());
             var clanIds = users.Select(x => x.ClanId).Distinct().ToArray();
             var clanReferences = await _destinyDb.GetClanReferencesFromIdsAsync(clanIds);
@@ -408,11 +405,11 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
             var lang = await _localizationService.GetGuildLocale(GuildId);
 
             if (!bungieClient.TryGetDefinition<DestinySeasonPassDefinition>(seasonPassHash, lang, out var seasonPassDefinition))
-                return Error($"Failed get DestinySeasonPassDefinition {seasonPassHash}");
+                return DestinyDefinitionNotFound<DestinySeasonPassDefinition>(seasonPassHash);
 
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
-                return Error($"Failed to get load guild settings");
+                return GuildSettingsNotFound();
 
             var users = await _destinyDb.GetGuardianSeasonPassLevelsAsync(
                 seasonPassDefinition.RewardProgression.Hash.GetValueOrDefault(),

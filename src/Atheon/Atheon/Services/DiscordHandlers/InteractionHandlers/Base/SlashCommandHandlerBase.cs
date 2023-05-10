@@ -3,6 +3,7 @@ using Atheon.Services.DiscordHandlers.InteractionFlow;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using DotNetBungieAPI.Models.Destiny;
 using Polly;
 
 namespace Atheon.Services.DiscordHandlers.InteractionHandlers.Base
@@ -33,28 +34,6 @@ namespace Atheon.Services.DiscordHandlers.InteractionHandlers.Base
             _logger.LogInformation("Finished executing command: {CommandName}", command.Name);
         }
 
-        protected async Task ExecuteAndHanldeErrors(Func<Task> actualCommand)
-        {
-            try
-            {             
-                await actualCommand();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error while executing command");
-                var embed = EmbedBuilderService.CreateErrorEmbed(ex);
-
-                if (Context.Interaction.HasResponded)
-                {
-                    await Context.Interaction.FollowupAsync(embed: embed);
-                }
-                else
-                {
-                    await Context.Interaction.RespondAsync(embed: embed);
-                }
-            }
-        }
-
         protected async Task ExecuteAndHandleErrors(Func<Task<IDiscordCommandResult>> commandResult)
         {
             try
@@ -83,7 +62,18 @@ namespace Atheon.Services.DiscordHandlers.InteractionHandlers.Base
             return new DiscordCommandErrorEmbedResult(message);
         }
 
-        protected IDiscordCommandResult Success(Embed embed, bool hide)
+        protected IDiscordCommandResult DestinyDefinitionNotFound<TDefinition>(uint hash) where TDefinition : IDestinyDefinition
+        {
+            var type = typeof(TDefinition);
+            return new DiscordCommandErrorEmbedResult($"Definition {type.Name} {hash} not found");
+        }
+
+        protected IDiscordCommandResult GuildSettingsNotFound()
+        {
+            return new DiscordCommandErrorEmbedResult("Failed to get load guild settings");
+        }
+
+        protected IDiscordCommandResult Success(Embed embed, bool hide = false)
         {
             return new DiscordCommandEmbedResult(embed, hide);
         }
