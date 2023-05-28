@@ -21,7 +21,7 @@ public class SqliteDestinyDb : IDestinyDb
     }
 
     private const string GetGuildReferencesQuery =
-        """
+            """
             SELECT 
                 GuildId,
                 GuildName
@@ -33,7 +33,7 @@ public class SqliteDestinyDb : IDestinyDb
     }
 
     private const string GetAllGuildSettingsQuery =
-        """
+            """
             SELECT * FROM Guilds;
             """;
     public async Task<List<DiscordGuildSettingsDbModel>> GetAllGuildSettings()
@@ -103,7 +103,7 @@ public class SqliteDestinyDb : IDestinyDb
     }
 
     private const string GetGuildSettingsQuery =
-        """
+            """
             SELECT * FROM Guilds WHERE GuildId = @GuildId;
             """;
     public async Task<DiscordGuildSettingsDbModel?> GetGuildSettingsAsync(ulong guildId)
@@ -113,8 +113,8 @@ public class SqliteDestinyDb : IDestinyDb
 
     private const string GetAllGuildSettingsForClanQuery =
         """
-            SELECT * FROM Guilds 
-            WHERE EXISTS (SELECT 1 FROM json_each(Clans) WHERE value = @ClanId);
+        SELECT * FROM Guilds 
+        WHERE EXISTS (SELECT 1 FROM json_each(Clans) WHERE value = @ClanId);
         """;
     public async Task<List<DiscordGuildSettingsDbModel>> GetAllGuildSettingsForClanAsync(long clanId)
     {
@@ -1004,8 +1004,8 @@ public class SqliteDestinyDb : IDestinyDb
         """;
 
     public async Task<List<DestinyProfileLiteWithDoubleValues<int, int>>> GetGuardianSeasonPassLevelsAsync(
-        uint pass, 
-        uint prestigePass, 
+        uint pass,
+        uint prestigePass,
         long[] clanIds)
     {
         return await _dbAccess.QueryAsync<DestinyProfileLiteWithDoubleValues<int, int>>(
