@@ -16,21 +16,23 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
     {
         private object test = new object();
 
-        private readonly HashSet<uint> _weaponBucketHashes = new()
-        {
-            DefinitionHashes.InventoryBuckets.KineticWeapons,
-            DefinitionHashes.InventoryBuckets.EnergyWeapons,
-            DefinitionHashes.InventoryBuckets.PowerWeapons
-        };
+        private readonly HashSet<uint> _weaponBucketHashes =
+            new()
+            {
+                DefinitionHashes.InventoryBuckets.KineticWeapons,
+                DefinitionHashes.InventoryBuckets.EnergyWeapons,
+                DefinitionHashes.InventoryBuckets.PowerWeapons
+            };
 
-        private readonly HashSet<uint> _armorBucketHashes = new()
-        {
-            DefinitionHashes.InventoryBuckets.Helmet,
-            DefinitionHashes.InventoryBuckets.Gauntlets,
-            DefinitionHashes.InventoryBuckets.ChestArmor,
-            DefinitionHashes.InventoryBuckets.LegArmor,
-            DefinitionHashes.InventoryBuckets.ClassArmor
-        };
+        private readonly HashSet<uint> _armorBucketHashes =
+            new()
+            {
+                DefinitionHashes.InventoryBuckets.Helmet,
+                DefinitionHashes.InventoryBuckets.Gauntlets,
+                DefinitionHashes.InventoryBuckets.ChestArmor,
+                DefinitionHashes.InventoryBuckets.LegArmor,
+                DefinitionHashes.InventoryBuckets.ClassArmor
+            };
 
         private readonly DestinyDefinitionDataService _destinyDefinitionDataService;
         private readonly ILogger<ComputedDataUpdater> _logger;
@@ -41,7 +43,8 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
 
         public ComputedDataUpdater(
             DestinyDefinitionDataService destinyDefinitionDataService,
-            ILogger<ComputedDataUpdater> logger)
+            ILogger<ComputedDataUpdater> logger
+        )
         {
             _destinyDefinitionDataService = destinyDefinitionDataService;
             _logger = logger;
@@ -51,7 +54,8 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
             IBungieClient bungieClient,
             DestinyProfileDbModel dbProfile,
             DestinyProfileResponse profileResponse,
-            List<DiscordGuildSettingsDbModel> guildSettings)
+            List<DiscordGuildSettingsDbModel> guildSettings
+        )
         {
             dbProfile.ComputedData ??= new DestinyComputedData();
             await UpdateComputedData(dbProfile, profileResponse);
@@ -60,7 +64,8 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
         public async Task UpdateSilent(
             IBungieClient bungieClient,
             DestinyProfileDbModel dbProfile,
-            DestinyProfileResponse profileResponse)
+            DestinyProfileResponse profileResponse
+        )
         {
             dbProfile.ComputedData ??= new DestinyComputedData();
             await UpdateComputedData(dbProfile, profileResponse);
@@ -68,12 +73,18 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
 
         private async Task UpdateComputedData(
             DestinyProfileDbModel dbModel,
-            DestinyProfileResponse profileResponse)
+            DestinyProfileResponse profileResponse
+        )
         {
             dbModel.ComputedData!.Drystreaks = new Dictionary<uint, int>();
             foreach (var (collectibleHash, metricHash) in Destiny2Metadata.DryStreakItemSettings)
             {
-                if (!profileResponse.Metrics.Data.Metrics.TryGetValue(metricHash, out var metricComponent))
+                if (
+                    !profileResponse.Metrics.Data.Metrics.TryGetValue(
+                        metricHash,
+                        out var metricComponent
+                    )
+                )
                     continue;
 
                 var progress = metricComponent.ObjectiveProgress.Progress ?? 0;
@@ -94,13 +105,17 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
             foreach (var (titleHash, gildHash) in titleHashes)
             {
                 int completions = 0;
-                if (profileRecords.TryGetValue(titleHash, out var recordComponent)
-                    && !recordComponent.State.HasFlag(DestinyRecordState.ObjectiveNotCompleted))
+                if (
+                    profileRecords.TryGetValue(titleHash, out var recordComponent)
+                    && !recordComponent.State.HasFlag(DestinyRecordState.ObjectiveNotCompleted)
+                )
                 {
                     completions++;
 
-                    if (gildHash.HasValue &&
-                        profileRecords.TryGetValue(gildHash.Value, out var gildRecordComponent))
+                    if (
+                        gildHash.HasValue
+                        && profileRecords.TryGetValue(gildHash.Value, out var gildRecordComponent)
+                    )
                     {
                         completions += (gildRecordComponent.CompletedCount ?? 0);
                     }
@@ -112,10 +127,14 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
             bool failedToGetInvenoryCalculations = true;
             try
             {
-                if (profileResponse.ProfileInventory.Data?.Items.Count > 0 &&
-                    profileResponse.ItemComponents?.Instances.Data.Count > 0)
+                if (
+                    profileResponse.ProfileInventory.Data?.Items.Count > 0
+                    && profileResponse.ItemComponents?.Instances.Data.Count > 0
+                )
                 {
-                    dbModel.ComputedData.PowerLevel = CalculateHighestLightBasedOnInventory(profileResponse);
+                    dbModel.ComputedData.PowerLevel = CalculateHighestLightBasedOnInventory(
+                        profileResponse
+                    );
                     failedToGetInvenoryCalculations = false;
                 }
             }
@@ -124,24 +143,40 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
                 _logger.LogError(ex, "Failed to calculate light based on inventory");
             }
 
-            if (failedToGetInvenoryCalculations && dbModel.Records.TryGetValue(DefinitionHashes.Records.PathtoPower, out var powerRecord))
+            if (
+                failedToGetInvenoryCalculations
+                && dbModel.Records.TryGetValue(
+                    DefinitionHashes.Records.PathtoPower,
+                    out var powerRecord
+                )
+            )
             {
-                dbModel.ComputedData.PowerLevel = powerRecord.IntervalObjectives?.FirstOrDefault()?.Progress;
+                dbModel.ComputedData.PowerLevel = powerRecord.IntervalObjectives
+                    ?.FirstOrDefault()
+                    ?.Progress;
             }
 
-            if (dbModel.Records.TryGetValue(DefinitionHashes.Records.ArtifactPowerBonus, out var artifactPowerRecord))
+            if (
+                dbModel.Records.TryGetValue(
+                    DefinitionHashes.Records.ArtifactPowerBonus_3093587483,
+                    out var artifactPowerRecord
+                )
+            )
             {
-                dbModel.ComputedData.ArtifactPowerLevel = artifactPowerRecord.Objectives?.FirstOrDefault()?.Progress;
+                dbModel.ComputedData.ArtifactPowerLevel = artifactPowerRecord.Objectives
+                    ?.FirstOrDefault()
+                    ?.Progress;
             }
 
             dbModel.ComputedData.LifetimeScore = profileResponse.ProfileRecords.Data.LifetimeScore;
             dbModel.ComputedData.ActiveScore = profileResponse.ProfileRecords.Data.ActiveScore;
             dbModel.ComputedData.LegacyScore = profileResponse.ProfileRecords.Data.LegacyScore;
-            dbModel.ComputedData.TotalTitlesEarned = dbModel.ComputedData.Titles.Count(x => x.Value > 0);
+            dbModel.ComputedData.TotalTitlesEarned = dbModel.ComputedData.Titles.Count(
+                x => x.Value > 0
+            );
         }
 
-        private int CalculateHighestLightBasedOnInventory(
-            DestinyProfileResponse profileResponse)
+        private int CalculateHighestLightBasedOnInventory(DestinyProfileResponse profileResponse)
         {
             var highestLightValue = 0;
 
@@ -152,7 +187,9 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
                 { DefinitionHashes.InventoryBuckets.PowerWeapons, 0 }
             };
 
-            foreach (var (characterId, characterEquipment) in profileResponse.CharacterEquipment.Data)
+            foreach (
+                var (characterId, characterEquipment) in profileResponse.CharacterEquipment.Data
+            )
             {
                 foreach (var characterEquippedItem in characterEquipment.Items)
                 {
@@ -170,9 +207,13 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
                     if (!highlestLightWeapons.ContainsKey(bucketHash))
                         continue;
 
-                    var instance = profileResponse.ItemComponents.Instances.Data[characterEquippedItem.ItemInstanceId.GetValueOrDefault()];
+                    var instance = profileResponse.ItemComponents.Instances.Data[
+                        characterEquippedItem.ItemInstanceId.GetValueOrDefault()
+                    ];
 
-                    var lightValue = instance.PrimaryStat.Value;
+                    var lightValue = instance.PrimaryStat is not null
+                        ? instance.PrimaryStat.Value
+                        : instance.ItemLevel * 10 + instance.Quality;
 
                     var currentValue = highlestLightWeapons[bucketHash];
 
@@ -212,32 +253,41 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
 
                     if (highlestLightArmorInBucket.TryGetValue(bucketHash, out var currentValue))
                     {
-                        var instance = profileResponse.ItemComponents.Instances.Data[item.ItemInstanceId.GetValueOrDefault()];
+                        var instance = profileResponse.ItemComponents.Instances.Data[
+                            item.ItemInstanceId.GetValueOrDefault()
+                        ];
 
                         if (instance.PrimaryStat is null)
                             continue;
 
-                        var lightValue = instance.PrimaryStat.Value;
+                        var lightValue = instance.PrimaryStat is not null
+                            ? instance.PrimaryStat.Value
+                            : instance.ItemLevel * 10 + instance.Quality;
 
                         if (currentValue < lightValue)
                         {
                             highlestLightArmorInBucket[bucketHash] = lightValue;
                         }
                     }
-                    else if (highlestLightWeapons.TryGetValue(bucketHash, out var currentWeaponValue))
+                    else if (
+                        highlestLightWeapons.TryGetValue(bucketHash, out var currentWeaponValue)
+                    )
                     {
-                        var instance = profileResponse.ItemComponents.Instances.Data[item.ItemInstanceId.GetValueOrDefault()];
+                        var instance = profileResponse.ItemComponents.Instances.Data[
+                            item.ItemInstanceId.GetValueOrDefault()
+                        ];
 
                         if (instance.PrimaryStat is null)
                             continue;
 
-                        var lightValue = instance.PrimaryStat.Value;
+                        var lightValue = instance.PrimaryStat is not null
+                            ? instance.PrimaryStat.Value
+                            : instance.ItemLevel * 10 + instance.Quality;
 
                         if (currentWeaponValue < lightValue)
                         {
                             highlestLightWeapons[bucketHash] = lightValue;
                         }
-
                     }
                 }
 
@@ -257,31 +307,44 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
                     if (!highlestLightArmorInBucket.ContainsKey(bucketHash))
                         continue;
 
-                    if (_armorBucketHashes.Contains(bucketHash) && itemDefinition.ClassType != characterClassType)
+                    if (
+                        _armorBucketHashes.Contains(bucketHash)
+                        && itemDefinition.ClassType != characterClassType
+                    )
                         continue;
 
                     if (highlestLightArmorInBucket.TryGetValue(bucketHash, out var currentValue))
                     {
-                        var instance = profileResponse.ItemComponents.Instances.Data[profileItem.ItemInstanceId.GetValueOrDefault()];
+                        var instance = profileResponse.ItemComponents.Instances.Data[
+                            profileItem.ItemInstanceId.GetValueOrDefault()
+                        ];
 
                         if (instance.PrimaryStat is null)
                             continue;
 
-                        var lightValue = instance.PrimaryStat.Value;
+                        var lightValue = instance.PrimaryStat is not null
+                            ? instance.PrimaryStat.Value
+                            : instance.ItemLevel * 10 + instance.Quality;
 
                         if (currentValue < lightValue)
                         {
                             highlestLightArmorInBucket[bucketHash] = lightValue;
                         }
                     }
-                    else if (highlestLightWeapons.TryGetValue(bucketHash, out var currentWeaponValue))
+                    else if (
+                        highlestLightWeapons.TryGetValue(bucketHash, out var currentWeaponValue)
+                    )
                     {
-                        var instance = profileResponse.ItemComponents.Instances.Data[profileItem.ItemInstanceId.GetValueOrDefault()];
+                        var instance = profileResponse.ItemComponents.Instances.Data[
+                            profileItem.ItemInstanceId.GetValueOrDefault()
+                        ];
 
                         if (instance.PrimaryStat is null)
                             continue;
 
-                        var lightValue = instance.PrimaryStat.Value;
+                        var lightValue = instance.PrimaryStat is not null
+                            ? instance.PrimaryStat.Value
+                            : instance.ItemLevel * 10 + instance.Quality;
 
                         if (currentWeaponValue < lightValue)
                         {
@@ -305,26 +368,36 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
 
                     if (highlestLightArmorInBucket.TryGetValue(bucketHash, out var currentValue))
                     {
-                        var instance = profileResponse.ItemComponents.Instances.Data[characterEquippedItem.ItemInstanceId.GetValueOrDefault()];
+                        var instance = profileResponse.ItemComponents.Instances.Data[
+                            characterEquippedItem.ItemInstanceId.GetValueOrDefault()
+                        ];
 
                         if (instance.PrimaryStat is null)
                             continue;
 
-                        var lightValue = instance.PrimaryStat.Value;
+                        var lightValue = instance.PrimaryStat is not null
+                            ? instance.PrimaryStat.Value
+                            : instance.ItemLevel * 10 + instance.Quality;
 
                         if (currentValue < lightValue)
                         {
                             highlestLightArmorInBucket[bucketHash] = lightValue;
                         }
                     }
-                    else if (highlestLightWeapons.TryGetValue(bucketHash, out var currentWeaponValue))
+                    else if (
+                        highlestLightWeapons.TryGetValue(bucketHash, out var currentWeaponValue)
+                    )
                     {
-                        var instance = profileResponse.ItemComponents.Instances.Data[characterEquippedItem.ItemInstanceId.GetValueOrDefault()];
+                        var instance = profileResponse.ItemComponents.Instances.Data[
+                            characterEquippedItem.ItemInstanceId.GetValueOrDefault()
+                        ];
 
                         if (instance.PrimaryStat is null)
                             continue;
 
-                        var lightValue = instance.PrimaryStat.Value;
+                        var lightValue = instance.PrimaryStat is not null
+                            ? instance.PrimaryStat.Value
+                            : instance.ItemLevel * 10 + instance.Quality;
 
                         if (currentWeaponValue < lightValue)
                         {
@@ -333,7 +406,9 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
                     }
                 }
 
-                var totalLight = highlestLightArmorInBucket.Sum(x => x.Value) + highlestLightWeapons.Sum(x => x.Value);
+                var totalLight =
+                    highlestLightArmorInBucket.Sum(x => x.Value)
+                    + highlestLightWeapons.Sum(x => x.Value);
 
                 var medianLight = (int)Math.Floor(totalLight / (double)8);
 
