@@ -62,7 +62,7 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
             var bungieClient = await _bungieClientProvider.GetClientAsync();
             var lang = await _localizationService.GetGuildLocale(GuildId);
 
-            if (bungieClient.TryGetDefinition<DestinyCollectibleDefinition>(collectibleHash, out var colDef, lang))
+            if (!bungieClient.TryGetDefinition<DestinyCollectibleDefinition>(collectibleHash, out var colDef, lang))
                 return DestinyDefinitionNotFound<DestinyCollectibleDefinition>(collectibleHash);
 
             var (defName, defIcon) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(colDef, lang);
@@ -328,7 +328,7 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
             var clanReferences = await _destinyDb.GetClanReferencesFromIdsAsync(clanIds);
 
             var embedBuilder = _embedBuilderService
-            .GetTemplateEmbed()
+                .GetTemplateEmbed()
                 .WithTitle($"Users who {(hasVersion is false ? "don't " : "")}have {gameVersion}");
 
             var gettersList = new List<Func<DestinyProfileLite, object>>()
