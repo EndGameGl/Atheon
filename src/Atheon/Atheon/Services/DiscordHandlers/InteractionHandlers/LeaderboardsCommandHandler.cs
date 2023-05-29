@@ -46,7 +46,7 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
 
             var bungieClient = await _bungieClientProvider.GetClientAsync();
             var lang = await _localizationService.GetGuildLocale(GuildId);
-            if (!bungieClient.TryGetDefinition<DestinyMetricDefinition>(metricHash, lang, out var metricDefinition))
+            if (!bungieClient.TryGetDefinition<DestinyMetricDefinition>(metricHash, out var metricDefinition, lang))
                 return DestinyDefinitionNotFound<DestinyMetricDefinition>(metricHash);
 
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
@@ -291,7 +291,7 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
 
             var lang = await _localizationService.GetGuildLocale(GuildId);
 
-            if (!bungieClient.TryGetDefinition<DestinyRecordDefinition>(recordHash, lang, out var recordDefinition))
+            if (!bungieClient.TryGetDefinition<DestinyRecordDefinition>(recordHash, out var recordDefinition, lang))
                 return DestinyDefinitionNotFound<DestinyRecordDefinition>(recordHash);
 
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
@@ -404,7 +404,7 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
 
             var lang = await _localizationService.GetGuildLocale(GuildId);
 
-            if (!bungieClient.TryGetDefinition<DestinySeasonPassDefinition>(seasonPassHash, lang, out var seasonPassDefinition))
+            if (!bungieClient.TryGetDefinition<DestinySeasonPassDefinition>(seasonPassHash, out var seasonPassDefinition, lang))
                 return DestinyDefinitionNotFound<DestinySeasonPassDefinition>(seasonPassHash);
 
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);

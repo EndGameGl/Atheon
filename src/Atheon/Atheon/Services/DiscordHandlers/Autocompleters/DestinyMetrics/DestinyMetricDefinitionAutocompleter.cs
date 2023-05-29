@@ -37,10 +37,10 @@ namespace Atheon.Services.DiscordHandlers.Autocompleters.DestinyMetrics
 
                 var searchResults = client
                     .Repository
-                    .Search<DestinyMetricDefinition>(lang, x =>
+                    .Search<DestinyMetricDefinition>(x =>
                     {
                         return x.DisplayProperties.Name.Contains(searchEntry, StringComparison.InvariantCultureIgnoreCase);
-                    })
+                    }, lang)
                     .Take(20);
 
                 var results = searchResults

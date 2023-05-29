@@ -35,7 +35,6 @@ public static class DestinyExtensions
 		if (
 			bungieClient.Repository.TryGetDestinyDefinition<DestinyProgressionDefinition>(
 				progressionHash,
-				BungieLocales.EN,
 				out var progressionDefinition
 			)
 		)

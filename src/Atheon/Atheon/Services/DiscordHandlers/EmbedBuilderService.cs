@@ -171,9 +171,9 @@ public class EmbedBuilderService
         BungieLocales locale)
     {
         if (bungieClient.TryGetDefinition<DestinyCollectibleDefinition>(
-                destinyUserBroadcast.DefinitionHash,
-                locale,
-                out var collectibleDefinition))
+                destinyUserBroadcast.DefinitionHash,              
+                out var collectibleDefinition,
+                locale))
         {
             var (name, icon) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(collectibleDefinition, locale);
             embedBuilder.WithThumbnailUrl(icon);
@@ -205,8 +205,8 @@ public class EmbedBuilderService
     {
         if (bungieClient.TryGetDefinition<DestinyRecordDefinition>(
                 destinyUserBroadcast.DefinitionHash,
-                locale,
-                out var recordDefinition))
+                out var recordDefinition,
+                locale))
         {
             embedBuilder.WithThumbnailUrl(recordDefinition.DisplayProperties.Icon.AbsolutePath);
 
@@ -226,9 +226,9 @@ public class EmbedBuilderService
         BungieLocales locale)
     {
         if (bungieClient.TryGetDefinition<DestinyRecordDefinition>(
-                destinyUserBroadcast.DefinitionHash,
-                locale,
-                out var recordDefinition))
+                destinyUserBroadcast.DefinitionHash,              
+                out var recordDefinition,
+                locale))
         {
             if (recordDefinition.DisplayProperties.Icon.HasValue)
             {
@@ -257,17 +257,17 @@ public class EmbedBuilderService
         BungieLocales locale)
     {
         if (bungieClient.TryGetDefinition<DestinyRecordDefinition>(
-                destinyUserBroadcast.DefinitionHash,
-                locale,
-                out _))
+                destinyUserBroadcast.DefinitionHash,            
+                out _,
+                locale))
         {
             var titleHash = uint.Parse(destinyUserBroadcast.AdditionalData["parentTitleHash"]);
             var gildedCount = int.Parse(destinyUserBroadcast.AdditionalData["gildedCount"]);
 
             if (bungieClient.TryGetDefinition<DestinyRecordDefinition>(
-                    titleHash,
-                    locale,
-                    out var titleRecordDefinition))
+                    titleHash,                
+                    out var titleRecordDefinition,
+                    locale))
             {
                 if (titleRecordDefinition.DisplayProperties.Icon.HasValue)
                 {
@@ -364,9 +364,9 @@ public class EmbedBuilderService
         BungieLocales locale)
     {
         if (bungieClient.TryGetDefinition<DestinyCollectibleDefinition>(
-                definitionHash,
-                locale,
-                out var collectibleDefinition))
+                definitionHash,             
+                out var collectibleDefinition,
+                locale))
         {
             var (name, icon) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(collectibleDefinition, locale);
             embedBuilder.WithDescription(
@@ -409,9 +409,9 @@ public class EmbedBuilderService
         BungieLocales locale)
     {
         if (bungieClient.TryGetDefinition<DestinyRecordDefinition>(
-                definitionHash,
-                locale,
-                out var recordDefinition))
+                definitionHash,                
+                out var recordDefinition,
+                locale))
         {
             embedBuilder.WithDescription(
                 $"{usernames.Count} people have completed triumph: **{recordDefinition.DisplayProperties.Name}**");
@@ -449,9 +449,9 @@ public class EmbedBuilderService
         BungieLocales locale)
     {
         if (bungieClient.TryGetDefinition<DestinyRecordDefinition>(
-                definitionHash,
-                locale,
-                out var recordDefinition))
+                definitionHash,                
+                out var recordDefinition,
+                locale))
         {
             if (recordDefinition.DisplayProperties.Icon.HasValue)
             {
@@ -500,9 +500,9 @@ public class EmbedBuilderService
         BungieLocales locale)
     {
         if (bungieClient.TryGetDefinition<DestinyRecordDefinition>(
-                parentTitleHash,
-                locale,
-                out var recordDefinition))
+                parentTitleHash,               
+                out var recordDefinition,
+                locale))
         {
             if (recordDefinition.DisplayProperties.Icon.HasValue)
             {

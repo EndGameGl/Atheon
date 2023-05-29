@@ -67,9 +67,7 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
                         {
                             var parentTitleRecord = bungieClient
                                 .Repository
-                                .Search<DestinyRecordDefinition>(
-                                    BungieLocales.EN,
-                                    def => ((DestinyRecordDefinition)def).TitleInfo?.GildingTrackingRecord.Hash == recordHash)
+                                .Search<DestinyRecordDefinition>(def => def.TitleInfo?.GildingTrackingRecord.Hash == recordHash)
                                 .FirstOrDefault();
 
                             if (parentTitleRecord is null)

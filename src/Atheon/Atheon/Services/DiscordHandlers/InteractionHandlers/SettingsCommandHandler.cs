@@ -245,7 +245,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
 
             var lang = await _localizationService.GetGuildLocale(GuildId);
 
-            if (!client.TryGetDefinition<DestinyCollectibleDefinition>(itemHash, lang, out var collectibleDefinition))
+            if (!client.TryGetDefinition<DestinyCollectibleDefinition>(itemHash, out var collectibleDefinition, lang))
                 return DestinyDefinitionNotFound<DestinyCollectibleDefinition>(itemHash);
 
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
@@ -276,7 +276,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
 
             var lang = await _localizationService.GetGuildLocale(GuildId);
 
-            if (!client.TryGetDefinition<DestinyCollectibleDefinition>(itemHash, lang, out var collectibleDefinition))
+            if (!client.TryGetDefinition<DestinyCollectibleDefinition>(itemHash,  out var collectibleDefinition, lang))
             {
                 return DestinyDefinitionNotFound<DestinyCollectibleDefinition>(itemHash);
             }
@@ -323,7 +323,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
 
             foreach (var collectibleHash in guildSettings.TrackedCollectibles.TrackedHashes)
             {
-                if (!client.TryGetDefinition<DestinyCollectibleDefinition>(collectibleHash, lang, out var collectibleDefinition))
+                if (!client.TryGetDefinition<DestinyCollectibleDefinition>(collectibleHash, out var collectibleDefinition, lang))
                 {
                     sb.AppendLine($"> Unknown definition hash {collectibleHash}");
                 }
@@ -352,7 +352,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
 
             var lang = await _localizationService.GetGuildLocale(GuildId);
 
-            if (!client.TryGetDefinition<DestinyRecordDefinition>(recordHash, lang, out var recordDefinition))
+            if (!client.TryGetDefinition<DestinyRecordDefinition>(recordHash, out var recordDefinition, lang))
                 return DestinyDefinitionNotFound<DestinyRecordDefinition>(recordHash);
 
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
@@ -381,7 +381,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
             var client = await _bungieClientProvider.GetClientAsync();
             var lang = await _localizationService.GetGuildLocale(GuildId);
 
-            if (!client.TryGetDefinition<DestinyRecordDefinition>(recordHash, lang, out var recordDefinition))
+            if (!client.TryGetDefinition<DestinyRecordDefinition>(recordHash, out var recordDefinition, lang))
                 return DestinyDefinitionNotFound<DestinyRecordDefinition>(recordHash);
 
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
@@ -424,7 +424,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
 
             foreach (var collectibleHash in guildSettings.TrackedRecords.TrackedHashes)
             {
-                if (!client.TryGetDefinition<DestinyRecordDefinition>(collectibleHash, lang, out var recordDefinition))
+                if (!client.TryGetDefinition<DestinyRecordDefinition>(collectibleHash, out var recordDefinition, lang))
                 {
                     sb.AppendLine($"> Unknown definition hash {collectibleHash}");
                 }
@@ -501,7 +501,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
             var client = await _bungieClientProvider.GetClientAsync();
             var lang = await _localizationService.GetGuildLocale(GuildId);
 
-            if (!client.TryGetDefinition<DestinyPresentationNodeDefinition>(presentationNodeHash, lang, out var presentationNodeDefinition))
+            if (!client.TryGetDefinition<DestinyPresentationNodeDefinition>(presentationNodeHash, out var presentationNodeDefinition, lang))
                 return DestinyDefinitionNotFound<DestinyPresentationNodeDefinition>(presentationNodeHash);
 
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
@@ -538,7 +538,7 @@ public class SettingsCommandHandler : SlashCommandHandlerBase
             var client = await _bungieClientProvider.GetClientAsync();
             var lang = await _localizationService.GetGuildLocale(GuildId);
 
-            if (!client.TryGetDefinition<DestinyPresentationNodeDefinition>(presentationNodeHash, lang, out var presentationNodeDefinition))
+            if (!client.TryGetDefinition<DestinyPresentationNodeDefinition>(presentationNodeHash, out var presentationNodeDefinition, lang))
                 return DestinyDefinitionNotFound<DestinyPresentationNodeDefinition>(presentationNodeHash);
 
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
