@@ -65,6 +65,10 @@ public static class Destiny2Metadata
 				{
 					DefinitionHashes.Collectibles.ConditionalFinality,
 					DefinitionHashes.Metrics.RootofNightmaresCompletions
+				},
+				{
+					DefinitionHashes.Collectibles.TheNavigator,
+					DefinitionHashes.Metrics.GhostsoftheDeepCompletions
 				}
 			}
 		);
@@ -90,7 +94,8 @@ public static class Destiny2Metadata
 				{
 					DefinitionHashes.Collectibles.ConditionalFinality,
 					"Source: Root of Nightmares Raid"
-				}
+				},
+				{ DefinitionHashes.Collectibles.TheNavigator, "Source: Ghosts of the Deep Dungeon" }
 			}
 		);
 

@@ -177,6 +177,7 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
         [Choice("Touch of Malice", "192937277")]
         [Choice("Hierarchy of Needs", "3558330464")]
         [Choice("Conditional Finality", "2553509474")]
+        [Choice("The Navigator", "161963863")]
         uint collectibleHash,
         [Summary(description: "Whether to hide this message")]
         bool hide = false)
