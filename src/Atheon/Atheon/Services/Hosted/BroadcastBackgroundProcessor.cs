@@ -4,9 +4,9 @@ using Atheon.DataAccess.Models.Destiny.Broadcasts;
 using Atheon.Extensions;
 using Atheon.Services.BungieApi;
 using Atheon.Services.DiscordHandlers;
-using Atheon.Services.EventBus;
 using Atheon.Services.Hosted.Utilities;
 using Atheon.Services.Interfaces;
+using Discord;
 using Discord.WebSocket;
 using DotNetBungieAPI.Service.Abstractions;
 using System.Collections.Concurrent;
@@ -16,44 +16,41 @@ namespace Atheon.Services.Hosted;
 public class BroadcastBackgroundProcessor : PeriodicBackgroundService
 {
     private readonly ILogger<BroadcastBackgroundProcessor> _logger;
-    private readonly IEventBus<ClanBroadcastDbModel> _clanBroadcastEventChannel;
-    private readonly IEventBus<DestinyUserProfileBroadcastDbModel> _profileBroadcastEventChannel;
+    private readonly ICommonEvents _commonEvents;
     private readonly IDiscordClientProvider _discordClientProvider;
     private readonly IDestinyDb _destinyDb;
     private readonly IBungieClientProvider _bungieClientProvider;
     private readonly EmbedBuilderService _embedBuilderService;
-    private readonly DestinyDefinitionDataService _destinyDefinitionDataService;
     private readonly IMemoryCache _memoryCache;
+
     private ConcurrentQueue<ClanBroadcastDbModel> _clanBroadcasts = new();
     private ConcurrentQueue<DestinyUserProfileBroadcastDbModel> _userBroadcasts = new();
+    private ConcurrentQueue<DestinyUserProfileCustomBroadcastDbModel> _userCustomBroadcasts = new();
 
     public BroadcastBackgroundProcessor(
         ILogger<BroadcastBackgroundProcessor> logger,
-        IEventBus<ClanBroadcastDbModel> clanBroadcastEventChannel,
-        IEventBus<DestinyUserProfileBroadcastDbModel> profileBroadcastEventChannel,
+        ICommonEvents commonEvents,
         IDiscordClientProvider discordClientProvider,
         IDestinyDb destinyDb,
         BroadcastSaver broadcastSaver,
         IBungieClientProvider bungieClientProvider,
         EmbedBuilderService embedBuilderService,
-        DestinyDefinitionDataService destinyDefinitionDataService,
         IMemoryCache memoryCache) : base(logger)
     {
         _logger = logger;
-        _clanBroadcastEventChannel = clanBroadcastEventChannel;
-        _profileBroadcastEventChannel = profileBroadcastEventChannel;
+        _commonEvents = commonEvents;
         _discordClientProvider = discordClientProvider;
         _destinyDb = destinyDb;
         _bungieClientProvider = bungieClientProvider;
         _embedBuilderService = embedBuilderService;
-        _destinyDefinitionDataService = destinyDefinitionDataService;
         _memoryCache = memoryCache;
     }
 
     protected override Task BeforeExecutionAsync(CancellationToken stoppingToken)
     {
-        _clanBroadcastEventChannel.Published += (clanBroadcast) => { _clanBroadcasts.Enqueue(clanBroadcast); };
-        _profileBroadcastEventChannel.Published += (userBroadcast) => { _userBroadcasts.Enqueue(userBroadcast); };
+        _commonEvents.ClanBroadcasts.Published += (clanBroadcast) => { _clanBroadcasts.Enqueue(clanBroadcast); };
+        _commonEvents.ProfileBroadcasts.Published += (userBroadcast) => { _userBroadcasts.Enqueue(userBroadcast); };
+        _commonEvents.CustomProfileBroadcasts.Published += (userBroadcast) => { _userCustomBroadcasts.Enqueue(userBroadcast); };
 
         this.ChangeTimerSafe(TimeSpan.FromMinutes(1));
         return Task.CompletedTask;
@@ -90,6 +87,78 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
                             hashGroupedBroadcasts,
                             cancellationToken);
                     }
+        }
+
+        foreach (var userCustomBroadcast in TryDequeue(_userCustomBroadcasts))
+        {
+            await ProcessUserCustomBroadcast(client, userCustomBroadcast, bungieClient);
+        }
+    }
+
+    private async Task ProcessUserCustomBroadcast(
+        DiscordShardedClient client,
+        DestinyUserProfileCustomBroadcastDbModel userBroadcast,
+        IBungieClient bungieClient)
+    {
+        var userName = await _destinyDb.GetProfileDisplayNameAsync(userBroadcast.MembershipId);
+
+        if (string.IsNullOrEmpty(userName))
+        {
+            await _destinyDb.MarkUserCustomBroadcastSentAsync(userBroadcast);
+            _logger.LogWarning("Failed to send broadcast due to username being null {@Broadcast}", userBroadcast);
+            return;
+        }
+
+        var clanData = await _destinyDb.GetClanModelAsync(userBroadcast.ClanId);
+        if (clanData is null)
+        {
+            await _destinyDb.MarkUserCustomBroadcastSentAsync(userBroadcast);
+            _logger.LogWarning("Failed to send broadcast due to clan data not being found {@Broadcast}", userBroadcast);
+            return;
+        }
+
+        var guild = client.GetGuild(userBroadcast.GuildId);
+        if (guild is null)
+        {
+            await _destinyDb.MarkUserCustomBroadcastSentAsync(userBroadcast);
+            _logger.LogWarning("Failed to send broadcast due to guild being null {@Broadcast}", userBroadcast);
+            return;
+        }
+
+        var settings = await _destinyDb.GetGuildSettingsAsync(userBroadcast.GuildId);
+
+        if (settings is null)
+            return;
+
+        var channelId = settings.DefaultReportChannel;
+
+        if (channelId is null)
+        {
+            await _destinyDb.MarkUserCustomBroadcastSentAsync(userBroadcast);
+            _logger.LogWarning("Failed to send broadcast due to channelId being null {@Broadcast}", userBroadcast);
+            return;
+        }
+
+        var channel = guild.GetTextChannel(channelId.Value);
+
+        var lang = await _memoryCache.GetOrAddAsync(
+                $"guild_lang_{userBroadcast.GuildId}",
+                async () => (await _destinyDb.GetGuildLanguageAsync(userBroadcast.GuildId)).ConvertToBungieLocale(),
+                TimeSpan.FromSeconds(15),
+                Caching.CacheExpirationType.Absolute);
+
+        if (channel is not null)
+        {
+            await channel.SendMessageAsync(
+                embed: _embedBuilderService.BuildDestinyCustomUserBroadcast(userBroadcast, clanData, bungieClient, userName, lang));
+
+            await _destinyDb.MarkUserCustomBroadcastSentAsync(userBroadcast);
+        }
+        else
+        {
+            await _destinyDb.MarkUserCustomBroadcastSentAsync(userBroadcast);
+            _logger.LogWarning("Failed to send broadcast due to channel being null {@Broadcast}", userBroadcast);
+            return;
         }
     }
 

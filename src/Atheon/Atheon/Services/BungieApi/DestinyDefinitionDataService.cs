@@ -208,7 +208,7 @@ public class DestinyDefinitionDataService
     {
         if (!bungieClient.TryGetDefinition<DestinyPresentationNodeDefinition>(
                 presentationNodeHash,
-                BungieLocales.EN, out var sealsPresentationNodeDefinition))
+                out var sealsPresentationNodeDefinition))
             return;
 
         foreach (var nodeSealEntry in sealsPresentationNodeDefinition.Children.PresentationNodes)
@@ -252,7 +252,8 @@ public class DestinyDefinitionDataService
     {
         if (!bungieClient.TryGetDefinition<DestinyPresentationNodeDefinition>(
                 presentationNodeHash,
-                locale, out var sealsPresentationNodeDefinition))
+                out var sealsPresentationNodeDefinition, 
+                locale))
             return;
 
         foreach (var nodeSealEntry in sealsPresentationNodeDefinition.Children.PresentationNodes)

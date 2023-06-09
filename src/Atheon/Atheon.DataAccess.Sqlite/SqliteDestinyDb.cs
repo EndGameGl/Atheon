@@ -7,6 +7,7 @@ using Atheon.DataAccess.Models.Destiny.Links;
 using Atheon.DataAccess.Models.Destiny.Profiles;
 using Atheon.DataAccess.Models.Destiny.Tracking;
 using Atheon.DataAccess.Models.Discord;
+using DotNetBungieAPI.Models.Destiny;
 
 namespace Atheon.DataAccess.Sqlite;
 
@@ -20,7 +21,7 @@ public class SqliteDestinyDb : IDestinyDb
     }
 
     private const string GetGuildReferencesQuery =
-        """
+            """
             SELECT 
                 GuildId,
                 GuildName
@@ -32,7 +33,7 @@ public class SqliteDestinyDb : IDestinyDb
     }
 
     private const string GetAllGuildSettingsQuery =
-        """
+            """
             SELECT * FROM Guilds;
             """;
     public async Task<List<DiscordGuildSettingsDbModel>> GetAllGuildSettings()
@@ -102,7 +103,7 @@ public class SqliteDestinyDb : IDestinyDb
     }
 
     private const string GetGuildSettingsQuery =
-        """
+            """
             SELECT * FROM Guilds WHERE GuildId = @GuildId;
             """;
     public async Task<DiscordGuildSettingsDbModel?> GetGuildSettingsAsync(ulong guildId)
@@ -112,8 +113,8 @@ public class SqliteDestinyDb : IDestinyDb
 
     private const string GetAllGuildSettingsForClanQuery =
         """
-            SELECT * FROM Guilds 
-            WHERE EXISTS (SELECT 1 FROM json_each(Clans) WHERE value = @ClanId);
+        SELECT * FROM Guilds 
+        WHERE EXISTS (SELECT 1 FROM json_each(Clans) WHERE value = @ClanId);
         """;
     public async Task<List<DiscordGuildSettingsDbModel>> GetAllGuildSettingsForClanAsync(long clanId)
     {
@@ -219,7 +220,9 @@ public class SqliteDestinyDb : IDestinyDb
             {nameof(DestinyProfileDbModel.LastUpdated)},
             {nameof(DestinyProfileDbModel.ComputedData)},
             {nameof(DestinyProfileDbModel.Metrics)},
-            {nameof(DestinyProfileDbModel.CurrentGuardianRank)}
+            {nameof(DestinyProfileDbModel.CurrentGuardianRank)},
+            {nameof(DestinyProfileDbModel.CurrentActivityData)},
+            {nameof(DestinyProfileDbModel.GameVersionsOwned)}
         )
         VALUES 
         (
@@ -237,7 +240,9 @@ public class SqliteDestinyDb : IDestinyDb
             @{nameof(DestinyProfileDbModel.LastUpdated)},
             @{nameof(DestinyProfileDbModel.ComputedData)},
             @{nameof(DestinyProfileDbModel.Metrics)},
-            @{nameof(DestinyProfileDbModel.CurrentGuardianRank)}
+            @{nameof(DestinyProfileDbModel.CurrentGuardianRank)},
+            @{nameof(DestinyProfileDbModel.CurrentActivityData)},
+            @{nameof(DestinyProfileDbModel.GameVersionsOwned)}
         )
         ON CONFLICT ({nameof(DestinyProfileDbModel.MembershipId)}) DO UPDATE SET 
             {nameof(DestinyProfileDbModel.MembershipType)} = @{nameof(DestinyProfileDbModel.MembershipType)},
@@ -253,7 +258,9 @@ public class SqliteDestinyDb : IDestinyDb
             {nameof(DestinyProfileDbModel.LastUpdated)} = @{nameof(DestinyProfileDbModel.LastUpdated)},
             {nameof(DestinyProfileDbModel.ComputedData)} = @{nameof(DestinyProfileDbModel.ComputedData)},
             {nameof(DestinyProfileDbModel.Metrics)} = @{nameof(DestinyProfileDbModel.Metrics)},
-            {nameof(DestinyProfileDbModel.CurrentGuardianRank)} = @{nameof(DestinyProfileDbModel.CurrentGuardianRank)};
+            {nameof(DestinyProfileDbModel.CurrentGuardianRank)} = @{nameof(DestinyProfileDbModel.CurrentGuardianRank)},
+            {nameof(DestinyProfileDbModel.CurrentActivityData)} = @{nameof(DestinyProfileDbModel.CurrentActivityData)},
+            {nameof(DestinyProfileDbModel.GameVersionsOwned)} = @{nameof(DestinyProfileDbModel.GameVersionsOwned)};
         """;
     public async Task UpsertDestinyProfileAsync(DestinyProfileDbModel profileDbModel)
     {
@@ -886,5 +893,126 @@ public class SqliteDestinyDb : IDestinyDb
     public async Task SetClanRescanForAllTrackedClansAsync()
     {
         await _dbAccess.ExecuteAsync(SetClanRescanForAllTrackedClansQuery);
+    }
+
+    private const string GetPlayersWithoutGameVersionQuery =
+        $"""
+        SELECT
+            MembershipId,
+            Name,
+            ClanId
+        FROM DestinyProfiles
+        WHERE ClanId IN @ClanIds AND GameVersionsOwned & (@Version) == 0
+        """;
+
+    private const string GetPlayersWithGameVersionQuery =
+        $"""
+        SELECT
+            MembershipId,
+            Name,
+            ClanId
+        FROM DestinyProfiles
+        WHERE ClanId IN @ClanIds AND GameVersionsOwned & (@Version) != 0
+        """;
+    public async Task<List<DestinyProfileLite>> GetPlayersWithGameVersionAsync(
+        DestinyGameVersions gameVersion,
+        bool hasVersion,
+        long[] clanIds)
+    {
+        if (hasVersion)
+        {
+            return await _dbAccess.QueryAsync<DestinyProfileLite>(GetPlayersWithGameVersionQuery,
+                new
+                {
+                    ClanIds = clanIds,
+                    Version = gameVersion
+                });
+        }
+
+        return await _dbAccess.QueryAsync<DestinyProfileLite>(GetPlayersWithoutGameVersionQuery,
+            new
+            {
+                ClanIds = clanIds,
+                Version = gameVersion
+            });
+    }
+
+    private const string TryInsertProfileCustomBroadcastQuery =
+        $"""
+        INSERT INTO DestinyUserCustomBroadcasts
+            (
+                {nameof(DestinyUserProfileCustomBroadcastDbModel.GuildId)},
+                {nameof(DestinyUserProfileCustomBroadcastDbModel.ClanId)},
+                {nameof(DestinyUserProfileCustomBroadcastDbModel.WasAnnounced)},
+                {nameof(DestinyUserProfileCustomBroadcastDbModel.Date)},
+                {nameof(DestinyUserProfileCustomBroadcastDbModel.Type)},
+                {nameof(DestinyUserProfileCustomBroadcastDbModel.MembershipId)},
+                {nameof(DestinyUserProfileCustomBroadcastDbModel.OldValue)},
+                {nameof(DestinyUserProfileCustomBroadcastDbModel.NewValue)},
+                {nameof(DestinyUserProfileCustomBroadcastDbModel.AdditionalData)}
+            )
+            VALUES 
+            (
+                @{nameof(DestinyUserProfileCustomBroadcastDbModel.GuildId)},
+                @{nameof(DestinyUserProfileCustomBroadcastDbModel.ClanId)},
+                @{nameof(DestinyUserProfileCustomBroadcastDbModel.WasAnnounced)},
+                @{nameof(DestinyUserProfileCustomBroadcastDbModel.Date)},
+                @{nameof(DestinyUserProfileCustomBroadcastDbModel.Type)},
+                @{nameof(DestinyUserProfileCustomBroadcastDbModel.MembershipId)},
+                @{nameof(DestinyUserProfileCustomBroadcastDbModel.OldValue)},
+                @{nameof(DestinyUserProfileCustomBroadcastDbModel.NewValue)},
+                @{nameof(DestinyUserProfileCustomBroadcastDbModel.AdditionalData)}
+            )
+            ON CONFLICT DO NOTHING;
+        """;
+
+    public async Task TryInsertProfileCustomBroadcastAsync(DestinyUserProfileCustomBroadcastDbModel profileCustomBroadcast)
+    {
+        await _dbAccess.ExecuteAsync(TryInsertProfileCustomBroadcastQuery, profileCustomBroadcast);
+    }
+
+    private const string MarkUserCustomBroadcastSentQuery =
+        $"""
+        UPDATE DestinyUserCustomBroadcasts
+            SET 
+                {nameof(DestinyUserProfileCustomBroadcastDbModel.WasAnnounced)} = true
+            WHERE 
+                {nameof(DestinyUserProfileCustomBroadcastDbModel.Type)} = @{nameof(DestinyUserProfileCustomBroadcastDbModel.Type)} AND
+                {nameof(DestinyUserProfileCustomBroadcastDbModel.ClanId)} = @{nameof(DestinyUserProfileCustomBroadcastDbModel.ClanId)} AND
+                {nameof(DestinyUserProfileCustomBroadcastDbModel.GuildId)} = @{nameof(DestinyUserProfileCustomBroadcastDbModel.GuildId)} AND
+                {nameof(DestinyUserProfileCustomBroadcastDbModel.OldValue)} = @{nameof(DestinyUserProfileCustomBroadcastDbModel.OldValue)} AND
+                {nameof(DestinyUserProfileCustomBroadcastDbModel.OldValue)} = @{nameof(DestinyUserProfileCustomBroadcastDbModel.OldValue)} AND
+                {nameof(DestinyUserProfileCustomBroadcastDbModel.MembershipId)} = @{nameof(DestinyUserProfileCustomBroadcastDbModel.MembershipId)};
+        """;
+
+    public async Task MarkUserCustomBroadcastSentAsync(DestinyUserProfileCustomBroadcastDbModel profileCustomBroadcast)
+    {
+        await _dbAccess.ExecuteAsync(MarkUserCustomBroadcastSentQuery, profileCustomBroadcast);
+    }
+
+    private const string GetGuardianSeasonPassLevelsQuery =
+       """
+        SELECT
+            MembershipId,
+            Name,
+            ClanId,
+            json_extract(Progressions, '$.{0}.level') as FirstValue,
+            json_extract(Progressions, '$.{1}.level') as SecondValue
+        FROM DestinyProfiles
+        WHERE ClanId IN @ClanIds AND (FirstValue > 0 OR SecondValue > 0) 
+        ORDER BY (FirstValue + SecondValue) DESC
+        """;
+
+    public async Task<List<DestinyProfileLiteWithDoubleValues<int, int>>> GetGuardianSeasonPassLevelsAsync(
+        uint pass,
+        uint prestigePass,
+        long[] clanIds)
+    {
+        return await _dbAccess.QueryAsync<DestinyProfileLiteWithDoubleValues<int, int>>(
+            string.Format(GetGuardianSeasonPassLevelsQuery, pass, prestigePass),
+            new
+            {
+                ClanIds = clanIds
+            });
     }
 }

@@ -61,6 +61,12 @@ public class DestinyProfileDbModel
     [AutoColumn(nameof(CurrentGuardianRank))]
     public int CurrentGuardianRank { get; set; }
 
+    [AutoColumn(nameof(CurrentActivityData))]
+    public PlayerActivityData? CurrentActivityData { get; set; }
+
+    [AutoColumn(nameof(GameVersionsOwned))]
+    public DestinyGameVersions GameVersionsOwned { get; set; }
+
 
     public static async Task<DestinyProfileDbModel> CreateFromApiResponse(
         long clanId,
@@ -69,6 +75,8 @@ public class DestinyProfileDbModel
         List<(uint TitleRecordHash, uint? TitleGildRecordHash)> titleHashes)
     {
         var userInfo = destinyProfileResponse.Profile.Data.UserInfo;
+
+        var lastPlayedCharacterId = destinyProfileResponse.GetLastPlayedCharacterId();
 
         var dbModel = new DestinyProfileDbModel()
         {
@@ -82,8 +90,22 @@ public class DestinyProfileDbModel
             ClanId = clanId,
             ResponseMintedTimestamp = destinyProfileResponse.ResponseMintedTimestamp,
             SecondaryComponentsMintedTimestamp = destinyProfileResponse.SecondaryComponentsMintedTimestamp,
-            CurrentGuardianRank = destinyProfileResponse.Profile.Data.CurrentGuardianRank
+            CurrentGuardianRank = destinyProfileResponse.Profile.Data.CurrentGuardianRank,
+            GameVersionsOwned = destinyProfileResponse.Profile.Data.VersionsOwned
         };
+
+        if (lastPlayedCharacterId.HasValue)
+        {
+            var characterActivities = destinyProfileResponse.CharacterActivities.Data[lastPlayedCharacterId.Value];
+            dbModel.CurrentActivityData = new PlayerActivityData()
+            {
+                ActivityHash = characterActivities.CurrentActivity.Hash,
+                ActivityModeHashes = characterActivities.CurrentActivityModes.Select(x => x.Hash.GetValueOrDefault()).Distinct().ToList(),
+                PlaylistActivityHash = characterActivities.CurrentPlaylistActivity.Hash,
+                DateActivityStarted = characterActivities.DateActivityStarted,
+                ActivityModeHash = characterActivities.CurrentActivityMode.Hash
+            };
+        }
 
         dbModel.FillCollectibles(destinyProfileResponse);
         dbModel.FillRecords(destinyProfileResponse);

@@ -1,8 +1,6 @@
 ﻿using Atheon.Services.BungieApi;
-using Atheon.Services.DiscordHandlers;
 using Atheon.Services.Hosted.Utilities;
 using Atheon.Services.Interfaces;
-using System.ComponentModel;
 
 namespace Atheon.Services.Hosted;
 
@@ -65,6 +63,10 @@ public class DestinyManifestHandler : PeriodicBackgroundService, IDestinyManifes
 
                 await client.DefinitionProvider.Update();
                 client.Repository.Clear();
+
+                var manifest = await client.ApiAccess.Destiny2.GetDestinyManifest();
+                await client.DefinitionProvider.ChangeManifestVersion(manifest.Response.Version);
+
                 await client.DefinitionProvider.ReadToRepository(client.Repository);
                 await _destinyDefinitionDataService.MapLookupTables();
 

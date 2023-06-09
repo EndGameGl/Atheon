@@ -9,11 +9,15 @@ public class CommonEvents : ICommonEvents
 
     public IEventBus<DestinyUserProfileBroadcastDbModel> ProfileBroadcasts { get; }
 
+    public IEventBus<DestinyUserProfileCustomBroadcastDbModel> CustomProfileBroadcasts { get; }
+
     public CommonEvents(
         IEventBus<ClanBroadcastDbModel> clanBroadcasts,
-        IEventBus<DestinyUserProfileBroadcastDbModel> profileBroadcasts)
+        IEventBus<DestinyUserProfileBroadcastDbModel> profileBroadcasts,
+        IEventBus<DestinyUserProfileCustomBroadcastDbModel> customProfileBroadcasts)
     {
         ClanBroadcasts = clanBroadcasts;
         ProfileBroadcasts = profileBroadcasts;
+        CustomProfileBroadcasts = customProfileBroadcasts;
     }
 }

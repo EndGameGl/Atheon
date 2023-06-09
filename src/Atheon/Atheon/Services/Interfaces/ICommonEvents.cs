@@ -7,4 +7,5 @@ public interface ICommonEvents
 {
     IEventBus<ClanBroadcastDbModel> ClanBroadcasts { get; }
     IEventBus<DestinyUserProfileBroadcastDbModel> ProfileBroadcasts { get; }
+    IEventBus<DestinyUserProfileCustomBroadcastDbModel> CustomProfileBroadcasts { get; }
 }

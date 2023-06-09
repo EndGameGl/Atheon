@@ -1,6 +1,10 @@
 ﻿using Atheon.Extensions;
+using Atheon.Services.DiscordHandlers.InteractionFlow;
+using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using DotNetBungieAPI.Models.Destiny;
+using Polly;
 
 namespace Atheon.Services.DiscordHandlers.InteractionHandlers.Base
 {
@@ -30,11 +34,12 @@ namespace Atheon.Services.DiscordHandlers.InteractionHandlers.Base
             _logger.LogInformation("Finished executing command: {CommandName}", command.Name);
         }
 
-        protected async Task ExecuteAndHanldeErrors(Func<Task> actualCommand)
+        protected async Task ExecuteAndHandleErrors(Func<Task<IDiscordCommandResult>> commandResult)
         {
             try
             {
-                await actualCommand();
+                var result = await commandResult();
+                await result.Execute(Context);
             }
             catch (Exception ex)
             {
@@ -50,6 +55,32 @@ namespace Atheon.Services.DiscordHandlers.InteractionHandlers.Base
                     await Context.Interaction.RespondAsync(embed: embed);
                 }
             }
+        }
+
+        protected IDiscordCommandResult Error(string message)
+        {
+            return new DiscordCommandErrorEmbedResult(message);
+        }
+
+        protected IDiscordCommandResult DestinyDefinitionNotFound<TDefinition>(uint hash) where TDefinition : IDestinyDefinition
+        {
+            var type = typeof(TDefinition);
+            return new DiscordCommandErrorEmbedResult($"Definition {type.Name} {hash} not found");
+        }
+
+        protected IDiscordCommandResult GuildSettingsNotFound()
+        {
+            return new DiscordCommandErrorEmbedResult("Failed to get load guild settings");
+        }
+
+        protected IDiscordCommandResult Success(Embed embed, bool hide = false)
+        {
+            return new DiscordCommandEmbedResult(embed, hide);
+        }
+
+        protected IDiscordCommandResult Success(EmbedBuilder embedBuilder, bool hide = false)
+        {
+            return new DiscordCommandEmbedResult(embedBuilder.Build(), hide);
         }
     }
 }
