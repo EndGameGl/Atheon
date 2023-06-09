@@ -77,5 +77,10 @@ namespace Atheon.Services.DiscordHandlers.InteractionHandlers.Base
         {
             return new DiscordCommandEmbedResult(embed, hide);
         }
+
+        protected IDiscordCommandResult Success(EmbedBuilder embedBuilder, bool hide = false)
+        {
+            return new DiscordCommandEmbedResult(embedBuilder.Build(), hide);
+        }
     }
 }
