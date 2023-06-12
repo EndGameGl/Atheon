@@ -1,10 +1,8 @@
-﻿using Atheon.Extensions;
-using Atheon.Services.DiscordHandlers.InteractionFlow;
+﻿using Atheon.Services.DiscordHandlers.InteractionFlow;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using DotNetBungieAPI.Models.Destiny;
-using Polly;
 
 namespace Atheon.Services.DiscordHandlers.InteractionHandlers.Base
 {
@@ -24,14 +22,16 @@ namespace Atheon.Services.DiscordHandlers.InteractionHandlers.Base
             EmbedBuilderService = embedBuilderService;
         }
 
-        public override void BeforeExecute(ICommandInfo command)
+        public override Task BeforeExecuteAsync(ICommandInfo command)
         {
             _logger.LogInformation("Started executing command: {CommandName}", command.Name);
+            return Task.CompletedTask;
         }
 
-        public override void AfterExecute(ICommandInfo command)
+        public override Task AfterExecuteAsync(ICommandInfo command)
         {
             _logger.LogInformation("Finished executing command: {CommandName}", command.Name);
+            return Task.CompletedTask;
         }
 
         protected async Task ExecuteAndHandleErrors(Func<Task<IDiscordCommandResult>> commandResult)

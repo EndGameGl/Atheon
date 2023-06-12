@@ -14,7 +14,7 @@ using DotNetBungieAPI.Models.Destiny.Definitions.SeasonPasses;
 namespace Atheon.Services.DiscordHandlers.InteractionHandlers;
 
 [Group("leaderboards", "Group of commands to show leaderboards for Destiny 2")]
-public class LeaderboardsCommandHandler : SlashCommandHandlerBase
+public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
 {
     private readonly EmbedBuilderService _embedBuilderService;
     private readonly IDestinyDb _destinyDb;
@@ -26,7 +26,7 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
         EmbedBuilderService embedBuilderService,
         IDestinyDb destinyDb,
         IBungieClientProvider bungieClientProvider,
-        ILocalizationService localizationService) : base(logger, embedBuilderService)
+        ILocalizationService localizationService) : base(localizationService, logger, embedBuilderService)
     {
         _embedBuilderService = embedBuilderService;
         _destinyDb = destinyDb;
@@ -45,8 +45,7 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
                 return Error($"Couldn't parse metric hash");
 
             var bungieClient = await _bungieClientProvider.GetClientAsync();
-            var lang = await _localizationService.GetGuildLocale(GuildId);
-            if (!bungieClient.TryGetDefinition<DestinyMetricDefinition>(metricHash, out var metricDefinition, lang))
+            if (!bungieClient.TryGetDefinition<DestinyMetricDefinition>(metricHash, out var metricDefinition, GuildLocale))
                 return DestinyDefinitionNotFound<DestinyMetricDefinition>(metricHash);
 
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
@@ -289,9 +288,7 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
 
             var bungieClient = await _bungieClientProvider.GetClientAsync();
 
-            var lang = await _localizationService.GetGuildLocale(GuildId);
-
-            if (!bungieClient.TryGetDefinition<DestinyRecordDefinition>(recordHash, out var recordDefinition, lang))
+            if (!bungieClient.TryGetDefinition<DestinyRecordDefinition>(recordHash, out var recordDefinition, GuildLocale))
                 return DestinyDefinitionNotFound<DestinyRecordDefinition>(recordHash);
 
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
@@ -401,10 +398,7 @@ public class LeaderboardsCommandHandler : SlashCommandHandlerBase
                 return Error("Failed to parse season pass hash");
 
             var bungieClient = await _bungieClientProvider.GetClientAsync();
-
-            var lang = await _localizationService.GetGuildLocale(GuildId);
-
-            if (!bungieClient.TryGetDefinition<DestinySeasonPassDefinition>(seasonPassHash, out var seasonPassDefinition, lang))
+            if (!bungieClient.TryGetDefinition<DestinySeasonPassDefinition>(seasonPassHash, out var seasonPassDefinition, GuildLocale))
                 return DestinyDefinitionNotFound<DestinySeasonPassDefinition>(seasonPassHash);
 
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);

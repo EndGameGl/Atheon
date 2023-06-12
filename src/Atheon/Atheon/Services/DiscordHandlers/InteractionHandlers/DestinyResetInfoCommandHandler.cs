@@ -7,14 +7,15 @@ using Humanizer;
 namespace Atheon.Services.DiscordHandlers.InteractionHandlers;
 
 [Group("destiny-time-info", "Group of commands to show time-related info for Destiny 2")]
-public class DestinyResetInfoCommandHandler : SlashCommandHandlerBase
+public class DestinyResetInfoCommandHandler : LocalizedSlashCommandHandler
 {
     private readonly IBungieClientProvider _bungieClientProvider;
 
     public DestinyResetInfoCommandHandler(
         ILogger<DestinyResetInfoCommandHandler> logger,
         EmbedBuilderService embedBuilderService,
-        IBungieClientProvider bungieClientProvider) : base(logger, embedBuilderService)
+        IBungieClientProvider bungieClientProvider,
+        ILocalizationService localizationService) : base(localizationService, logger, embedBuilderService)
     {
         _bungieClientProvider = bungieClientProvider;
     }
@@ -28,7 +29,7 @@ public class DestinyResetInfoCommandHandler : SlashCommandHandlerBase
             var resetTime = bungieClient.ResetService.GetNextDailyReset();
             var currentTime = DateTime.UtcNow;
             var timeLeft = currentTime - resetTime;
-            var humanizedTime = timeLeft.Humanize(culture: SystemDefaults.DefaultCulture, minUnit: Humanizer.Localisation.TimeUnit.Minute);
+            var humanizedTime = timeLeft.Humanize(culture: LocaleCulture, minUnit: Humanizer.Localisation.TimeUnit.Minute, precision: 2);
             var embed = EmbedBuilderService.CreateSimpleResponseEmbed("Time until daily reset", $"Daily reset will happen in {humanizedTime}");
             return Success(embed);
         });
@@ -43,7 +44,7 @@ public class DestinyResetInfoCommandHandler : SlashCommandHandlerBase
             var resetTime = bungieClient.ResetService.GetNextWeeklyReset(DayOfWeek.Tuesday);
             var currentTime = DateTime.UtcNow;
             var timeLeft = currentTime - resetTime;
-            var humanizedTime = timeLeft.Humanize(culture: SystemDefaults.DefaultCulture, minUnit: Humanizer.Localisation.TimeUnit.Minute);
+            var humanizedTime = timeLeft.Humanize(culture: LocaleCulture, minUnit: Humanizer.Localisation.TimeUnit.Minute, precision: 2);
             var embed = EmbedBuilderService.CreateSimpleResponseEmbed("Time until weekly reset", $"Weekly reset will happen in {humanizedTime}");
             return Success(embed);
         });
@@ -57,7 +58,7 @@ public class DestinyResetInfoCommandHandler : SlashCommandHandlerBase
             var bungieClient = await _bungieClientProvider.GetClientAsync();
             var currentTime = DateTime.UtcNow;
             var currentSeason = bungieClient.Repository
-                .Search<DestinySeasonDefinition>(x => x.EndDate is not null && (currentTime < x.EndDate && currentTime >= x.StartDate))
+                .Search<DestinySeasonDefinition>(x => x.EndDate is not null && (currentTime < x.EndDate && currentTime >= x.StartDate), GuildLocale)
                 .FirstOrDefault();
 
             if (currentSeason is null)
@@ -66,7 +67,7 @@ public class DestinyResetInfoCommandHandler : SlashCommandHandlerBase
             }
 
             var timeLeft = currentSeason.EndDate!.Value - currentTime;
-            var humanizedTime = timeLeft.Humanize(culture: SystemDefaults.DefaultCulture, minUnit: Humanizer.Localisation.TimeUnit.Minute);
+            var humanizedTime = timeLeft.Humanize(culture: LocaleCulture, minUnit: Humanizer.Localisation.TimeUnit.Minute, precision: 2);
             var embed = EmbedBuilderService.CreateSimpleResponseEmbed("Time until season ends", $"{currentSeason.DisplayProperties.Name} will end in {humanizedTime}");
             return Success(embed);
         });
