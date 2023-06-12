@@ -65,11 +65,23 @@ namespace Atheon.Services.DiscordHandlers.InteractionHandlers.Base
         protected IDiscordCommandResult DestinyDefinitionNotFound<TDefinition>(uint hash) where TDefinition : IDestinyDefinition
         {
             var type = typeof(TDefinition);
+            if (this is LocalizedSlashCommandHandler localizedSlashCommandHandler)
+            {
+                return new DiscordCommandErrorEmbedResult(localizedSlashCommandHandler.FormatText(
+                    "DefinitionNotFoundError", 
+                    () => "Definition {0} {1} not found",
+                    type.Name,
+                    hash));
+            }
             return new DiscordCommandErrorEmbedResult($"Definition {type.Name} {hash} not found");
         }
 
         protected IDiscordCommandResult GuildSettingsNotFound()
         {
+            if (this is LocalizedSlashCommandHandler localizedSlashCommandHandler)
+            {
+                return new DiscordCommandErrorEmbedResult(localizedSlashCommandHandler.Text("GuildSettingsNotFound", () => "Failed to get load guild settings"));
+            }
             return new DiscordCommandErrorEmbedResult("Failed to get load guild settings");
         }
 

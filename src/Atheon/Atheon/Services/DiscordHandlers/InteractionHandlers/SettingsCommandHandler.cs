@@ -13,13 +13,14 @@ using Atheon.Services.DiscordHandlers.Autocompleters.DestinyRecords;
 using Atheon.Services.DiscordHandlers.InteractionHandlers.Base;
 using Atheon.Services.DiscordHandlers.Preconditions;
 using Atheon.Services.Interfaces;
-using Atheon.Services.Localization;
 using Discord;
 using Discord.Interactions;
 using DotNetBungieAPI.Models.Destiny.Definitions.Collectibles;
 using DotNetBungieAPI.Models.Destiny.Definitions.PresentationNodes;
 using DotNetBungieAPI.Models.Destiny.Definitions.Records;
+using System.Security.Claims;
 using System.Text;
+using System.Xml.Linq;
 
 namespace Atheon.Services.DiscordHandlers.InteractionHandlers;
 
@@ -65,13 +66,15 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
             {
                 var existingGuildClan = await _destinyDb.GetClanModelAsync(clanId);
                 if (existingGuildClan is null)
-                    return Error($"Clan {clanId} not found in database");
+                    return Error(FormatText("ClanNotFoundError", () => "Clan {0} not found in database", clanId));
 
                 existingGuildClan.IsTracking = true;
                 await _destinyDb.UpsertClanModelAsync(existingGuildClan);
 
-                var embedTemplate = _embedBuilderService.CreateSimpleResponseEmbed("Add new clan failed", "Clan is already added to this discord guild");
-                return Success(embedTemplate.Build());
+                var embedTemplate = _embedBuilderService.CreateSimpleResponseEmbed(
+                    Text("AddClanFailedTitle", () => "Add new clan failed"),
+                    Text("AddClanFailedDescription", () => "Clan is already added to this discord guild"));
+                return Success(embedTemplate);
             }
 
             var existingClan = await _destinyDb.GetClanModelAsync(clanId);
@@ -80,17 +83,18 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
             {
                 settings.Clans.Add(clanId);
                 await _destinyDb.UpsertGuildSettingsAsync(settings);
-                var embedTemplate = _embedBuilderService.CreateSimpleResponseEmbed("Add new clan success", "Added clan to this guild");
-                return Success(embedTemplate.Build());
+                var embedTemplate = _embedBuilderService.CreateSimpleResponseEmbed(
+                    Text("AddClanSuccessTitle", () => "Add new clan success"),
+                    Text("AddClanSuccessDescription", () => "Added clan to this guild"));
+                return Success(embedTemplate);
             }
 
             _clanQueue.EnqueueFirstTimeScan(clanId);
             settings.Clans.Add(clanId);
             await _destinyDb.UpsertGuildSettingsAsync(settings);
             return Success(_embedBuilderService.CreateSimpleResponseEmbed(
-                    "Add new clan success",
-                    "New clan will be ready when scan message pops up")
-                .Build());
+                    Text("AddClanSuccessTitle", () => "Add new clan success"),
+                    Text("AddClanSuccessResponseNew", () => "New clan will be ready when scan message pops up")));
         });
     }
 
@@ -108,14 +112,16 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
             guildSettings.Clans.Remove(clanIdToRemove);
             var clanModel = await _destinyDb.GetClanModelAsync(clanIdToRemove);
             if (clanModel is null)
-                return Error("Clan not found");
+                return Error(FormatText("ClanNotFoundError", () => "Clan {0} not found in database", clanIdToRemove));
 
             clanModel.IsTracking = false;
 
             await _destinyDb.UpsertClanModelAsync(clanModel);
             await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
 
-            return Success(_embedBuilderService.CreateSimpleResponseEmbed($"Removed clan {clanIdToRemove}", "Success").Build());
+            return Success(_embedBuilderService.CreateSimpleResponseEmbed(
+                Text("RemoveClanSuccessTitle", () => "Clan removed"),
+                FormatText("RemoveClanSuccessDescription", () => "Removed clan {0} from this server", clanIdToRemove)));
         });
     }
 
@@ -139,8 +145,8 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
             await _destinyDb.UpsertProfileLinkAsync(link);
 
             return Success(_embedBuilderService.CreateSimpleResponseEmbed(
-                    "User updated",
-                    $"{userToLinkTo.Mention} is now linked to {user.MembershipId}").Build());
+                    Text("UserDataUpdatedTitle", () => "User updated"),
+                    FormatText("UserDestinyMembershipLinked", () => "{0} is now linked to {1}", userToLinkTo.Mention, user.MembershipId)));
         });
     }
 
@@ -158,8 +164,8 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
             });
 
             return Success(_embedBuilderService.CreateSimpleResponseEmbed(
-                    "Admin added",
-                    $"{user.Mention} is now bot admin").Build());
+                    Text("AdminAddedSuccessTitle", () => "Admin added"),
+                    FormatText("AdminAddedSuccessDescription", () => "{0} is now bot admin", user.Mention)));
         });
     }
 
@@ -177,8 +183,8 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
             });
 
             return Success(_embedBuilderService.CreateSimpleResponseEmbed(
-                    "Admin removed",
-                    $"{user.Mention} is not bot admin anymore").Build());
+                   Text("AdminRemovedSuccessTitle", () => "Admin removed"),
+                   FormatText("AdminRemovedSuccessDescription", () => "{0} is not bot admin anymore", user.Mention)));
         });
     }
 
@@ -197,9 +203,8 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
             await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
 
             return Success(_embedBuilderService.CreateSimpleResponseEmbed(
-                    "Success",
-                    $"Default report channel is now <#{channel.Id}>")
-                .Build());
+                    Text("Success", () => "Success"),
+                    FormatText("DefaultReportChannelChangeResponse", () => "Default report channel is now <#{0}>", channel.Id)));
         });
     }
 
@@ -228,9 +233,8 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
             await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
 
             return Success(_embedBuilderService.CreateSimpleResponseEmbed(
-                    "Success",
-                    $"Updated report settings")
-                .Build());
+                    Text("Success", () => "Success"),
+                    Text("ReportSettingsUpdatedDescription", () => "Updated report settings")));
         });
     }
 
@@ -256,10 +260,9 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
             var (name, icon) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(collectibleDefinition, GuildLocale);
 
             return Success(_embedBuilderService.CreateSimpleResponseEmbed(
-                    "Success",
-                    $"Added **{name}** to tracking")
-                .WithThumbnailUrl(icon)
-                .Build());
+                    Text("Success", () => "Success"),
+                    FormatText("ItemAddedToTrackingDescription", () => "Added **{0}** to tracking", name))
+                .WithThumbnailUrl(icon));
         });
     }
 
@@ -272,7 +275,7 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
         {
             var client = await _bungieClientProvider.GetClientAsync();
 
-            if (!client.TryGetDefinition<DestinyCollectibleDefinition>(itemHash,  out var collectibleDefinition, GuildLocale))
+            if (!client.TryGetDefinition<DestinyCollectibleDefinition>(itemHash, out var collectibleDefinition, GuildLocale))
             {
                 return DestinyDefinitionNotFound<DestinyCollectibleDefinition>(itemHash);
             }
@@ -287,10 +290,9 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
             var (name, icon) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(collectibleDefinition, GuildLocale);
 
             return Success(_embedBuilderService.CreateSimpleResponseEmbed(
-                    "Success",
-                    $"Removed **{name}** from tracking")
-                .WithThumbnailUrl(icon)
-                .Build());
+                    Text("Success", () => "Success"),
+                    FormatText("ItemRemovedFromTrackingDescription", () => "Removed **{0}** from tracking", name))
+                .WithThumbnailUrl(icon));
         });
     }
 
@@ -308,9 +310,8 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
             if (!guildSettings.TrackedCollectibles.TrackedHashes.Any())
             {
                 return Success(_embedBuilderService.CreateSimpleResponseEmbed(
-                        "Tracked items",
-                        $"Currently there's no tracked items")
-                    .Build());
+                        Text("TrackedItemsTitle", () => "Tracked items"),
+                        Text("NoTrackedItemsDescription", () => "Currently there's no tracked items")));
             }
 
             var sb = new StringBuilder();
@@ -319,7 +320,7 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
             {
                 if (!client.TryGetDefinition<DestinyCollectibleDefinition>(collectibleHash, out var collectibleDefinition, GuildLocale))
                 {
-                    sb.AppendLine($"> Unknown definition hash {collectibleHash}");
+                    sb.AppendLine($"> {FormatText("UnknownTrackedItem", () => "Unknown definition hash {0}", collectibleHash)}");
                 }
                 else
                 {
@@ -329,9 +330,8 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
             }
 
             return Success(_embedBuilderService.CreateSimpleResponseEmbed(
-                    $"Tracked items: {guildSettings.TrackedCollectibles.TrackedHashes.Count}",
-                    sb.ToString().LimitTo(4096))
-                .Build());
+                    FormatText("TrackedItemsCountTitle", () => "Tracked items: {0}", guildSettings.TrackedCollectibles.TrackedHashes.Count),
+                    sb.ToString().LimitTo(4096)));
         });
     }
 
@@ -356,10 +356,9 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
             await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
 
             return Success(_embedBuilderService.CreateSimpleResponseEmbed(
-                    "Success",
-                    $"Added **{recordDefinition.DisplayProperties.Name}** to tracking")
-                .WithThumbnailUrl(recordDefinition.DisplayProperties.Icon.AbsolutePath)
-                .Build());
+                    Text("Success", () => "Success"),
+                    FormatText("ItemAddedToTrackingDescription", () => "Added **{0}** to tracking", recordDefinition.DisplayProperties.Name))
+                .WithThumbnailUrl(recordDefinition.DisplayProperties.Icon.AbsolutePath));
         });
     }
 
@@ -383,10 +382,9 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
             await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
 
             return Success(_embedBuilderService.CreateSimpleResponseEmbed(
-                    "Success",
-                    $"Removed **{recordDefinition.DisplayProperties.Name}** from tracking")
-                .WithThumbnailUrl(recordDefinition.DisplayProperties.Icon.AbsolutePath)
-                .Build());
+                    Text("Success", () => "Success"),
+                    FormatText("ItemRemovedFromTrackingDescription", () => "Removed **{0}** from tracking", recordDefinition.DisplayProperties.Name))
+                .WithThumbnailUrl(recordDefinition.DisplayProperties.Icon.AbsolutePath));
         });
     }
 
@@ -404,18 +402,18 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
             if (!guildSettings.TrackedRecords.TrackedHashes.Any())
             {
                 return Success(_embedBuilderService.CreateSimpleResponseEmbed(
-                        "Tracked triumphs",
-                        $"Currently there's no tracked triumphs")
+                        Text("TrackedTriumphsTitle", () => "Tracked triumphs"),
+                        Text("NoTrackedTriumphsDescription", () => "Currently there's no tracked triumphs"))
                     .Build());
             }
 
             var sb = new StringBuilder();
 
-            foreach (var collectibleHash in guildSettings.TrackedRecords.TrackedHashes)
+            foreach (var recordHash in guildSettings.TrackedRecords.TrackedHashes)
             {
-                if (!client.TryGetDefinition<DestinyRecordDefinition>(collectibleHash, out var recordDefinition, GuildLocale))
+                if (!client.TryGetDefinition<DestinyRecordDefinition>(recordHash, out var recordDefinition, GuildLocale))
                 {
-                    sb.AppendLine($"> Unknown definition hash {collectibleHash}");
+                    sb.AppendLine($"> {FormatText("UnknownTrackedItem", () => "Unknown definition hash {0}", recordHash)}");
                 }
                 else
                 {
@@ -424,9 +422,8 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
             }
 
             return Success(_embedBuilderService.CreateSimpleResponseEmbed(
-                    $"Tracked triumphs: {guildSettings.TrackedRecords.TrackedHashes.Count}",
-                    sb.ToString().LimitTo(4096))
-                .Build());
+                    FormatText("TrackedTriumphsCountTitle", () => "Tracked triumphs: {0}", guildSettings.TrackedRecords.TrackedHashes.Count),
+                    sb.ToString().LimitTo(4096)));
         });
     }
 
@@ -470,8 +467,9 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
             }
 
             var embed = _embedBuilderService
-                .CreateSimpleResponseEmbed("Success", "Guild settings updated")
-                .Build();
+                .CreateSimpleResponseEmbed(
+                    Text("Success", () => "Success"),
+                    Text("GuildSystemReportSettingsUpdated", () => "Guild system report settings updated"));
 
             return Success(embed);
         });
@@ -485,7 +483,7 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
         await ExecuteAndHandleErrors(async () =>
         {
             if (!uint.TryParse(presentationNodeHashString, out var presentationNodeHash))
-                return Error($"Failed to parse presentation node hash");
+                return Error(FormatText("FailedToParsePresentationNodeHashError", () => "Failed to parse presentation node hash: {0}", presentationNodeHashString));
 
             var client = await _bungieClientProvider.GetClientAsync();
 
@@ -504,10 +502,13 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
             await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
 
             var embed = _embedBuilderService.CreateSimpleResponseEmbed(
-                    "Success",
-                    $"Added **{presentationNodeDefinition.DisplayProperties.Name}** ({presentationNodeDefinition.Children.Collectibles.Count} item(s)) to tracking")
-                .WithThumbnailUrl(presentationNodeDefinition.DisplayProperties.Icon.AbsolutePath)
-                .Build();
+                    Text("Success", () => "Success"),
+                    FormatText(
+                        "AddedAllItemsFromPresentationNodeDescription",
+                        () => "Added **{0}** ({1} item(s)) to tracking",
+                        presentationNodeDefinition.DisplayProperties.Name,
+                        presentationNodeDefinition.Children.Collectibles.Count))
+                .WithThumbnailUrl(presentationNodeDefinition.DisplayProperties.Icon.AbsolutePath);
 
             return Success(embed);
         });
@@ -521,7 +522,7 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
         await ExecuteAndHandleErrors(async () =>
         {
             if (!uint.TryParse(presentationNodeHashString, out var presentationNodeHash))
-                return Error($"Failed to parse presentation node hash");
+                return Error(FormatText("FailedToParsePresentationNodeHashError", () => "Failed to parse presentation node hash: {0}", presentationNodeHashString));
 
             var client = await _bungieClientProvider.GetClientAsync();
 
@@ -540,10 +541,13 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
             await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
 
             var embed = _embedBuilderService.CreateSimpleResponseEmbed(
-                    "Success",
-                    $"Removed **{presentationNodeDefinition.DisplayProperties.Name}** ({presentationNodeDefinition.Children.Collectibles.Count} item(s)) from tracking")
-                .WithThumbnailUrl(presentationNodeDefinition.DisplayProperties.Icon.AbsolutePath)
-                .Build();
+                    Text("Success", () => "Success"),
+                    FormatText(
+                        "RemovedAllItemsFromPresentationNodeDescription",
+                        () => "Removed **{0}** ({1} item(s)) from tracking",
+                        presentationNodeDefinition.DisplayProperties.Name,
+                        presentationNodeDefinition.Children.Collectibles.Count))
+                .WithThumbnailUrl(presentationNodeDefinition.DisplayProperties.Icon.AbsolutePath);
 
             return Success(embed);
         });
@@ -569,9 +573,8 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
             await _bungieClientProvider.ReloadClient();
 
             return Success(_embedBuilderService.CreateSimpleResponseEmbed(
-                    "Success",
-                    $"Changed locale language to {locale}")
-                .Build());
+                    Text("Success", () => "Success"),
+                    FormatText("ChangedGuildLocale", () => "Changed locale language to {0}", locale)));
         });
     }
 
@@ -585,9 +588,8 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
             await _destinyDb.SetClanRescanAsync(clanToRescan);
 
             return Success(_embedBuilderService.CreateSimpleResponseEmbed(
-                    "Success",
-                    $"Queued clan for rescan: {clanToRescan}")
-                .Build());
+                    Text("Success", () => "Success"),
+                    FormatText("QueuedClanForRescan", () => "Queued clan for rescan: {0}", clanToRescan)));
         });
     }
 
@@ -600,9 +602,8 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
             await _destinyDb.SetClanRescanForAllTrackedClansAsync();
 
             return Success(_embedBuilderService.CreateSimpleResponseEmbed(
-                    "Success",
-                    $"Queued up all clans for rescan")
-                .Build());
+                    Text("Success", () => "Success"),
+                    Text("QueuedAllClansForRescan", () => "Queued up all clans for rescan")));
         });
     }
 }

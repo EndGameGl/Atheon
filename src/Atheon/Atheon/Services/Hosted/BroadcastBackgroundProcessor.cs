@@ -179,7 +179,7 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
         if (clanModel is null)
             return;
 
-        var clanEmbed = _embedBuilderService.CreateClanBroadcastEmbed(clanBroadcast, clanModel);
+        var clanEmbed = _embedBuilderService.CreateClanBroadcastEmbed(clanBroadcast, clanModel, settings.DestinyManifestLocale.ConvertToBungieLocale());
 
         var guild = client.GetGuild(clanBroadcast.GuildId);
         var channel = guild.GetTextChannel(settings.DefaultReportChannel.Value);

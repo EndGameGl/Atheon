@@ -50,7 +50,7 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
         await ExecuteAndHandleErrors(async () =>
         {
             if (!uint.TryParse(collectibleHashString, out var collectibleHash))
-                return Error($"Failed to parse collectible hash");
+                return Error(FormatText("FailedToParseCollectibleHashError", () => "Failed to parse collectible hash: {0}", collectibleHashString));
 
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
@@ -68,7 +68,9 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
 
             var embedBuilder = _embedBuilderService
                 .GetTemplateEmbed()
-                .WithTitle($"{users.Count} users {(hasItem ? "have" : "miss")} {defName}")
+                .WithTitle(hasItem ?
+                    FormatText("UsersWithItemCount", () => "{0} users have {1}", users.Count, defName) :
+                    FormatText("UsersWithoutItemCount", () => "{0} users miss {1}", users.Count, defName))
                 .WithThumbnailUrl(defIcon);
 
             for (int j = 0; j < clanReferences.Count; j++)
@@ -91,7 +93,7 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
                     else
                     {
                         var left = usersOfClan.Count - i + 1;
-                        sb.Append($"And {left} more...");
+                        sb.Append(FormatText("HiddenUsersCount", () => "And {0} more...", left));
                         break;
                     }
                 }
@@ -112,7 +114,7 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
         await ExecuteAndHandleErrors(async () =>
         {
             if (!uint.TryParse(recordHashString, out var recordHash))
-                return Error($"Failed to parse record hash");
+                return Error(FormatText("FailedToParseRecordHashError", () => "Failed to parse record hash: {0}", recordHashString));
 
             var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
@@ -129,7 +131,9 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
             var embedBuilder = _embedBuilderService
                 .GetTemplateEmbed()
                 .WithThumbnailUrl(recordDefinition.DisplayProperties.Icon.AbsolutePath)
-                .WithTitle($"{users.Count} users have{(hasCompletedTriumph ? " " : " not ")}completed {recordDefinition.DisplayProperties.Name}");
+                .WithTitle(hasCompletedTriumph ? 
+                    FormatText("UsersWithTriumphCount", () => "{0} users have completed {1}", users.Count, recordDefinition.DisplayProperties.Name) :
+                    FormatText("UsersWithoutTriumphCount", () => "{0} users have not completed {1}", users.Count, recordDefinition.DisplayProperties.Name));
 
             for (int j = 0; j < clanReferences.Count; j++)
             {
@@ -151,7 +155,7 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
                     else
                     {
                         var left = usersOfClan.Count - i + 1;
-                        sb.Append($"And {left} more...");
+                        sb.Append(FormatText("HiddenUsersCount", () => "And {0} more...", left));
                         break;
                     }
                 }
@@ -198,7 +202,11 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
             var embedBuilder = _embedBuilderService
                 .GetTemplateEmbed()
                 .WithThumbnailUrl(collectibleDefinition.DisplayProperties.Icon.AbsolutePath)
-                .WithTitle($"Users who don't have {collectibleDefinition.DisplayProperties.Name}");
+                .WithTitle(FormatText(
+                    "UsersWithoutItemCount", 
+                    () => "{0} users miss {1}", 
+                    drystreaks.Count,
+                    collectibleDefinition.DisplayProperties.Name));
 
             if (Destiny2Metadata.DryStreakItemSources.TryGetValue(collectibleHash, out var source))
             {
@@ -212,7 +220,7 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
 
                 var formattedData = _embedBuilderService.FormatAsStringTable<DestinyProfileLiteWithValue<int>, long>(
                     usersOfClan.Count,
-                    "No users",
+                    Text("NoUsersFound", () => "No users"),
                     usersOfClan,
                     (user) => user.MembershipId,
                     new Func<DestinyProfileLiteWithValue<int>, object>[]
@@ -238,7 +246,7 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
         await ExecuteAndHandleErrors(async () =>
         {
             if (!uint.TryParse(titleRecordHashString, out var titleRecordHash))
-                return Error($"Failed to parse record hash");
+                return Error(FormatText("FailedToParseRecordHashError", () => "Failed to parse record hash: {0}", titleRecordHashString));
 
             var client = await _bungieClientProvider.GetClientAsync();
 
@@ -256,8 +264,8 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
             var clanReferences = await _destinyDb.GetClanReferencesFromIdsAsync(clanIds);
 
             var embedBuilder = _embedBuilderService
-            .GetTemplateEmbed()
-                .WithTitle($"Users who have {titleName} title");
+                .GetTemplateEmbed()
+                .WithTitle(FormatText("UsersWithTitleTitle", () => "Users who have {0} title", titleName));
 
             var gettersList = new List<Func<DestinyProfileLiteWithValue<int>, object>>()
             {
@@ -278,7 +286,7 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
 
                 var formattedData = _embedBuilderService.FormatAsStringTable<DestinyProfileLiteWithValue<int>, long>(
                     usersOfClan.Count,
-                    "No users",
+                    Text("NoUsersFound", () => "No users"),
                     usersOfClan,
                     (user) => user.MembershipId,
                     getters,
@@ -303,7 +311,7 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
             }
             embedBuilder.WithThumbnailUrl(icon ?? titleDefinition.DisplayProperties.Icon.AbsolutePath);
 
-            return Success(embedBuilder.Build(), hide);
+            return Success(embedBuilder, hide);
         });
     }
 
@@ -325,7 +333,9 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
 
             var embedBuilder = _embedBuilderService
                 .GetTemplateEmbed()
-                .WithTitle($"Users who {(hasVersion is false ? "don't " : "")}have {gameVersion}");
+                .WithTitle(hasVersion is false ?
+                    FormatText("UsersWithoutGameVersion", () => "Users who don't have {0}", gameVersion) :
+                    FormatText("UsersWithGameVersion", () => "Users who have {0}", gameVersion));
 
             var gettersList = new List<Func<DestinyProfileLite, object>>()
             {
@@ -341,7 +351,7 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
 
                 var formattedData = _embedBuilderService.FormatAsStringTable<DestinyProfileLite, long>(
                     usersOfClan.Count,
-                    "No users",
+                    Text("NoUsersFound", () => "No users"),
                     usersOfClan,
                     (user) => user.MembershipId,
                     getters,
@@ -350,7 +360,7 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
                 embedBuilder.AddField(reference.Name, $"```{formattedData}```");
             }
 
-            return Success(embedBuilder.Build(), hide);
+            return Success(embedBuilder, hide);
         });
     }
 }

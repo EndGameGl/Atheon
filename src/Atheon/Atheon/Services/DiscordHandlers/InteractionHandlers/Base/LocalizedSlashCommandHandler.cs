@@ -10,7 +10,7 @@ public abstract class LocalizedSlashCommandHandler : SlashCommandHandlerBase
     private readonly ILocalizationService _localizationService;
 
     protected BungieLocales GuildLocale { get; private set; }
-    protected CultureInfo LocaleCulture { get; private set; }
+    protected CultureInfo LocaleCulture { get; private set; } = null!;
 
     protected LocalizedSlashCommandHandler(
         ILocalizationService localizationService,
@@ -25,5 +25,16 @@ public abstract class LocalizedSlashCommandHandler : SlashCommandHandlerBase
         await base.BeforeExecuteAsync(command);
         GuildLocale = await _localizationService.GetGuildLocaleCachedAsync(GuildId);
         LocaleCulture = _localizationService.GetCultureForLocale(GuildLocale);
+    }
+
+    public string FormatText(string id, Func<string> defaultText, params object[] parameters)
+    {
+        var text = _localizationService.GetLocalizedText(id, GuildLocale, defaultText);
+        return string.Format(text, parameters);
+    }
+
+    public string Text(string id, Func<string> defaultText)
+    {
+        return _localizationService.GetLocalizedText(id, GuildLocale, defaultText);
     }
 }

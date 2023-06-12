@@ -42,7 +42,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
         await ExecuteAndHandleErrors(async () =>
         {
             if (!uint.TryParse(metricHashString, out var metricHash))
-                return Error($"Couldn't parse metric hash");
+                return Error(FormatText("FailedToParseMetricHashError", () => "Failed to parse metric hash: {0}", metricHashString));
 
             var bungieClient = await _bungieClientProvider.GetClientAsync();
             if (!bungieClient.TryGetDefinition<DestinyMetricDefinition>(metricHash, out var metricDefinition, GuildLocale))
@@ -58,7 +58,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
 
             var embedBuilder = _embedBuilderService
                 .GetTemplateEmbed()
-                .WithTitle($"{metricDefinition.DisplayProperties.Name} Leaderboard")
+                .WithTitle(FormatText("MetricLeaderboardTitle", () => "{0} Leaderboard", metricDefinition.DisplayProperties.Name))
                 .WithThumbnailUrl(metricDefinition.DisplayProperties.Icon.AbsolutePath);
 
             var getters = new Func<DestinyProfileLiteWithValue<int>, object>[]
@@ -77,7 +77,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
 
                 var formattedData = _embedBuilderService.FormatAsStringTable<DestinyProfileLiteWithValue<int>, long>(
                     usersOfClan.Count,
-                    "No users",
+                    Text("NoUsersFound", () => "No users"),
                     usersOfClan,
                     (user) => user.MembershipId,
                     getters,
@@ -106,7 +106,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
 
             var embedBuilder = _embedBuilderService
                 .GetTemplateEmbed()
-                .WithTitle($"Guardian Ranks Leaderboard");
+                .WithTitle(Text("GuardianRanksLeaderboardTitle", () => "Guardian Ranks Leaderboard"));
 
             var getters = new Func<DestinyProfileLiteWithValue<int>, object>[]
             {
@@ -124,7 +124,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
 
                 var formattedData = _embedBuilderService.FormatAsStringTable<DestinyProfileLiteWithValue<int>, long>(
                     usersOfClan.Count,
-                    "No users",
+                    Text("NoUsersFound", () => "No users"),
                     usersOfClan,
                     (user) => user.MembershipId,
                     getters,
@@ -153,7 +153,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
 
             var embedBuilder = _embedBuilderService
                 .GetTemplateEmbed()
-                .WithTitle($"Power Level Leaderboard");
+                .WithTitle(Text("PowerLevelLeaderboardTitle", () => "Power Level Leaderboard"));
 
             var getters = new Func<DestinyProfileLiteWithDoubleValues<int, int>, object>[]
             {
@@ -170,7 +170,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
 
                 var formattedData = _embedBuilderService.FormatAsStringTable<DestinyProfileLiteWithDoubleValues<int, int>, long>(
                     usersOfClan.Count,
-                    "No users",
+                    Text("NoUsersFound", () => "No users"),
                     usersOfClan,
                     (user) => user.MembershipId,
                     getters,
@@ -199,7 +199,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
 
             var embedBuilder = _embedBuilderService
                 .GetTemplateEmbed()
-                .WithTitle($"Triumph Score Leaderboard");
+                .WithTitle(Text("TriumphScoreLeaderboard", () => "Triumph Score Leaderboard"));
 
             var getters = new Func<DestinyProfileLiteWithDoubleValues<int, int>, object>[]
             {
@@ -216,7 +216,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
 
                 var formattedData = _embedBuilderService.FormatAsStringTable<DestinyProfileLiteWithDoubleValues<int, int>, long>(
                     usersOfClan.Count,
-                    "No users",
+                    Text("NoUsersFound", () => "No users"),
                     usersOfClan,
                     (user) => user.MembershipId,
                     getters,
@@ -245,7 +245,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
 
             var embedBuilder = _embedBuilderService
                 .GetTemplateEmbed()
-                .WithTitle($"Time played Leaderboard");
+                .WithTitle(Text("TimePlayedLeaderboard", () => "Time played Leaderboard"));
 
             var getters = new Func<DestinyProfileLiteWithValue<int>, object>[]
             {
@@ -263,7 +263,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
 
                 var formattedData = _embedBuilderService.FormatAsStringTable<DestinyProfileLiteWithValue<int>, long>(
                     usersOfClan.Count,
-                    "No users",
+                    Text("NoUsersFound", () => "No users"),
                     usersOfClan,
                     (user) => user.MembershipId,
                     getters,
@@ -284,7 +284,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
         await ExecuteAndHandleErrors(async () =>
         {
             if (!uint.TryParse(triumphHashString, out var recordHash))
-                return Error("Failed to parse triumph hash");
+                return Error(FormatText("FailedToParseRecordHashError", () => "Failed to parse record hash: {0}", triumphHashString));
 
             var bungieClient = await _bungieClientProvider.GetClientAsync();
 
@@ -312,7 +312,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
             var embedBuilder = _embedBuilderService
                 .GetTemplateEmbed()
                 .WithDescription(recordDefinition.DisplayProperties.Description)
-                .WithTitle($"{recordDefinition.DisplayProperties.Name} Leaderboard")
+                .WithTitle(FormatText("TriumphProgressLeaderboard", () => "{0} Leaderboard", recordDefinition.DisplayProperties.Name))
                 .WithThumbnailUrl(recordDefinition.DisplayProperties.Icon.AbsolutePath);
 
             var getters = new Func<DestinyProfileLiteWithValue<int>, object>[]
@@ -328,7 +328,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
 
                 var formattedData = _embedBuilderService.FormatAsStringTable<DestinyProfileLiteWithValue<int>, long>(
                     usersOfClan.Count,
-                    "No users",
+                    Text("NoUsersFound", () => "No users"),
                     usersOfClan,
                     (user) => user.MembershipId,
                     getters,
@@ -356,7 +356,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
 
             var embedBuilder = _embedBuilderService
                 .GetTemplateEmbed()
-                .WithTitle($"Total Titles Leaderboard");
+                .WithTitle(FormatText("TotalTitlesLeaderboardTitle", () => "Total Titles Leaderboard"));
 
             var getters = new Func<DestinyProfileLiteWithValue<int>, object>[]
             {
@@ -374,7 +374,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
 
                 var formattedData = _embedBuilderService.FormatAsStringTable<DestinyProfileLiteWithValue<int>, long>(
                     usersOfClan.Count,
-                    "No users",
+                    Text("NoUsersFound", () => "No users"),
                     usersOfClan,
                     (user) => user.MembershipId,
                     getters,
@@ -395,7 +395,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
         await ExecuteAndHandleErrors(async () =>
         {
             if (!uint.TryParse(seasonPassHashString, out var seasonPassHash))
-                return Error("Failed to parse season pass hash");
+                return Error(FormatText("FailedToParseSeasonPassHashError", () => "Failed to parse season pass hash: {0}", seasonPassHashString));
 
             var bungieClient = await _bungieClientProvider.GetClientAsync();
             if (!bungieClient.TryGetDefinition<DestinySeasonPassDefinition>(seasonPassHash, out var seasonPassDefinition, GuildLocale))
@@ -415,7 +415,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
 
             var embedBuilder = _embedBuilderService
                 .GetTemplateEmbed()
-                .WithTitle($"Season Pass Levels Leaderboard")
+                .WithTitle(Text("SeasonPassLevelsLeaderboardTitle", () => "Season Pass Levels Leaderboard"))
                 .WithDescription(seasonPassDefinition.DisplayProperties.Name);
 
             var getters = new Func<DestinyProfileLiteWithDoubleValues<int, int>, object>[]
@@ -431,7 +431,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
 
                 var formattedData = _embedBuilderService.FormatAsStringTable<DestinyProfileLiteWithDoubleValues<int, int>, long>(
                     usersOfClan.Count,
-                    "No users",
+                    Text("NoUsersFound", () => "No users"),
                     usersOfClan,
                     (user) => user.MembershipId,
                     getters,

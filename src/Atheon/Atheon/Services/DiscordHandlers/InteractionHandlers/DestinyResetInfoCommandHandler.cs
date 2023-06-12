@@ -30,7 +30,9 @@ public class DestinyResetInfoCommandHandler : LocalizedSlashCommandHandler
             var currentTime = DateTime.UtcNow;
             var timeLeft = currentTime - resetTime;
             var humanizedTime = timeLeft.Humanize(culture: LocaleCulture, minUnit: Humanizer.Localisation.TimeUnit.Minute, precision: 2);
-            var embed = EmbedBuilderService.CreateSimpleResponseEmbed("Time until daily reset", $"Daily reset will happen in {humanizedTime}");
+            var embed = EmbedBuilderService.CreateSimpleResponseEmbed(
+                Text("TimeUntilDailyReset", () => "Time until daily reset"),
+                FormatText("TimeUntilDailyResetDescription", () => "Daily reset will happen in {0}", humanizedTime));
             return Success(embed);
         });
     }
@@ -45,7 +47,9 @@ public class DestinyResetInfoCommandHandler : LocalizedSlashCommandHandler
             var currentTime = DateTime.UtcNow;
             var timeLeft = currentTime - resetTime;
             var humanizedTime = timeLeft.Humanize(culture: LocaleCulture, minUnit: Humanizer.Localisation.TimeUnit.Minute, precision: 2);
-            var embed = EmbedBuilderService.CreateSimpleResponseEmbed("Time until weekly reset", $"Weekly reset will happen in {humanizedTime}");
+            var embed = EmbedBuilderService.CreateSimpleResponseEmbed(
+                Text("TimeUntilWeeklyReset", () => "Time until weekly reset"),
+                 FormatText("TimeUntilWeeklyResetDescription", () => "Weekly reset will happen in {0}", humanizedTime));
             return Success(embed);
         });
     }
@@ -63,12 +67,14 @@ public class DestinyResetInfoCommandHandler : LocalizedSlashCommandHandler
 
             if (currentSeason is null)
             {
-                return Error("Current season couldn't be determined");
+                return Error(Text("FailedToResolveCurrentSeasonError", () => "Current season couldn't be determined"));
             }
 
             var timeLeft = currentSeason.EndDate!.Value - currentTime;
             var humanizedTime = timeLeft.Humanize(culture: LocaleCulture, minUnit: Humanizer.Localisation.TimeUnit.Minute, precision: 2);
-            var embed = EmbedBuilderService.CreateSimpleResponseEmbed("Time until season ends", $"{currentSeason.DisplayProperties.Name} will end in {humanizedTime}");
+            var embed = EmbedBuilderService.CreateSimpleResponseEmbed(
+                Text("TimeUntilSeasonEnds", () => "Time until season ends"),
+                FormatText("TimeUntilSeasonEndsDescription", () => "{0} will end in {1}", currentSeason.DisplayProperties.Name, humanizedTime));
             return Success(embed);
         });
     }

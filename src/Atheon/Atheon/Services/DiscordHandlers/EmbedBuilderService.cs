@@ -1,28 +1,32 @@
-﻿using Discord;
-using Color = Discord.Color;
+﻿using Atheon.DataAccess.Models.Destiny;
+using Atheon.DataAccess.Models.Destiny.Broadcasts;
+using Atheon.Extensions;
+using Atheon.Services.BungieApi;
+using Atheon.Services.Interfaces;
+using Discord;
 using DotNetBungieAPI.HashReferences;
+using DotNetBungieAPI.Models;
 using DotNetBungieAPI.Models.Destiny.Definitions.Collectibles;
 using DotNetBungieAPI.Models.Destiny.Definitions.PresentationNodes;
 using DotNetBungieAPI.Models.Destiny.Definitions.Records;
-using DotNetBungieAPI.Models;
 using DotNetBungieAPI.Service.Abstractions;
-using System.Text;
-using Atheon.Extensions;
-using Atheon.Services.BungieApi;
 using Humanizer;
-using Atheon.DataAccess.Models.Destiny.Broadcasts;
-using Atheon.DataAccess.Models.Destiny;
+using System.Text;
+using Color = Discord.Color;
 
 namespace Atheon.Services.DiscordHandlers;
 
 public class EmbedBuilderService
 {
     private readonly DestinyDefinitionDataService _destinyDefinitionDataService;
+    private readonly ILocalizationService _localizationService;
 
     public EmbedBuilderService(
-        DestinyDefinitionDataService destinyDefinitionDataService)
+        DestinyDefinitionDataService destinyDefinitionDataService,
+        ILocalizationService localizationService)
     {
         _destinyDefinitionDataService = destinyDefinitionDataService;
+        _localizationService = localizationService;
     }
 
     public EmbedBuilder GetTemplateEmbed(Color? color = null)
@@ -68,64 +72,71 @@ public class EmbedBuilderService
 
     public Embed CreateClanBroadcastEmbed(
             ClanBroadcastDbModel clanBroadcast,
-            DestinyClanDbModel destinyClanDbModel)
+            DestinyClanDbModel destinyClanDbModel,
+            BungieLocales locale)
     {
         var templateEmbed = GetTemplateEmbed();
 
-        templateEmbed.WithTitle($"Clan broadcast - {destinyClanDbModel.ClanName}");
+        templateEmbed.WithTitle(FormatText(locale, "ClanBroadcastTitle", () => "Clan broadcast - {0}", destinyClanDbModel.ClanName));
 
         switch (clanBroadcast.Type)
         {
             case ClanBroadcastType.ClanLevel:
-                AddClanLevelData(templateEmbed, clanBroadcast);
+                AddClanLevelData(templateEmbed, clanBroadcast, locale);
                 break;
             case ClanBroadcastType.ClanName:
-                AddClanNameChangeData(templateEmbed, clanBroadcast);
+                AddClanNameChangeData(templateEmbed, clanBroadcast, locale);
                 break;
             case ClanBroadcastType.ClanCallsign:
-                AddClanCallsignChangeData(templateEmbed, clanBroadcast);
+                AddClanCallsignChangeData(templateEmbed, clanBroadcast, locale);
                 break;
             case ClanBroadcastType.ClanScanFinished:
-                AddClanScanfinishedData(templateEmbed, destinyClanDbModel);
+                AddClanScanfinishedData(templateEmbed, destinyClanDbModel, locale);
                 break;
         }
 
         return templateEmbed.Build();
     }
 
-    private static void AddClanLevelData(EmbedBuilder eb, ClanBroadcastDbModel clanBroadcast)
+    private void AddClanLevelData(EmbedBuilder eb, ClanBroadcastDbModel clanBroadcast, BungieLocales locale)
     {
-        var message =
-            $"""
-                Clan reached level {clanBroadcast.NewValue}!
-                """;
+        var message = FormatText(
+            locale,
+            "ClanReachedLevelBroadcast",
+            () => "Clan reached level {0}!",
+            clanBroadcast.NewValue);
         eb.WithDescription(message);
     }
 
-    private static void AddClanNameChangeData(EmbedBuilder eb, ClanBroadcastDbModel clanBroadcast)
+    private void AddClanNameChangeData(EmbedBuilder eb, ClanBroadcastDbModel clanBroadcast, BungieLocales locale)
     {
-        var message =
-            $"""
-                Clan name changed from {clanBroadcast.OldValue} to {clanBroadcast.NewValue}
-                """;
+        var message = FormatText(
+            locale,
+            "ClanNameChangedBroadcast",
+            () => "Clan name changed from {0} to {1}",
+            clanBroadcast.OldValue,
+            clanBroadcast.NewValue);
         eb.WithDescription(message);
     }
 
-    private static void AddClanCallsignChangeData(EmbedBuilder eb, ClanBroadcastDbModel clanBroadcast)
+    private void AddClanCallsignChangeData(EmbedBuilder eb, ClanBroadcastDbModel clanBroadcast, BungieLocales locale)
     {
-        var message =
-            $"""
-                Clan callsign changed from {clanBroadcast.OldValue} to {clanBroadcast.NewValue}
-                """;
+        var message = FormatText(
+            locale,
+            "ClanCallsignChangedBroadcast",
+            () => "Clan callsign changed from {0} to {1}",
+            clanBroadcast.OldValue,
+            clanBroadcast.NewValue);
         eb.WithDescription(message);
     }
 
-    private static void AddClanScanfinishedData(EmbedBuilder eb, DestinyClanDbModel destinyClanDbModel)
+    private void AddClanScanfinishedData(EmbedBuilder eb, DestinyClanDbModel destinyClanDbModel, BungieLocales locale)
     {
-        var message =
-            $"""
-                Clan scan for {destinyClanDbModel.ClanName} was finished!
-                """;
+        var message = FormatText(
+            locale,
+            "ClanScanFinishedBroadcast",
+            () => "Clan scan for {destinyClanDbModel.ClanName} was finished!",
+            destinyClanDbModel.ClanName);
         eb.WithDescription(message);
     }
 
@@ -142,7 +153,7 @@ public class EmbedBuilderService
     {
         var templateEmbed = GetTemplateEmbed();
 
-        templateEmbed.WithTitle($"Clan Broadcast - {clanData.ClanName}");
+        templateEmbed.WithTitle(FormatText(locale, "ClanBroadcastTitle", () => "Clan broadcast - {0}", clanData.ClanName));
 
         switch (destinyUserBroadcast.Type)
         {
@@ -171,7 +182,7 @@ public class EmbedBuilderService
         BungieLocales locale)
     {
         if (bungieClient.TryGetDefinition<DestinyCollectibleDefinition>(
-                destinyUserBroadcast.DefinitionHash,              
+                destinyUserBroadcast.DefinitionHash,
                 out var collectibleDefinition,
                 locale))
         {
@@ -182,21 +193,41 @@ public class EmbedBuilderService
                 destinyUserBroadcast.AdditionalData.TryGetValue("completions", out var complString))
             {
                 if (int.TryParse(complString, out var activityCompletions))
-                    embedBuilder.WithDescription(
-                        $"{username} has obtained [{name}](https://www.light.gg/db/items/{collectibleDefinition.Item.Hash.GetValueOrDefault()}) on their {activityCompletions.Ordinalize()} clear");
+                {
+                    embedBuilder.WithDescription(FormatText(
+                        locale,
+                        "UserObtainedDrystreakCollectible",
+                        () => "{0} has obtained [{1}](https://www.light.gg/db/items/{2}) on their {3} clear",
+                        username,
+                        name,
+                        collectibleDefinition.Item.Hash.GetValueOrDefault(),
+                        activityCompletions.Ordinalize()));
+                }
                 else
-                    embedBuilder.WithDescription(
-                        $"{username} has obtained [{name}](https://www.light.gg/db/items/{collectibleDefinition.Item.Hash.GetValueOrDefault()})");
+                {
+                    embedBuilder.WithDescription(FormatText(
+                        locale,
+                        "UserObtainedCollectible",
+                        () => "{0} has obtained [{1}](https://www.light.gg/db/items/{2})",
+                        username,
+                        name,
+                        collectibleDefinition.Item.Hash.GetValueOrDefault()));
+                }
             }
             else
             {
-                embedBuilder.WithDescription(
-                    $"{username} has obtained [{name}](https://www.light.gg/db/items/{collectibleDefinition.Item.Hash.GetValueOrDefault()})");
+                embedBuilder.WithDescription(FormatText(
+                    locale,
+                    "UserObtainedCollectible",
+                    () => "{0} has obtained [{1}](https://www.light.gg/db/items/{2})",
+                    username,
+                    name,
+                    collectibleDefinition.Item.Hash.GetValueOrDefault()));
             }
         }
     }
 
-    private static void AddTriumphDataToEmbed(
+    private void AddTriumphDataToEmbed(
         EmbedBuilder embedBuilder,
         DestinyUserProfileBroadcastDbModel destinyUserBroadcast,
         IBungieClient bungieClient,
@@ -210,15 +241,19 @@ public class EmbedBuilderService
         {
             embedBuilder.WithThumbnailUrl(recordDefinition.DisplayProperties.Icon.AbsolutePath);
 
-            embedBuilder.WithDescription(
-                $"{username} has completed triumph: {recordDefinition.DisplayProperties.Name}");
+            embedBuilder.WithDescription(FormatText(
+                locale,
+                "UserCompletedTriumph",
+                () => "{0} has completed triumph: {1}",
+                username,
+                recordDefinition.DisplayProperties.Name));
 
             if (!string.IsNullOrEmpty(recordDefinition.DisplayProperties.Description))
-                embedBuilder.AddField("How to complete:", recordDefinition.DisplayProperties.Description);
+                embedBuilder.AddField(Text(locale, "HowToCompleteTriumph", () => "How to complete:"), recordDefinition.DisplayProperties.Description);
         }
     }
 
-    private static void AddTitleDataToEmbed(
+    private void AddTitleDataToEmbed(
         EmbedBuilder embedBuilder,
         DestinyUserProfileBroadcastDbModel destinyUserBroadcast,
         IBungieClient bungieClient,
@@ -226,7 +261,7 @@ public class EmbedBuilderService
         BungieLocales locale)
     {
         if (bungieClient.TryGetDefinition<DestinyRecordDefinition>(
-                destinyUserBroadcast.DefinitionHash,              
+                destinyUserBroadcast.DefinitionHash,
                 out var recordDefinition,
                 locale))
         {
@@ -244,12 +279,16 @@ public class EmbedBuilderService
                     embedBuilder.WithThumbnailUrl(recordTitleNode.DisplayProperties.Icon.AbsolutePath);
             }
 
-            embedBuilder.WithDescription(
-                $"{username} has obtained title: **{recordDefinition.TitleInfo.TitlesByGenderHash[DefinitionHashes.Genders.Masculine]}**");
+            embedBuilder.WithDescription(FormatText(
+                locale,
+                "UserObtainedTitle",
+                () => "{0} has obtained title: **{1}**",
+                username,
+                recordDefinition.TitleInfo.TitlesByGenderHash[DefinitionHashes.Genders.Masculine]));
         }
     }
 
-    private static void AddTitleGildDataToEmbed(
+    private void AddTitleGildDataToEmbed(
         EmbedBuilder embedBuilder,
         DestinyUserProfileBroadcastDbModel destinyUserBroadcast,
         IBungieClient bungieClient,
@@ -257,7 +296,7 @@ public class EmbedBuilderService
         BungieLocales locale)
     {
         if (bungieClient.TryGetDefinition<DestinyRecordDefinition>(
-                destinyUserBroadcast.DefinitionHash,            
+                destinyUserBroadcast.DefinitionHash,
                 out _,
                 locale))
         {
@@ -265,7 +304,7 @@ public class EmbedBuilderService
             var gildedCount = int.Parse(destinyUserBroadcast.AdditionalData["gildedCount"]);
 
             if (bungieClient.TryGetDefinition<DestinyRecordDefinition>(
-                    titleHash,                
+                    titleHash,
                     out var titleRecordDefinition,
                     locale))
             {
@@ -283,8 +322,13 @@ public class EmbedBuilderService
                         embedBuilder.WithThumbnailUrl(recordTitleNode.DisplayProperties.Icon.AbsolutePath);
                 }
 
-                embedBuilder.WithDescription(
-                    $"{username} has gilded title: **{titleRecordDefinition.TitleInfo.TitlesByGenderHash[DefinitionHashes.Genders.Masculine]}** {gildedCount} times!");
+                embedBuilder.WithDescription(FormatText(
+                    locale,
+                    "UserGildedTitle",
+                    () => "{0} has gilded title: **{1}** {2} times!",
+                    username,
+                    titleRecordDefinition.TitleInfo.TitlesByGenderHash[DefinitionHashes.Genders.Masculine],
+                    gildedCount));
             }
         }
     }
@@ -300,7 +344,7 @@ public class EmbedBuilderService
     {
         var embedBuilder = GetTemplateEmbed();
 
-        embedBuilder.WithTitle("Clans Broadcast");
+        embedBuilder.WithTitle(Text(locale, "MultipleClansBroadcastTitle", () => "Clans Broadcast"));
 
         switch (broadcastType)
         {
@@ -364,13 +408,18 @@ public class EmbedBuilderService
         BungieLocales locale)
     {
         if (bungieClient.TryGetDefinition<DestinyCollectibleDefinition>(
-                definitionHash,             
+                definitionHash,
                 out var collectibleDefinition,
                 locale))
         {
             var (name, icon) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(collectibleDefinition, locale);
-            embedBuilder.WithDescription(
-                $"{usernames.Count} people have obtained [{name}](https://www.light.gg/db/items/{collectibleDefinition.Item.Hash.GetValueOrDefault()})!");
+            embedBuilder.WithDescription(FormatText(
+                locale,
+                "UserGroupObtainedCollectible",
+                () => "{0} people have obtained [{1}](https://www.light.gg/db/items/{2})!",
+                usernames.Count,
+                name,
+                collectibleDefinition.Item.Hash.GetValueOrDefault()));
             embedBuilder.WithThumbnailUrl(icon);
 
             var stringBuilder = new StringBuilder();
@@ -388,18 +437,23 @@ public class EmbedBuilderService
                         if (broadcast.AdditionalData is not null &&
                             broadcast.AdditionalData.TryGetValue("completions", out var completionsUnparsed) &&
                             int.TryParse(completionsUnparsed, out var completions))
-                            stringBuilder.AppendLine($"{username} - on their {completions.Ordinalize()} clear");
+                            stringBuilder.AppendLine(FormatText(
+                                locale,
+                                "DrystreakUserInGroup",
+                                () => "{0} - on their {1} clear",
+                                username,
+                                completions.Ordinalize()));
                         else
                             stringBuilder.AppendLine(username);
                     }
                 }
 
-                embedBuilder.AddField($"Clan: {clanData.ClanName}", stringBuilder.ToString());
+                embedBuilder.AddField(FormatText(locale, "ClanInGroup", () => "Clan: {0}", clanData.ClanName), stringBuilder.ToString());
             }
         }
     }
 
-    private static void AddGroupTriumphDataToEmbed(
+    private void AddGroupTriumphDataToEmbed(
         EmbedBuilder embedBuilder,
         IEnumerable<DestinyUserProfileBroadcastDbModel> destinyUserBroadcasts,
         uint definitionHash,
@@ -409,12 +463,16 @@ public class EmbedBuilderService
         BungieLocales locale)
     {
         if (bungieClient.TryGetDefinition<DestinyRecordDefinition>(
-                definitionHash,                
+                definitionHash,
                 out var recordDefinition,
                 locale))
         {
-            embedBuilder.WithDescription(
-                $"{usernames.Count} people have completed triumph: **{recordDefinition.DisplayProperties.Name}**");
+            embedBuilder.WithDescription(FormatText(
+                locale,
+                "UserGroupCompletedTriumph",
+                () => "{0} people have completed triumph: **{1}**",
+                usernames.Count,
+                recordDefinition.DisplayProperties.Name));
             embedBuilder.WithThumbnailUrl(recordDefinition.DisplayProperties.Icon.AbsolutePath);
 
             var stringBuilder = new StringBuilder();
@@ -431,15 +489,15 @@ public class EmbedBuilderService
                         stringBuilder.AppendLine(username);
                 }
 
-                embedBuilder.AddField($"Clan: {clanData.ClanName}", stringBuilder.ToString());
+                embedBuilder.AddField(FormatText(locale, "ClanInGroup", () => "Clan: {0}", clanData.ClanName), stringBuilder.ToString());
             }
 
             if (!string.IsNullOrEmpty(recordDefinition.DisplayProperties.Description))
-                embedBuilder.AddField("How to complete:", recordDefinition.DisplayProperties.Description);
+                embedBuilder.AddField(Text(locale, "HowToCompleteTriumph", () => "How to complete:"), recordDefinition.DisplayProperties.Description);
         }
     }
 
-    private static void AddGroupTitleDataToEmbed(
+    private void AddGroupTitleDataToEmbed(
         EmbedBuilder embedBuilder,
         IEnumerable<DestinyUserProfileBroadcastDbModel> destinyUserBroadcasts,
         uint definitionHash,
@@ -449,7 +507,7 @@ public class EmbedBuilderService
         BungieLocales locale)
     {
         if (bungieClient.TryGetDefinition<DestinyRecordDefinition>(
-                definitionHash,                
+                definitionHash,
                 out var recordDefinition,
                 locale))
         {
@@ -467,8 +525,12 @@ public class EmbedBuilderService
                     embedBuilder.WithThumbnailUrl(recordTitleNode.DisplayProperties.Icon.AbsolutePath);
             }
 
-            embedBuilder.WithDescription(
-                $"{usernames.Count} people have obtained title: **{recordDefinition.TitleInfo.TitlesByGenderHash[DefinitionHashes.Genders.Masculine]}**");
+            embedBuilder.WithDescription(FormatText(
+                locale,
+                "UserGroupObtainedTitle",
+                () => "{0} people have obtained title: **{1}**",
+                usernames.Count,
+                recordDefinition.TitleInfo.TitlesByGenderHash[DefinitionHashes.Genders.Masculine]));
 
             var stringBuilder = new StringBuilder();
             foreach (var (clanId, clanData) in clansData)
@@ -484,12 +546,12 @@ public class EmbedBuilderService
                         stringBuilder.AppendLine(username);
                 }
 
-                embedBuilder.AddField($"Clan: {clanData.ClanName}", stringBuilder.ToString());
+                embedBuilder.AddField(FormatText(locale, "ClanInGroup", () => "Clan: {0}", clanData.ClanName), stringBuilder.ToString());
             }
         }
     }
 
-    private static void AddGroupTitleGildingDataToEmbed(
+    private void AddGroupTitleGildingDataToEmbed(
         EmbedBuilder embedBuilder,
         IEnumerable<DestinyUserProfileBroadcastDbModel> destinyUserBroadcasts,
         uint definitionHash,
@@ -500,7 +562,7 @@ public class EmbedBuilderService
         BungieLocales locale)
     {
         if (bungieClient.TryGetDefinition<DestinyRecordDefinition>(
-                parentTitleHash,               
+                parentTitleHash,
                 out var recordDefinition,
                 locale))
         {
@@ -518,8 +580,11 @@ public class EmbedBuilderService
                     embedBuilder.WithThumbnailUrl(recordTitleNode.DisplayProperties.Icon.AbsolutePath);
             }
 
-            embedBuilder.WithDescription(
-                $"{usernames.Count} people have gilded title: **{recordDefinition.TitleInfo.TitlesByGenderHash[DefinitionHashes.Genders.Masculine]}**");
+            embedBuilder.WithDescription(FormatText(locale,
+                "UserGroupGildedTitle",
+                () => "{0} people have gilded title: **{1}**",
+                usernames.Count,
+                recordDefinition.TitleInfo.TitlesByGenderHash[DefinitionHashes.Genders.Masculine]));
 
             var stringBuilder = new StringBuilder();
             foreach (var (clanId, clanData) in clansData)
@@ -534,10 +599,12 @@ public class EmbedBuilderService
                     if (usernames.TryGetValue(broadcast.MembershipId, out var username) &&
                         broadcast.AdditionalData.TryGetValue("gildedCount", out var gildedCountUnparsed) &&
                         int.TryParse(gildedCountUnparsed, out var gildedCount))
-                        stringBuilder.AppendLine($"{username} - {gildedCount} times");
+                    {
+                        stringBuilder.AppendLine(FormatText(locale, "UserGildInGroup", () => "{0} - {1} times", username, gildedCount));
+                    }
                 }
 
-                embedBuilder.AddField($"Clan: {clanData.ClanName}", stringBuilder.ToString());
+                embedBuilder.AddField(FormatText(locale, "ClanInGroup", () => "Clan: {0}", clanData.ClanName), stringBuilder.ToString());
             }
         }
     }
@@ -621,12 +688,18 @@ public class EmbedBuilderService
     {
         var templateEmbed = GetTemplateEmbed();
 
-        templateEmbed.WithTitle($"Clan Broadcast - {clanData.ClanName}");
+        templateEmbed.WithTitle(FormatText(locale, "ClanBroadcastTitle", () => "Clan broadcast - {0}", clanData.ClanName));
 
         switch (destinyUserBroadcast.Type)
         {
             case ProfileCustomBroadcastType.GuardianRank:
-                templateEmbed.WithDescription($"{username} guardian rank changed: {destinyUserBroadcast.OldValue} to {destinyUserBroadcast.NewValue}");
+                templateEmbed.WithDescription(FormatText(
+                    locale,
+                    "UserGuardianRankChanged",
+                    () => "{0} guardian rank changed: {1} to {2}",
+                    username,
+                    destinyUserBroadcast.OldValue,
+                    destinyUserBroadcast.NewValue));
                 break;
         }
 
@@ -634,4 +707,15 @@ public class EmbedBuilderService
     }
 
     #endregion
+
+    public string FormatText(BungieLocales locale, string id, Func<string> defaultText, params object[] parameters)
+    {
+        var text = _localizationService.GetLocalizedText(id, locale, defaultText);
+        return string.Format(text, parameters);
+    }
+
+    public string Text(BungieLocales locale, string id, Func<string> defaultText)
+    {
+        return _localizationService.GetLocalizedText(id, locale, defaultText);
+    }
 }

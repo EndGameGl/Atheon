@@ -33,6 +33,7 @@
   <ItemGroup>
     <Folder Include="Models\Events\" />
     <Folder Include="Options\" />
+    <Folder Include="Localization\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Atheon.DataAccess.Sqlite\Atheon.DataAccess.Sqlite.csproj" />
