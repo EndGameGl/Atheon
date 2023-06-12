@@ -51,7 +51,7 @@ public partial class LocalizationService : ILocalizationService
                     var localeData = JsonSerializer.Deserialize<Dictionary<string, string>>(fileStream, serializerOptions) ?? new();
                     _localization[bungieLocale] = localeData;
                 }
-                catch
+                catch (Exception ex)
                 {
                     _logger.LogWarning("Attempted to load unknown locale: {LocaleName}", localeName);
                 }
@@ -98,6 +98,6 @@ public partial class LocalizationService : ILocalizationService
         return false;
     }
 
-    [GeneratedRegex("text.(?<localeName>[a-n\\-]+).json", RegexOptions.Compiled)]
+    [GeneratedRegex("text.(?<localeName>[a-z\\-]+).json", RegexOptions.Compiled)]
     private static partial Regex FileNameRegex();
 }
