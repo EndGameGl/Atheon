@@ -14,22 +14,25 @@ public class DestinyDbCollectibleDefinitionAutocompleter : AutocompleteHandler
 {
     private readonly IBungieClientProvider _bungieClientProvider;
     private readonly ILogger<DestinyCollectibleDefinitionAutocompleter> _logger;
-    private readonly IDestinyDb _destinyDb;
+    private readonly IGuildDb _guildDb;
     private readonly DestinyDefinitionDataService _destinyDefinitionDataService;
     private readonly IMemoryCache _memoryCache;
+    private readonly ILocalizationService _localizationService;
 
     public DestinyDbCollectibleDefinitionAutocompleter(
         IBungieClientProvider bungieClientProvider,
         ILogger<DestinyCollectibleDefinitionAutocompleter> logger,
-        IDestinyDb destinyDb,
+        IGuildDb guildDb,
         DestinyDefinitionDataService destinyDefinitionDataService,
-        IMemoryCache memoryCache)
+        IMemoryCache memoryCache,
+        ILocalizationService localizationService)
     {
         _bungieClientProvider = bungieClientProvider;
         _logger = logger;
-        _destinyDb = destinyDb;
+        _guildDb = guildDb;
         _destinyDefinitionDataService = destinyDefinitionDataService;
         _memoryCache = memoryCache;
+        _localizationService = localizationService;
     }
 
     public override async Task<AutocompletionResult> GenerateSuggestionsAsync(
@@ -40,15 +43,11 @@ public class DestinyDbCollectibleDefinitionAutocompleter : AutocompleteHandler
     {
         try
         {
-            var lang = await _memoryCache.GetOrAddAsync(
-                $"guild_lang_{context.Guild.Id}",
-                async () => (await _destinyDb.GetGuildLanguageAsync(context.Guild.Id)).ConvertToBungieLocale(),
-                TimeSpan.FromSeconds(15),
-                Caching.CacheExpirationType.Absolute);
+            var lang = await _localizationService.GetGuildLocaleCachedAsync(context.Guild.Id);
 
             var client = await _bungieClientProvider.GetClientAsync();
             var searchEntry = (string)autocompleteInteraction.Data.Options.First(x => x.Focused).Value;
-            var settings = await _destinyDb.GetGuildSettingsAsync(context.Guild.Id);
+            var settings = await _guildDb.GetGuildSettingsAsync(context.Guild.Id);
 
             if (settings is null)
                 return AutocompletionResult.FromSuccess();

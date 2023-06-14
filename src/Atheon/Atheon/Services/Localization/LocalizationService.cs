@@ -1,4 +1,5 @@
 ﻿using Atheon.DataAccess;
+using Atheon.DataAccess.Sqlite;
 using Atheon.Extensions;
 using Atheon.Services.Interfaces;
 using DotNetBungieAPI.Models;
@@ -16,6 +17,7 @@ public partial class LocalizationService : ILocalizationService
     private readonly IDestinyDb _destinyDb;
     private readonly IMemoryCache _memoryCache;
     private readonly ILogger<LocalizationService> _logger;
+    private readonly IGuildDb _guildDb;
     private readonly Dictionary<BungieLocales, CultureInfo> _localeToCultureMapping = new()
     {
         [BungieLocales.EN] = CultureInfo.GetCultureInfo("en-US"),
@@ -28,11 +30,13 @@ public partial class LocalizationService : ILocalizationService
         IDestinyDb destinyDb,
         IMemoryCache memoryCache,
         ILogger<LocalizationService> logger,
+        IGuildDb guildDb,
         IOptions<JsonOptions> jsonOptions)
     {
         _destinyDb = destinyDb;
         _memoryCache = memoryCache;
         _logger = logger;
+        _guildDb = guildDb;
         var serializerOptions = jsonOptions.Value.SerializerOptions;
 
         var files = Directory.GetFiles("./Localization/");
@@ -69,8 +73,8 @@ public partial class LocalizationService : ILocalizationService
     public async ValueTask<BungieLocales> GetGuildLocaleCachedAsync(ulong guildId)
     {
         return await _memoryCache.GetOrAddAsync(
-            $"guild_lang_{guildId}",
-            async () => (await _destinyDb.GetGuildLanguageAsync(guildId)).ConvertToBungieLocale(),
+        $"guild_lang_{guildId}",
+            async () => (await _guildDb.GetGuildLanguageAsync(guildId)).ConvertToBungieLocale(),
             TimeSpan.FromSeconds(15),
             Caching.CacheExpirationType.Absolute);
     }

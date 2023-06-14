@@ -14,21 +14,18 @@ public class DestinyTitleAutocompleter : AutocompleteHandler
     private readonly IBungieClientProvider _bungieClientProvider;
     private readonly ILogger<DestinyCollectibleDefinitionAutocompleter> _logger;
     private readonly DestinyDefinitionDataService _destinyDefinitionDataService;
-    private readonly IDestinyDb _destinyDb;
-    private readonly IMemoryCache _memoryCache;
+    private readonly ILocalizationService _localizationService;
 
     public DestinyTitleAutocompleter(
         IBungieClientProvider bungieClientProvider,
         ILogger<DestinyCollectibleDefinitionAutocompleter> logger,
         DestinyDefinitionDataService destinyDefinitionDataService,
-        IDestinyDb destinyDb,
-        IMemoryCache memoryCache)
+        ILocalizationService localizationService)
     {
         _bungieClientProvider = bungieClientProvider;
         _logger = logger;
         _destinyDefinitionDataService = destinyDefinitionDataService;
-        _destinyDb = destinyDb;
-        _memoryCache = memoryCache;
+        _localizationService = localizationService;
     }
 
     public override async Task<AutocompletionResult> GenerateSuggestionsAsync(
@@ -37,11 +34,7 @@ public class DestinyTitleAutocompleter : AutocompleteHandler
         IParameterInfo parameter,
         IServiceProvider services)
     {
-        var lang = await _memoryCache.GetOrAddAsync(
-                $"guild_lang_{context.Guild.Id}",
-                async () => (await _destinyDb.GetGuildLanguageAsync(context.Guild.Id)).ConvertToBungieLocale(),
-                TimeSpan.FromSeconds(15),
-                Caching.CacheExpirationType.Absolute);
+        var lang = await _localizationService.GetGuildLocaleCachedAsync(context.Guild.Id);
 
         var searchEntry = (string)autocompleteInteraction.Data.Options.First(x => x.Focused).Value;
 

@@ -14,7 +14,7 @@ namespace Atheon.Services;
 public class BungieClientProvider : IBungieClientProvider
 {
     private readonly ISettingsStorage _settingsStorage;
-    private readonly IDestinyDb _destinyDb;
+    private readonly IGuildDb _guildDb;
     private IBungieClient? _clientInstance;
     private IBungieClientConfiguration? _bungieClientConfiguration;
     private SqliteDefinitionProviderConfiguration? _providerConfiguration;
@@ -23,10 +23,10 @@ public class BungieClientProvider : IBungieClientProvider
 
     public BungieClientProvider(
         ISettingsStorage settingsStorage,
-        IDestinyDb destinyDb)
+        IGuildDb guildDb)
     {
         _settingsStorage = settingsStorage;
-        _destinyDb = destinyDb;
+        _guildDb = guildDb;
     }
 
     private async Task<IBungieClient> ResolveClientInstance()
@@ -48,7 +48,7 @@ public class BungieClientProvider : IBungieClientProvider
 
     private async Task<IBungieClient> CreateClient(string apiKey, string manifestPath)
     {
-        var languages = (await _destinyDb.GetAllGuildSettings()).Select(x => x.DestinyManifestLocale.ConvertToBungieLocale()).Distinct().ToList();
+        var languages = (await _guildDb.GetAllGuildSettings()).Select(x => x.DestinyManifestLocale.ConvertToBungieLocale()).Distinct().ToList();
 
         if (!languages.Contains(BungieLocales.EN))
         {

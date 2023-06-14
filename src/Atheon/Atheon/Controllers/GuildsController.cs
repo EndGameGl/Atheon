@@ -14,14 +14,17 @@ public class GuildsController : ApiResponseControllerBase
 {
     private readonly IDestinyDb _destinyDb;
     private readonly IDiscordClientProvider _discordClientProvider;
+    private readonly IGuildDb _guildDb;
 
     public GuildsController(
         ILogger<GuildsController> logger,
         IDestinyDb destinyDb,
-        IDiscordClientProvider discordClientProvider) : base(logger)
+        IDiscordClientProvider discordClientProvider,
+        IGuildDb guildDb) : base(logger)
     {
         _destinyDb = destinyDb;
         _discordClientProvider = discordClientProvider;
+        _guildDb = guildDb;
     }
 
     [HttpGet("GuildReferences")]
@@ -30,7 +33,7 @@ public class GuildsController : ApiResponseControllerBase
     {
         try
         {
-            var guilds = await _destinyDb.GetGuildReferencesAsync();
+            var guilds = await _guildDb.GetGuildReferencesAsync();
             return OkResult(guilds);
         }
         catch (Exception ex)
@@ -46,7 +49,7 @@ public class GuildsController : ApiResponseControllerBase
     {
         try
         {
-            var guildSettings = await _destinyDb.GetGuildSettingsAsync(guildId);
+            var guildSettings = await _guildDb.GetGuildSettingsAsync(guildId);
             return OkResult(guildSettings);
         }
         catch (Exception ex)
@@ -94,8 +97,8 @@ public class GuildsController : ApiResponseControllerBase
     {
         try
         {
-            await _destinyDb.UpsertGuildSettingsAsync(guildDbModel);
-            var guildSettings = await _destinyDb.GetGuildSettingsAsync(guildId);
+            await _guildDb.UpsertGuildSettingsAsync(guildDbModel);
+            var guildSettings = await _guildDb.GetGuildSettingsAsync(guildId);
             return OkResult(guildSettings);
         }
         catch (Exception ex)

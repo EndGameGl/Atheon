@@ -26,6 +26,7 @@ namespace Atheon.Services.DiscordHandlers.InteractionHandlers;
 public class SettingsCommandHandler : LocalizedSlashCommandHandler
 {
     private readonly IDestinyDb _destinyDb;
+    private readonly IGuildDb _guildDb;
     private readonly IClanQueue _clanQueue;
     private readonly EmbedBuilderService _embedBuilderService;
     private readonly IBungieClientProvider _bungieClientProvider;
@@ -35,6 +36,7 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
     public SettingsCommandHandler(
         ILogger<SettingsCommandHandler> logger,
         IDestinyDb destinyDb,
+        IGuildDb guildDb,
         IClanQueue clanQueue,
         EmbedBuilderService embedBuilderService,
         IBungieClientProvider bungieClientProvider,
@@ -43,6 +45,7 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
         IServerAdminstrationDb serverAdminstrationDb) : base(localizationService, logger, embedBuilderService)
     {
         _destinyDb = destinyDb;
+        _guildDb = guildDb;
         _clanQueue = clanQueue;
         _embedBuilderService = embedBuilderService;
         _bungieClientProvider = bungieClientProvider;
@@ -57,7 +60,7 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
     {
         await ExecuteAndHandleErrors(async () =>
         {
-            var settings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var settings = await _guildDb.GetGuildSettingsAsync(GuildId);
             if (settings is null)
                 return GuildSettingsNotFound();
 
@@ -81,7 +84,7 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
             if (existingClan is not null)
             {
                 settings.Clans.Add(clanId);
-                await _destinyDb.UpsertGuildSettingsAsync(settings);
+                await _guildDb.UpsertGuildSettingsAsync(settings);
                 var embedTemplate = _embedBuilderService.CreateSimpleResponseEmbed(
                     Text("AddClanSuccessTitle", () => "Add new clan success"),
                     Text("AddClanSuccessDescription", () => "Added clan to this guild"));
@@ -90,7 +93,7 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
 
             _clanQueue.EnqueueFirstTimeScan(clanId);
             settings.Clans.Add(clanId);
-            await _destinyDb.UpsertGuildSettingsAsync(settings);
+            await _guildDb.UpsertGuildSettingsAsync(settings);
             return Success(_embedBuilderService.CreateSimpleResponseEmbed(
                     Text("AddClanSuccessTitle", () => "Add new clan success"),
                     Text("AddClanSuccessResponseNew", () => "New clan will be ready when scan message pops up")));
@@ -104,7 +107,7 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
     {
         await ExecuteAndHandleErrors(async () =>
         {
-            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var guildSettings = await _guildDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
                 return GuildSettingsNotFound();
 
@@ -116,7 +119,7 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
             clanModel.IsTracking = false;
 
             await _destinyDb.UpsertClanModelAsync(clanModel);
-            await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
+            await _guildDb.UpsertGuildSettingsAsync(guildSettings);
 
             return Success(_embedBuilderService.CreateSimpleResponseEmbed(
                 Text("RemoveClanSuccessTitle", () => "Clan removed"),
@@ -194,12 +197,12 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
     {
         await ExecuteAndHandleErrors(async () =>
         {
-            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var guildSettings = await _guildDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
                 return GuildSettingsNotFound();
 
             guildSettings.DefaultReportChannel = channel.Id;
-            await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
+            await _guildDb.UpsertGuildSettingsAsync(guildSettings);
 
             return Success(_embedBuilderService.CreateSimpleResponseEmbed(
                     Text("Success", () => "Success"),
@@ -215,7 +218,7 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
     {
         await ExecuteAndHandleErrors(async () =>
         {
-            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var guildSettings = await _guildDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
                 return GuildSettingsNotFound();
 
@@ -229,7 +232,7 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
                 guildSettings.TrackedRecords.IsReported = reportTriumphs is DiscordNullableBoolean.True;
             }
 
-            await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
+            await _guildDb.UpsertGuildSettingsAsync(guildSettings);
 
             return Success(_embedBuilderService.CreateSimpleResponseEmbed(
                     Text("Success", () => "Success"),
@@ -249,12 +252,12 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
             if (!client.TryGetDefinition<DestinyCollectibleDefinition>(itemHash, out var collectibleDefinition, GuildLocale))
                 return DestinyDefinitionNotFound<DestinyCollectibleDefinition>(itemHash);
 
-            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var guildSettings = await _guildDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
                 return GuildSettingsNotFound();
 
             guildSettings.TrackedCollectibles.TrackedHashes.Add(itemHash);
-            await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
+            await _guildDb.UpsertGuildSettingsAsync(guildSettings);
 
             var (name, icon) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(collectibleDefinition, GuildLocale);
 
@@ -279,12 +282,12 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
                 return DestinyDefinitionNotFound<DestinyCollectibleDefinition>(itemHash);
             }
 
-            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var guildSettings = await _guildDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
                 return GuildSettingsNotFound();
 
             guildSettings.TrackedCollectibles.TrackedHashes.Remove(itemHash);
-            await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
+            await _guildDb.UpsertGuildSettingsAsync(guildSettings);
 
             var (name, icon) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(collectibleDefinition, GuildLocale);
 
@@ -302,7 +305,7 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
         {
             var client = await _bungieClientProvider.GetClientAsync();
 
-            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var guildSettings = await _guildDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
                 return GuildSettingsNotFound();
 
@@ -346,13 +349,13 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
             if (!client.TryGetDefinition<DestinyRecordDefinition>(recordHash, out var recordDefinition, GuildLocale))
                 return DestinyDefinitionNotFound<DestinyRecordDefinition>(recordHash);
 
-            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var guildSettings = await _guildDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
                 return GuildSettingsNotFound();
 
             guildSettings.TrackedRecords.TrackedHashes.Add(recordHash);
 
-            await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
+            await _guildDb.UpsertGuildSettingsAsync(guildSettings);
 
             return Success(_embedBuilderService.CreateSimpleResponseEmbed(
                     Text("Success", () => "Success"),
@@ -373,12 +376,12 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
             if (!client.TryGetDefinition<DestinyRecordDefinition>(recordHash, out var recordDefinition, GuildLocale))
                 return DestinyDefinitionNotFound<DestinyRecordDefinition>(recordHash);
 
-            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var guildSettings = await _guildDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
                 return GuildSettingsNotFound();
 
             guildSettings.TrackedRecords.TrackedHashes.Remove(recordHash);
-            await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
+            await _guildDb.UpsertGuildSettingsAsync(guildSettings);
 
             return Success(_embedBuilderService.CreateSimpleResponseEmbed(
                     Text("Success", () => "Success"),
@@ -394,7 +397,7 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
         {
             var client = await _bungieClientProvider.GetClientAsync();
 
-            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var guildSettings = await _guildDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
                 return GuildSettingsNotFound();
 
@@ -434,7 +437,7 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
     {
         await ExecuteAndHandleErrors(async () =>
         {
-            var currentGuildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var currentGuildSettings = await _guildDb.GetGuildSettingsAsync(GuildId);
             if (currentGuildSettings is null)
                 return GuildSettingsNotFound();
 
@@ -462,7 +465,7 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
 
             if (anyChanges)
             {
-                await _destinyDb.UpsertGuildSettingsAsync(currentGuildSettings);
+                await _guildDb.UpsertGuildSettingsAsync(currentGuildSettings);
             }
 
             var embed = _embedBuilderService
@@ -489,7 +492,7 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
             if (!client.TryGetDefinition<DestinyPresentationNodeDefinition>(presentationNodeHash, out var presentationNodeDefinition, GuildLocale))
                 return DestinyDefinitionNotFound<DestinyPresentationNodeDefinition>(presentationNodeHash);
 
-            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var guildSettings = await _guildDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
                 return GuildSettingsNotFound();
 
@@ -498,7 +501,7 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
                 guildSettings.TrackedCollectibles.TrackedHashes.Add(collectibleHash.Collectible.Hash.GetValueOrDefault());
             }
 
-            await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
+            await _guildDb.UpsertGuildSettingsAsync(guildSettings);
 
             var embed = _embedBuilderService.CreateSimpleResponseEmbed(
                     Text("Success", () => "Success"),
@@ -528,7 +531,7 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
             if (!client.TryGetDefinition<DestinyPresentationNodeDefinition>(presentationNodeHash, out var presentationNodeDefinition, GuildLocale))
                 return DestinyDefinitionNotFound<DestinyPresentationNodeDefinition>(presentationNodeHash);
 
-            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var guildSettings = await _guildDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
                 return GuildSettingsNotFound();
 
@@ -537,7 +540,7 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
                 guildSettings.TrackedCollectibles.TrackedHashes.Remove(collectibleHash.Collectible.Hash.GetValueOrDefault());
             }
 
-            await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
+            await _guildDb.UpsertGuildSettingsAsync(guildSettings);
 
             var embed = _embedBuilderService.CreateSimpleResponseEmbed(
                     Text("Success", () => "Success"),
@@ -561,13 +564,13 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
         {
             await Context.Interaction.DeferAsync();
 
-            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var guildSettings = await _guildDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
                 return GuildSettingsNotFound();
 
             guildSettings.DestinyManifestLocale = locale;
 
-            await _destinyDb.UpsertGuildSettingsAsync(guildSettings);
+            await _guildDb.UpsertGuildSettingsAsync(guildSettings);
 
             await _bungieClientProvider.ReloadClient();
 

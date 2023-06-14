@@ -24,6 +24,7 @@ public class DestinyDefinitionDataService
     private readonly IBungieClientProvider _bungieClientProvider;
     private readonly IMemoryCache _memoryCache;
     private readonly IDestinyDb _destinyDb;
+    private readonly IGuildDb _guildDb;
     private readonly CuratedDefinitionInitialiser _curatedDefinitionInitialiser;
 
     public Dictionary<BungieLocales, List<DestinyRecordDefinition>> LeaderboardValidRecords { get; private set; }
@@ -32,17 +33,19 @@ public class DestinyDefinitionDataService
         IBungieClientProvider bungieClientProvider,
         IMemoryCache memoryCache,
         IDestinyDb destinyDb,
+        IGuildDb guildDb,
         CuratedDefinitionInitialiser curatedDefinitionInitialiser)
     {
         _bungieClientProvider = bungieClientProvider;
         _memoryCache = memoryCache;
         _destinyDb = destinyDb;
+        _guildDb = guildDb;
         _curatedDefinitionInitialiser = curatedDefinitionInitialiser;
     }
 
     public async Task MapLookupTables()
     {
-        var settings = await _destinyDb.GetAllGuildSettings();
+        var settings = await _guildDb.GetAllGuildSettings();
         var client = await _bungieClientProvider.GetClientAsync();
         _collectibleToItemMapping = new Dictionary<uint, uint>();
         var items = client.Repository.GetAll<DestinyInventoryItemDefinition>();

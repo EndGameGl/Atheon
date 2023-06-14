@@ -1,6 +1,4 @@
-﻿using Atheon.DataAccess;
-using Atheon.Extensions;
-using Atheon.Services.Interfaces;
+﻿using Atheon.Services.Interfaces;
 using Discord;
 using Discord.Interactions;
 using DotNetBungieAPI.Models.Destiny.Definitions.SeasonPasses;
@@ -10,17 +8,14 @@ namespace Atheon.Services.DiscordHandlers.Autocompleters.DestinySeasonPasses
     public class DestinySeasonPassDefinitionAutocompleter : AutocompleteHandler
     {
         private readonly IBungieClientProvider _bungieClientProvider;
-        private readonly IDestinyDb _destinyDb;
-        private readonly IMemoryCache _memoryCache;
+        private readonly ILocalizationService _localizationService;
 
         public DestinySeasonPassDefinitionAutocompleter(
             IBungieClientProvider bungieClientProvider,
-            IDestinyDb destinyDb,
-            IMemoryCache memoryCache)
+            ILocalizationService localizationService)
         {
             _bungieClientProvider = bungieClientProvider;
-            _destinyDb = destinyDb;
-            _memoryCache = memoryCache;
+            _localizationService = localizationService;
         }
 
         public override async Task<AutocompletionResult> GenerateSuggestionsAsync(
@@ -29,11 +24,7 @@ namespace Atheon.Services.DiscordHandlers.Autocompleters.DestinySeasonPasses
             IParameterInfo parameter,
             IServiceProvider services)
         {
-            var lang = await _memoryCache.GetOrAddAsync(
-                $"guild_lang_{context.Guild.Id}",
-                async () => (await _destinyDb.GetGuildLanguageAsync(context.Guild.Id)).ConvertToBungieLocale(),
-                TimeSpan.FromSeconds(15),
-                Caching.CacheExpirationType.Absolute);
+            var lang = await _localizationService.GetGuildLocaleCachedAsync(context.Guild.Id);
 
             var client = await _bungieClientProvider.GetClientAsync();
             var searchEntry = (string)autocompleteInteraction.Data.Options.First(x => x.Focused).Value;

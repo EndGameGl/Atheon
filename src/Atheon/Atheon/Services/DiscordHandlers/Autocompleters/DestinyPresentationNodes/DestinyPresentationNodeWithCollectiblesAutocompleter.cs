@@ -1,6 +1,4 @@
-﻿using Atheon.DataAccess;
-using Atheon.Extensions;
-using Atheon.Services.BungieApi;
+﻿using Atheon.Services.BungieApi;
 using Atheon.Services.Interfaces;
 using Discord;
 using Discord.Interactions;
@@ -10,17 +8,14 @@ namespace Atheon.Services.DiscordHandlers.Autocompleters.DestinyPresentationNode
 public class DestinyPresentationNodeWithCollectiblesAutocompleter : AutocompleteHandler
 {
     private readonly DestinyDefinitionDataService _destinyDefinitionDataService;
-    private readonly IMemoryCache _memoryCache;
-    private readonly IDestinyDb _destinyDb;
+    private readonly ILocalizationService _localizationService;
 
     public DestinyPresentationNodeWithCollectiblesAutocompleter(
         DestinyDefinitionDataService destinyDefinitionDataService,
-        IDestinyDb destinyDb,
-        IMemoryCache memoryCache)
+        ILocalizationService localizationService)
     {
         _destinyDefinitionDataService = destinyDefinitionDataService;
-        _memoryCache = memoryCache;
-        _destinyDb = destinyDb;
+        _localizationService = localizationService;
     }
 
     public override async Task<AutocompletionResult> GenerateSuggestionsAsync(
@@ -29,11 +24,7 @@ public class DestinyPresentationNodeWithCollectiblesAutocompleter : Autocomplete
         IParameterInfo parameter,
         IServiceProvider services)
     {
-        var lang = await _memoryCache.GetOrAddAsync(
-                $"guild_lang_{context.Guild.Id}",
-                async () => (await _destinyDb.GetGuildLanguageAsync(context.Guild.Id)).ConvertToBungieLocale(),
-                TimeSpan.FromSeconds(15),
-                Caching.CacheExpirationType.Absolute);
+        var lang = await _localizationService.GetGuildLocaleCachedAsync(context.Guild.Id);
 
         var searchEntry = (string)autocompleteInteraction.Data.Options.First(x => x.Focused).Value;
         var searchResults = _destinyDefinitionDataService

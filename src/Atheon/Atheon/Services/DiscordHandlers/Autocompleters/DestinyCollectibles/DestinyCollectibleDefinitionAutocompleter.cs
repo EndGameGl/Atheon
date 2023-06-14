@@ -16,20 +16,20 @@ public class DestinyCollectibleDefinitionAutocompleter : AutocompleteHandler
     private readonly ILogger<DestinyCollectibleDefinitionAutocompleter> _logger;
     private readonly DestinyDefinitionDataService _destinyDefinitionDataService;
     private readonly IMemoryCache _memoryCache;
-    private readonly IDestinyDb _destinyDb;
+    private readonly IGuildDb _guildDb;
 
     public DestinyCollectibleDefinitionAutocompleter(
         IBungieClientProvider bungieClientProvider,
         ILogger<DestinyCollectibleDefinitionAutocompleter> logger,
         DestinyDefinitionDataService destinyDefinitionDataService,
         IMemoryCache memoryCache,
-        IDestinyDb destinyDb)
+        IGuildDb guildDb)
     {
         _bungieClientProvider = bungieClientProvider;
         _logger = logger;
         _destinyDefinitionDataService = destinyDefinitionDataService;
         _memoryCache = memoryCache;
-        _destinyDb = destinyDb;
+        _guildDb = guildDb;
     }
     public override async Task<AutocompletionResult> GenerateSuggestionsAsync(
         IInteractionContext context,
@@ -41,7 +41,7 @@ public class DestinyCollectibleDefinitionAutocompleter : AutocompleteHandler
         {
             var lang = await _memoryCache.GetOrAddAsync(
                 $"guild_lang_{context.Guild.Id}",
-                async () => (await _destinyDb.GetGuildLanguageAsync(context.Guild.Id)).ConvertToBungieLocale(),
+                async () => (await _guildDb.GetGuildLanguageAsync(context.Guild.Id)).ConvertToBungieLocale(),
                 TimeSpan.FromSeconds(15),
                 Caching.CacheExpirationType.Absolute);
 

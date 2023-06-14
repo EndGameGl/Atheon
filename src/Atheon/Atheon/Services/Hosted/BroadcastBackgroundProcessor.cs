@@ -19,9 +19,11 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
     private readonly IDiscordClientProvider _discordClientProvider;
     private readonly IDestinyDb _destinyDb;
     private readonly IBroadcastDb _broadcastDb;
+    private readonly IGuildDb _guildDb;
     private readonly IBungieClientProvider _bungieClientProvider;
     private readonly EmbedBuilderService _embedBuilderService;
     private readonly IMemoryCache _memoryCache;
+    private readonly ILocalizationService _localizationService;
 
     private ConcurrentQueue<ClanBroadcastDbModel> _clanBroadcasts = new();
     private ConcurrentQueue<DestinyUserProfileBroadcastDbModel> _userBroadcasts = new();
@@ -33,19 +35,23 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
         IDiscordClientProvider discordClientProvider,
         IDestinyDb destinyDb,
         IBroadcastDb broadcastDb,
+        IGuildDb guildDb,
         BroadcastSaver broadcastSaver,
         IBungieClientProvider bungieClientProvider,
         EmbedBuilderService embedBuilderService,
-        IMemoryCache memoryCache) : base(logger)
+        IMemoryCache memoryCache,
+        ILocalizationService localizationService) : base(logger)
     {
         _logger = logger;
         _commonEvents = commonEvents;
         _discordClientProvider = discordClientProvider;
         _destinyDb = destinyDb;
         _broadcastDb = broadcastDb;
+        _guildDb = guildDb;
         _bungieClientProvider = bungieClientProvider;
         _embedBuilderService = embedBuilderService;
         _memoryCache = memoryCache;
+        _localizationService = localizationService;
     }
 
     protected override Task BeforeExecutionAsync(CancellationToken stoppingToken)
@@ -127,7 +133,7 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
             return;
         }
 
-        var settings = await _destinyDb.GetGuildSettingsAsync(userBroadcast.GuildId);
+        var settings = await _guildDb.GetGuildSettingsAsync(userBroadcast.GuildId);
 
         if (settings is null)
             return;
@@ -145,7 +151,7 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
 
         var lang = await _memoryCache.GetOrAddAsync(
                 $"guild_lang_{userBroadcast.GuildId}",
-                async () => (await _destinyDb.GetGuildLanguageAsync(userBroadcast.GuildId)).ConvertToBungieLocale(),
+                async () => (await _guildDb.GetGuildLanguageAsync(userBroadcast.GuildId)).ConvertToBungieLocale(),
                 TimeSpan.FromSeconds(15),
                 Caching.CacheExpirationType.Absolute);
 
@@ -168,7 +174,7 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
         DiscordShardedClient client,
         ClanBroadcastDbModel clanBroadcast)
     {
-        var settings = await _destinyDb.GetGuildSettingsAsync(clanBroadcast.GuildId);
+        var settings = await _guildDb.GetGuildSettingsAsync(clanBroadcast.GuildId);
 
         if (settings is null)
             return;
@@ -259,11 +265,7 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
 
         var channel = guild.GetTextChannel(channelId.Value);
 
-        var lang = await _memoryCache.GetOrAddAsync(
-                $"guild_lang_{broadcasts.First().GuildId}",
-                async () => (await _destinyDb.GetGuildLanguageAsync(broadcasts.First().GuildId)).ConvertToBungieLocale(),
-                TimeSpan.FromSeconds(15),
-                Caching.CacheExpirationType.Absolute);
+        var lang = await _localizationService.GetGuildLocaleCachedAsync(broadcasts.First().GuildId);
 
         if (channel is not null)
         {
@@ -333,11 +335,7 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
 
         var channel = guild.GetTextChannel(channelId.Value);
 
-        var lang = await _memoryCache.GetOrAddAsync(
-                $"guild_lang_{destinyUserBroadcast.GuildId}",
-                async () => (await _destinyDb.GetGuildLanguageAsync(destinyUserBroadcast.GuildId)).ConvertToBungieLocale(),
-                TimeSpan.FromSeconds(15),
-                Caching.CacheExpirationType.Absolute);
+        var lang = await _localizationService.GetGuildLocaleCachedAsync(destinyUserBroadcast.GuildId);
 
         if (channel is not null)
         {
@@ -361,7 +359,7 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
 
     private async Task<ulong?> GetGuildProfileBroadcastChannel(DestinyUserProfileBroadcastDbModel destinyUserBroadcast)
     {
-        var settings = await _destinyDb.GetGuildSettingsAsync(destinyUserBroadcast.GuildId);
+        var settings = await _guildDb.GetGuildSettingsAsync(destinyUserBroadcast.GuildId);
 
         if (settings is null)
             return null;

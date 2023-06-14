@@ -19,19 +19,20 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
     private readonly EmbedBuilderService _embedBuilderService;
     private readonly IDestinyDb _destinyDb;
     private readonly IBungieClientProvider _bungieClientProvider;
-    private readonly ILocalizationService _localizationService;
+    private readonly IGuildDb _guildDb;
 
     public LeaderboardsCommandHandler(
         ILogger<LeaderboardsCommandHandler> logger,
         EmbedBuilderService embedBuilderService,
         IDestinyDb destinyDb,
         IBungieClientProvider bungieClientProvider,
-        ILocalizationService localizationService) : base(localizationService, logger, embedBuilderService)
+        ILocalizationService localizationService,
+        IGuildDb guildDb) : base(localizationService, logger, embedBuilderService)
     {
         _embedBuilderService = embedBuilderService;
         _destinyDb = destinyDb;
         _bungieClientProvider = bungieClientProvider;
-        _localizationService = localizationService;
+        _guildDb = guildDb;
     }
 
     [SlashCommand("metric", "Shows leaderboard for a certain metric")]
@@ -48,7 +49,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
             if (!bungieClient.TryGetDefinition<DestinyMetricDefinition>(metricHash, out var metricDefinition, GuildLocale))
                 return DestinyDefinitionNotFound<DestinyMetricDefinition>(metricHash);
 
-            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var guildSettings = await _guildDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
                 return GuildSettingsNotFound();
 
@@ -96,7 +97,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
     {
         await ExecuteAndHandleErrors(async () =>
         {
-            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var guildSettings = await _guildDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
                 return GuildSettingsNotFound();
 
@@ -143,7 +144,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
     {
         await ExecuteAndHandleErrors(async () =>
         {
-            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var guildSettings = await _guildDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
                 return GuildSettingsNotFound();
 
@@ -189,7 +190,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
     {
         await ExecuteAndHandleErrors(async () =>
         {
-            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var guildSettings = await _guildDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
                 return GuildSettingsNotFound();
 
@@ -235,7 +236,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
     {
         await ExecuteAndHandleErrors(async () =>
         {
-            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var guildSettings = await _guildDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
                 return GuildSettingsNotFound();
 
@@ -291,7 +292,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
             if (!bungieClient.TryGetDefinition<DestinyRecordDefinition>(recordHash, out var recordDefinition, GuildLocale))
                 return DestinyDefinitionNotFound<DestinyRecordDefinition>(recordHash);
 
-            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var guildSettings = await _guildDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
                 return GuildSettingsNotFound();
 
@@ -347,7 +348,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
     {
         await ExecuteAndHandleErrors(async () =>
         {
-            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var guildSettings = await _guildDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
                 return GuildSettingsNotFound();
             var users = await _destinyDb.GetTotalTitlesLeaderboardAsync(guildSettings.Clans.ToArray());
@@ -401,7 +402,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
             if (!bungieClient.TryGetDefinition<DestinySeasonPassDefinition>(seasonPassHash, out var seasonPassDefinition, GuildLocale))
                 return DestinyDefinitionNotFound<DestinySeasonPassDefinition>(seasonPassHash);
 
-            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var guildSettings = await _guildDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
                 return GuildSettingsNotFound();
 

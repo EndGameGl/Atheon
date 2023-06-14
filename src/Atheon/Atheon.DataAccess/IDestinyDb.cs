@@ -1,26 +1,14 @@
 ﻿using Atheon.DataAccess.Models.Destiny;
-using Atheon.DataAccess.Models.Destiny.Broadcasts;
 using Atheon.DataAccess.Models.Destiny.Clans;
-using Atheon.DataAccess.Models.Destiny.Guilds;
 using Atheon.DataAccess.Models.Destiny.Links;
 using Atheon.DataAccess.Models.Destiny.Profiles;
 using Atheon.DataAccess.Models.Destiny.Tracking;
-using Atheon.DataAccess.Models.Discord;
 using DotNetBungieAPI.Models.Destiny;
 
 namespace Atheon.DataAccess;
 
 public interface IDestinyDb
 {
-    Task<List<GuildReference>> GetGuildReferencesAsync();
-    Task<List<DiscordGuildSettingsDbModel>> GetAllGuildSettings();
-    Task<DiscordGuildSettingsDbModel?> GetGuildSettingsAsync(ulong guildId);
-    Task UpsertGuildSettingsAsync(DiscordGuildSettingsDbModel guildSettings);
-    Task DeleteGuildSettingsAsync(ulong guildId);
-    Task<List<DiscordGuildSettingsDbModel>> GetAllGuildSettingsForClanAsync(long clanId);
-    Task<List<ClanReference>> GetClanReferencesFromGuildAsync(ulong guildId);
-    Task<DiscordDestinyLanguageEnum> GetGuildLanguageAsync(ulong guildId);
-
     Task<List<long>> GetClanIdsAsync(bool isTracking, DateTime oldenThan);
     Task<DestinyClanDbModel?> GetClanModelAsync(long clanId);
     Task UpsertClanModelAsync(DestinyClanDbModel clanDbModel);

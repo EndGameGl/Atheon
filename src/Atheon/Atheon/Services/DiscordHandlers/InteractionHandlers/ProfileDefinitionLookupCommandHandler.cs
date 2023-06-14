@@ -24,7 +24,7 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
     private readonly IBungieClientProvider _bungieClientProvider;
     private readonly EmbedBuilderService _embedBuilderService;
     private readonly DestinyDefinitionDataService _destinyDefinitionDataService;
-    private readonly ILocalizationService _localizationService;
+    private readonly IGuildDb _guildDb;
 
     public ProfileDefinitionLookupCommandHandler(
         ILogger<ProfileDefinitionLookupCommandHandler> logger,
@@ -32,13 +32,14 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
         IBungieClientProvider bungieClientProvider,
         EmbedBuilderService embedBuilderService,
         DestinyDefinitionDataService destinyDefinitionDataService,
-        ILocalizationService localizationService) : base(localizationService, logger, embedBuilderService)
+        ILocalizationService localizationService,
+        IGuildDb guildDb) : base(localizationService, logger, embedBuilderService)
     {
         _destinyDb = destinyDb;
         _bungieClientProvider = bungieClientProvider;
         _embedBuilderService = embedBuilderService;
         _destinyDefinitionDataService = destinyDefinitionDataService;
-        _localizationService = localizationService;
+        _guildDb = guildDb;
     }
 
     [SlashCommand("item-check", "Checks who has items")]
@@ -52,7 +53,7 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
             if (!uint.TryParse(collectibleHashString, out var collectibleHash))
                 return Error(FormatText("FailedToParseCollectibleHashError", () => "Failed to parse collectible hash: {0}", collectibleHashString));
 
-            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var guildSettings = await _guildDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
                 return GuildSettingsNotFound();
 
@@ -116,7 +117,7 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
             if (!uint.TryParse(recordHashString, out var recordHash))
                 return Error(FormatText("FailedToParseRecordHashError", () => "Failed to parse record hash: {0}", recordHashString));
 
-            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var guildSettings = await _guildDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
                 return GuildSettingsNotFound();
 
@@ -191,7 +192,7 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
             if (!client.TryGetDefinition<DestinyCollectibleDefinition>(collectibleHash, out var collectibleDefinition, GuildLocale))
                 return DestinyDefinitionNotFound<DestinyCollectibleDefinition>(collectibleHash);
 
-            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var guildSettings = await _guildDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
                 return GuildSettingsNotFound();
 
@@ -255,7 +256,7 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
 
 
             var titleName = titleDefinition.TitleInfo.TitlesByGenderHash[DefinitionHashes.Genders.Masculine];
-            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var guildSettings = await _guildDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
                 return GuildSettingsNotFound();
 
@@ -323,7 +324,7 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
     {
         await ExecuteAndHandleErrors(async () =>
         {
-            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var guildSettings = await _guildDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
                 return GuildSettingsNotFound();
 

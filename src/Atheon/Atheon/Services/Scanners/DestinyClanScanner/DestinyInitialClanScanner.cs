@@ -17,6 +17,7 @@ public class DestinyInitialClanScanner : EntityScannerBase<DestinyClanScannerInp
     private readonly IUserQueue _userQueue;
     private readonly IDestinyDb _destinyDb;
     private readonly ICommonEvents _commonEvents;
+    private readonly IGuildDb _guildDb;
     private AsyncPolicy _apiCallPolicy;
 
     public DestinyInitialClanScanner(
@@ -25,7 +26,8 @@ public class DestinyInitialClanScanner : EntityScannerBase<DestinyClanScannerInp
         BungieNetApiCallHandler bungieNetApiCallHandler,
         IUserQueue userQueue,
         IDestinyDb destinyDb,
-        ICommonEvents commonEvents) : base(logger)
+        ICommonEvents commonEvents,
+        IGuildDb guildDb) : base(logger)
     {
         Initialize();
         BuildApiCallPolicy();
@@ -34,6 +36,7 @@ public class DestinyInitialClanScanner : EntityScannerBase<DestinyClanScannerInp
         _userQueue = userQueue;
         _destinyDb = destinyDb;
         _commonEvents = commonEvents;
+        _guildDb = guildDb;
     }
 
     private void BuildApiCallPolicy()
@@ -146,7 +149,7 @@ public class DestinyInitialClanScanner : EntityScannerBase<DestinyClanScannerInp
         clanData.LastScan = DateTime.UtcNow;
         clanData.IsTracking = true;
         await _destinyDb.UpsertClanModelAsync(clanData);
-        var guildSettings = await _destinyDb.GetAllGuildSettingsForClanAsync(clanData.ClanId);
+        var guildSettings = await _guildDb.GetAllGuildSettingsForClanAsync(clanData.ClanId);
 
         foreach (var guildSetting in guildSettings)
         {
