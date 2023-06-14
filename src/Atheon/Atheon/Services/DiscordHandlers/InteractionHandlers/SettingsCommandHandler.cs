@@ -18,9 +18,7 @@ using Discord.Interactions;
 using DotNetBungieAPI.Models.Destiny.Definitions.Collectibles;
 using DotNetBungieAPI.Models.Destiny.Definitions.PresentationNodes;
 using DotNetBungieAPI.Models.Destiny.Definitions.Records;
-using System.Security.Claims;
 using System.Text;
-using System.Xml.Linq;
 
 namespace Atheon.Services.DiscordHandlers.InteractionHandlers;
 
@@ -52,7 +50,7 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
     [AtheonBotAdminOrOwner]
     [SlashCommand("clan-add", "Adds new clan to guild")]
     public async Task AddClanToGuildAsync(
-        [Autocomplete(typeof(DestinyClanByIdAutocompleter)), Summary("Clan")] long clanId)
+        [Autocomplete(typeof(DestinyClanByIdAutocompleter)), Summary("clan", "Clan ID to add")] long clanId)
     {
         await ExecuteAndHandleErrors(async () =>
         {
@@ -99,7 +97,7 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
     [AtheonBotAdminOrOwner]
     [SlashCommand("clan-remove", "Removes selected clan from guild")]
     public async Task RemoveClanFromGuildAsync(
-        [Autocomplete(typeof(DestinyClanFromGuildAutocompleter)), Summary("Clan")] long clanIdToRemove)
+        [Autocomplete(typeof(DestinyClanFromGuildAutocompleter)), Summary("clan", "Clan to remove")] long clanIdToRemove)
     {
         await ExecuteAndHandleErrors(async () =>
         {
@@ -126,8 +124,8 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
     [AtheonBotAdminOrOwner]
     [SlashCommand("link-user", "Links discord user to destiny profile")]
     public async Task LinkUserAsync(
-        [Autocomplete(typeof(SearchDestinyUserByNameAutocompleter))][Summary("User")] DestinyProfilePointer user,
-        [Summary("link-to", "User to link to")] IUser? linkTo = null)
+        [Autocomplete(typeof(SearchDestinyUserByNameAutocompleter))][Summary("user", "Destiny 2 user profile")] DestinyProfilePointer user,
+        [Summary("link-to", "Discord user to link to")] IUser? linkTo = null)
     {
         await ExecuteAndHandleErrors(async () =>
         {

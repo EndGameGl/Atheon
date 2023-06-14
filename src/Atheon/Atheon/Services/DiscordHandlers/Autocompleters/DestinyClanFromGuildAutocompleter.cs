@@ -23,7 +23,7 @@ namespace Atheon.Services.DiscordHandlers.Autocompleters
             var guildClans = await _destinyDb.GetClanReferencesFromGuildAsync(guildId);
             if (guildClans is null or { Count: 0 })
                 return AutocompletionResult.FromSuccess();
-           return AutocompletionResult.FromSuccess(guildClans.Select(x => new AutocompleteResult(x.Name, x.Id.ToString())));
+            return AutocompletionResult.FromSuccess(guildClans.Select(x => new AutocompleteResult(x.Name, x.Id.ToString())));
         }
     }
 }

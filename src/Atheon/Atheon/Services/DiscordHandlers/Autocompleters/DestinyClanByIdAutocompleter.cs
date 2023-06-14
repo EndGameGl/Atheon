@@ -14,9 +14,9 @@ public class DestinyClanByIdAutocompleter : AutocompleteHandler
     }
 
     public override async Task<AutocompletionResult> GenerateSuggestionsAsync(
-        IInteractionContext context, 
-        IAutocompleteInteraction autocompleteInteraction, 
-        IParameterInfo parameter, 
+        IInteractionContext context,
+        IAutocompleteInteraction autocompleteInteraction,
+        IParameterInfo parameter,
         IServiceProvider services)
     {
         var apiClient = await _bungieClientProvider.GetClientAsync();
@@ -32,7 +32,7 @@ public class DestinyClanByIdAutocompleter : AutocompleteHandler
             new AutocompleteResult(groupResponse.Response.Detail.Name, input)
         };
 
-        return !groupResponse.IsSuccessfulResponseCode ? 
+        return !groupResponse.IsSuccessfulResponseCode ?
             AutocompletionResult.FromSuccess() :
             AutocompletionResult.FromSuccess(resultList);
     }

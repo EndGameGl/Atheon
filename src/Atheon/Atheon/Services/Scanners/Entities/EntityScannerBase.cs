@@ -3,8 +3,8 @@ using System.Reflection;
 
 namespace Atheon.Services.Scanners.Entities
 {
-    public abstract class EntityScannerBase<TInput, TContext> 
-        where TContext : class 
+    public abstract class EntityScannerBase<TInput, TContext>
+        where TContext : class
         where TInput : class
     {
         private ScannerStepInfo<TInput, TContext>[] _steps;

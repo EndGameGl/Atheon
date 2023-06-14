@@ -4,7 +4,6 @@ using Atheon.DataAccess.Models.Destiny.Profiles;
 using Atheon.Destiny2.Metadata;
 using Atheon.Services.BungieApi;
 using Atheon.Services.Interfaces;
-using DotNetBungieAPI.Models;
 using DotNetBungieAPI.Models.Destiny;
 using DotNetBungieAPI.Models.Destiny.Components;
 using DotNetBungieAPI.Models.Destiny.Definitions.Records;
@@ -35,7 +34,7 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
             DestinyProfileDbModel dbProfile,
             DestinyProfileResponse profileResponse,
             List<DiscordGuildSettingsDbModel> guildSettings)
-        {          
+        {
             var titleAndGildHashes = _destinyDefinitionDataService.GetTitleHashesCachedAsync().GetAwaiter().GetResult()!;
             foreach (var (recordHash, recordComponent) in profileResponse.ProfileRecords.Data.Records)
             {

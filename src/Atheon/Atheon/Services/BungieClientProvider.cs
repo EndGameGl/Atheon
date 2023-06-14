@@ -37,7 +37,7 @@ public class BungieClientProvider : IBungieClientProvider
 
         var manifestPath = await _settingsStorage.GetManifestPath();
 
-        Ensure.That(manifestPath).Is(path => path.IsNotNullOrEmpty(), errorMessage: "Manifest path can't be empty");      
+        Ensure.That(manifestPath).Is(path => path.IsNotNullOrEmpty(), errorMessage: "Manifest path can't be empty");
 
         var client = await CreateClient(apiKey, manifestPath);
 
@@ -116,7 +116,7 @@ public class BungieClientProvider : IBungieClientProvider
 
     public async Task ReloadClient()
     {
-        _clientInstance =  await ResolveClientInstance();
+        _clientInstance = await ResolveClientInstance();
         await _clientInstance.DefinitionProvider.Initialize();
         await _clientInstance.DefinitionProvider.ReadToRepository(_clientInstance.Repository);
     }

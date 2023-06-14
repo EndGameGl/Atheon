@@ -68,7 +68,7 @@ namespace Atheon.Services.DiscordHandlers.InteractionHandlers.Base
             if (this is LocalizedSlashCommandHandler localizedSlashCommandHandler)
             {
                 return new DiscordCommandErrorEmbedResult(localizedSlashCommandHandler.FormatText(
-                    "DefinitionNotFoundError", 
+                    "DefinitionNotFoundError",
                     () => "Definition {0} {1} not found",
                     type.Name,
                     hash));

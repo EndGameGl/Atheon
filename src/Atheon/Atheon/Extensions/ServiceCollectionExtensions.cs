@@ -1,7 +1,7 @@
-﻿using Atheon.Services.Interfaces;
+﻿using Atheon.Services.Caching;
 using Atheon.Services.DiscordHandlers;
-using Atheon.Services.Caching;
 using Atheon.Services.Hosted;
+using Atheon.Services.Interfaces;
 
 namespace Atheon.Extensions;
 

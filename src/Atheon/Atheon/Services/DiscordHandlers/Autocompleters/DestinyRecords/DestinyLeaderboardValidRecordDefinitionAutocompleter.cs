@@ -24,9 +24,9 @@ public class DestinyLeaderboardValidRecordDefinitionAutocompleter : Autocomplete
     }
 
     public override async Task<AutocompletionResult> GenerateSuggestionsAsync(
-        IInteractionContext context, 
-        IAutocompleteInteraction autocompleteInteraction, 
-        IParameterInfo parameter, 
+        IInteractionContext context,
+        IAutocompleteInteraction autocompleteInteraction,
+        IParameterInfo parameter,
         IServiceProvider services)
     {
         var lang = await _memoryCache.GetOrAddAsync(

@@ -7,8 +7,8 @@ public class DiscordCommandEmbedResult : IDiscordCommandResult
     private readonly Embed _embed;
     private readonly bool _hide;
 
-    public DiscordCommandEmbedResult(Embed embed, bool hide) 
-    { 
+    public DiscordCommandEmbedResult(Embed embed, bool hide)
+    {
         _embed = embed;
         _hide = hide;
     }

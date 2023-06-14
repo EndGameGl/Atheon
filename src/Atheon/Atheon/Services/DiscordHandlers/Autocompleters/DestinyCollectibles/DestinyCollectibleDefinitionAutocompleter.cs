@@ -1,13 +1,12 @@
-﻿using Atheon.Extensions;
+﻿using Atheon.DataAccess;
+using Atheon.Extensions;
 using Atheon.Services.BungieApi;
-using Atheon.DataAccess;
+using Atheon.Services.Interfaces;
 using Discord;
 using Discord.Interactions;
 using DotNetBungieAPI.Extensions;
 using DotNetBungieAPI.Models;
 using DotNetBungieAPI.Models.Destiny.Definitions.Collectibles;
-using System.Linq;
-using Atheon.Services.Interfaces;
 
 namespace Atheon.Services.DiscordHandlers.Autocompleters.DestinyCollectibles;
 

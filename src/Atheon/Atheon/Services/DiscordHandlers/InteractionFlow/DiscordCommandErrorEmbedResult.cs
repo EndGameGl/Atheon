@@ -1,7 +1,4 @@
-﻿using Atheon.Extensions;
-using Discord;
-using System;
-using System.Drawing;
+﻿using Discord;
 
 namespace Atheon.Services.DiscordHandlers.InteractionFlow
 {

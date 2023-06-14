@@ -6,7 +6,6 @@ using Atheon.Services.BungieApi;
 using Atheon.Services.DiscordHandlers;
 using Atheon.Services.Hosted.Utilities;
 using Atheon.Services.Interfaces;
-using Discord;
 using Discord.WebSocket;
 using DotNetBungieAPI.Service.Abstractions;
 using System.Collections.Concurrent;

@@ -14,7 +14,7 @@ public abstract class LocalizedSlashCommandHandler : SlashCommandHandlerBase
 
     protected LocalizedSlashCommandHandler(
         ILocalizationService localizationService,
-        ILogger logger, 
+        ILogger logger,
         EmbedBuilderService embedBuilderService) : base(logger, embedBuilderService)
     {
         _localizationService = localizationService;

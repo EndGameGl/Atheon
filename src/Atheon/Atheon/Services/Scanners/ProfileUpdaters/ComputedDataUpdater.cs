@@ -3,7 +3,6 @@ using Atheon.DataAccess.Models.Destiny.Profiles;
 using Atheon.Destiny2.Metadata;
 using Atheon.Services.BungieApi;
 using Atheon.Services.Interfaces;
-using Discord;
 using DotNetBungieAPI.Extensions;
 using DotNetBungieAPI.HashReferences;
 using DotNetBungieAPI.Models.Destiny;

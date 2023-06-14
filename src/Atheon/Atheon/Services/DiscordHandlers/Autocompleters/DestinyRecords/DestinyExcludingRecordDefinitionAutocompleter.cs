@@ -1,10 +1,10 @@
-﻿using Atheon.Services.DiscordHandlers.Autocompleters.DestinyCollectibles;
-using Atheon.Services.Interfaces;
-using Discord.Interactions;
-using Discord;
-using DotNetBungieAPI.Models.Destiny.Definitions.Records;
+﻿using Atheon.DataAccess;
 using Atheon.Extensions;
-using Atheon.DataAccess;
+using Atheon.Services.DiscordHandlers.Autocompleters.DestinyCollectibles;
+using Atheon.Services.Interfaces;
+using Discord;
+using Discord.Interactions;
+using DotNetBungieAPI.Models.Destiny.Definitions.Records;
 
 namespace Atheon.Services.DiscordHandlers.Autocompleters.DestinyRecords;
 

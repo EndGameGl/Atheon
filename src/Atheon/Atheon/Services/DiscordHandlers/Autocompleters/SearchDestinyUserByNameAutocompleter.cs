@@ -1,5 +1,4 @@
 ﻿using Atheon.Destiny2.Metadata;
-using Atheon.Extensions;
 using Atheon.Services.Interfaces;
 using Discord;
 using Discord.Interactions;

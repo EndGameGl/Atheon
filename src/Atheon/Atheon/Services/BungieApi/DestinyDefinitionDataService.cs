@@ -1,18 +1,18 @@
-﻿using Atheon.Services.Interfaces;
-using DotNetBungieAPI.Models.Destiny.Definitions.PresentationNodes;
-using DotNetBungieAPI.Models;
-using DotNetBungieAPI.Service.Abstractions;
+﻿using Atheon.DataAccess;
+using Atheon.DataAccess.Models.Destiny.Tracking;
+using Atheon.Extensions;
+using Atheon.Services.Caching;
+using Atheon.Services.Interfaces;
 using DotNetBungieAPI.Extensions;
 using DotNetBungieAPI.HashReferences;
-using IMemoryCache = Atheon.Services.Interfaces.IMemoryCache;
-using Atheon.Services.Caching;
-using DotNetBungieAPI.Models.Destiny.Definitions.Records;
-using DotNetBungieAPI.Models.Destiny.Definitions.InventoryItems;
+using DotNetBungieAPI.Models;
 using DotNetBungieAPI.Models.Destiny.Definitions.Collectibles;
+using DotNetBungieAPI.Models.Destiny.Definitions.InventoryItems;
+using DotNetBungieAPI.Models.Destiny.Definitions.PresentationNodes;
+using DotNetBungieAPI.Models.Destiny.Definitions.Records;
+using DotNetBungieAPI.Service.Abstractions;
 using System.Text;
-using Atheon.Extensions;
-using Atheon.DataAccess;
-using Atheon.DataAccess.Models.Destiny.Tracking;
+using IMemoryCache = Atheon.Services.Interfaces.IMemoryCache;
 
 namespace Atheon.Services.BungieApi;
 
@@ -252,7 +252,7 @@ public class DestinyDefinitionDataService
     {
         if (!bungieClient.TryGetDefinition<DestinyPresentationNodeDefinition>(
                 presentationNodeHash,
-                out var sealsPresentationNodeDefinition, 
+                out var sealsPresentationNodeDefinition,
                 locale))
             return;
 

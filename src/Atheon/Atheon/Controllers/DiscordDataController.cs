@@ -1,7 +1,6 @@
 ﻿using Atheon.Controllers.Base;
 using Atheon.Models.Api;
 using Atheon.Services.Interfaces;
-using Discord;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Atheon.Controllers;
