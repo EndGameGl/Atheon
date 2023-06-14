@@ -49,14 +49,6 @@ public interface IDestinyDb
     Task<List<DestinyProfileLiteWithValue<int>>> GetTotalTitlesLeaderboardAsync(long[] clanIds);
     Task<List<DestinyProfileLite>> GetPlayersWithGameVersionAsync(DestinyGameVersions gameVersion, bool hasVersion, long[] clanIds);
 
-    Task TryInsertClanBroadcastAsync(ClanBroadcastDbModel clanBroadcast);
-    Task TryInsertProfileBroadcastAsync(DestinyUserProfileBroadcastDbModel profileBroadcast);
-    Task TryInsertProfileCustomBroadcastAsync(DestinyUserProfileCustomBroadcastDbModel profileCustomBroadcast);
-
-    Task MarkClanBroadcastSentAsync(ClanBroadcastDbModel clanBroadcast);
-    Task MarkUserBroadcastSentAsync(DestinyUserProfileBroadcastDbModel profileBroadcast);
-    Task MarkUserCustomBroadcastSentAsync(DestinyUserProfileCustomBroadcastDbModel profileCustomBroadcast);
-
     Task UpsertCuratedRecordDefinitionAsync(CuratedRecord curatedRecord);
     Task UpsertCuratedCollectibleDefinitionAsync(CuratedCollectible curatedCollectible);
     Task ClearAllCuratedTables();

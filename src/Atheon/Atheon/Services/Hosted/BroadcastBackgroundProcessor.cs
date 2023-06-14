@@ -18,6 +18,7 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
     private readonly ICommonEvents _commonEvents;
     private readonly IDiscordClientProvider _discordClientProvider;
     private readonly IDestinyDb _destinyDb;
+    private readonly IBroadcastDb _broadcastDb;
     private readonly IBungieClientProvider _bungieClientProvider;
     private readonly EmbedBuilderService _embedBuilderService;
     private readonly IMemoryCache _memoryCache;
@@ -31,6 +32,7 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
         ICommonEvents commonEvents,
         IDiscordClientProvider discordClientProvider,
         IDestinyDb destinyDb,
+        IBroadcastDb broadcastDb,
         BroadcastSaver broadcastSaver,
         IBungieClientProvider bungieClientProvider,
         EmbedBuilderService embedBuilderService,
@@ -40,6 +42,7 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
         _commonEvents = commonEvents;
         _discordClientProvider = discordClientProvider;
         _destinyDb = destinyDb;
+        _broadcastDb = broadcastDb;
         _bungieClientProvider = bungieClientProvider;
         _embedBuilderService = embedBuilderService;
         _memoryCache = memoryCache;
@@ -103,7 +106,7 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
 
         if (string.IsNullOrEmpty(userName))
         {
-            await _destinyDb.MarkUserCustomBroadcastSentAsync(userBroadcast);
+            await _broadcastDb.MarkUserCustomBroadcastSentAsync(userBroadcast);
             _logger.LogWarning("Failed to send broadcast due to username being null {@Broadcast}", userBroadcast);
             return;
         }
@@ -111,7 +114,7 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
         var clanData = await _destinyDb.GetClanModelAsync(userBroadcast.ClanId);
         if (clanData is null)
         {
-            await _destinyDb.MarkUserCustomBroadcastSentAsync(userBroadcast);
+            await _broadcastDb.MarkUserCustomBroadcastSentAsync(userBroadcast);
             _logger.LogWarning("Failed to send broadcast due to clan data not being found {@Broadcast}", userBroadcast);
             return;
         }
@@ -119,7 +122,7 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
         var guild = client.GetGuild(userBroadcast.GuildId);
         if (guild is null)
         {
-            await _destinyDb.MarkUserCustomBroadcastSentAsync(userBroadcast);
+            await _broadcastDb.MarkUserCustomBroadcastSentAsync(userBroadcast);
             _logger.LogWarning("Failed to send broadcast due to guild being null {@Broadcast}", userBroadcast);
             return;
         }
@@ -133,7 +136,7 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
 
         if (channelId is null)
         {
-            await _destinyDb.MarkUserCustomBroadcastSentAsync(userBroadcast);
+            await _broadcastDb.MarkUserCustomBroadcastSentAsync(userBroadcast);
             _logger.LogWarning("Failed to send broadcast due to channelId being null {@Broadcast}", userBroadcast);
             return;
         }
@@ -151,11 +154,11 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
             await channel.SendMessageAsync(
                 embed: _embedBuilderService.BuildDestinyCustomUserBroadcast(userBroadcast, clanData, bungieClient, userName, lang));
 
-            await _destinyDb.MarkUserCustomBroadcastSentAsync(userBroadcast);
+            await _broadcastDb.MarkUserCustomBroadcastSentAsync(userBroadcast);
         }
         else
         {
-            await _destinyDb.MarkUserCustomBroadcastSentAsync(userBroadcast);
+            await _broadcastDb.MarkUserCustomBroadcastSentAsync(userBroadcast);
             _logger.LogWarning("Failed to send broadcast due to channel being null {@Broadcast}", userBroadcast);
             return;
         }
@@ -236,7 +239,7 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
 
             foreach (var broadcast in broadcasts)
             {
-                await _destinyDb.MarkUserBroadcastSentAsync(broadcast);
+                await _broadcastDb.MarkUserBroadcastSentAsync(broadcast);
                 _logger.LogWarning("Failed to send broadcast due to guild being null {@Broadcast}", broadcast);
             }
             return;
@@ -248,7 +251,7 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
         {
             foreach (var broadcast in broadcasts)
             {
-                await _destinyDb.MarkUserBroadcastSentAsync(broadcast);
+                await _broadcastDb.MarkUserBroadcastSentAsync(broadcast);
                 _logger.LogWarning("Failed to send broadcast due to channelId being {@Broadcast}", broadcast);
             }
             return;
@@ -276,13 +279,13 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
             await channel.SendMessageAsync(embed: embed);
 
             foreach (var broadcast in broadcasts)
-                await _destinyDb.MarkUserBroadcastSentAsync(broadcast);
+                await _broadcastDb.MarkUserBroadcastSentAsync(broadcast);
         }
         else
         {
             foreach (var broadcast in broadcasts)
             {
-                await _destinyDb.MarkUserBroadcastSentAsync(broadcast);
+                await _broadcastDb.MarkUserBroadcastSentAsync(broadcast);
                 _logger.LogWarning("Failed to send broadcast due to channel being null {@Broadcast}", broadcast);
             }
             return;
@@ -298,7 +301,7 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
 
         if (string.IsNullOrEmpty(userName))
         {
-            await _destinyDb.MarkUserBroadcastSentAsync(destinyUserBroadcast);
+            await _broadcastDb.MarkUserBroadcastSentAsync(destinyUserBroadcast);
             _logger.LogWarning("Failed to send broadcast due to username being null {@Broadcast}", destinyUserBroadcast);
             return;
         }
@@ -306,7 +309,7 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
         var clanData = await _destinyDb.GetClanModelAsync(destinyUserBroadcast.ClanId);
         if (clanData is null)
         {
-            await _destinyDb.MarkUserBroadcastSentAsync(destinyUserBroadcast);
+            await _broadcastDb.MarkUserBroadcastSentAsync(destinyUserBroadcast);
             _logger.LogWarning("Failed to send broadcast due to clan data not being found {@Broadcast}", destinyUserBroadcast);
             return;
         }
@@ -314,7 +317,7 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
         var guild = client.GetGuild(destinyUserBroadcast.GuildId);
         if (guild is null)
         {
-            await _destinyDb.MarkUserBroadcastSentAsync(destinyUserBroadcast);
+            await _broadcastDb.MarkUserBroadcastSentAsync(destinyUserBroadcast);
             _logger.LogWarning("Failed to send broadcast due to guild being null {@Broadcast}", destinyUserBroadcast);
             return;
         }
@@ -323,7 +326,7 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
 
         if (channelId is null)
         {
-            await _destinyDb.MarkUserBroadcastSentAsync(destinyUserBroadcast);
+            await _broadcastDb.MarkUserBroadcastSentAsync(destinyUserBroadcast);
             _logger.LogWarning("Failed to send broadcast due to channelId being null {@Broadcast}", destinyUserBroadcast);
             return;
         }
@@ -346,11 +349,11 @@ public class BroadcastBackgroundProcessor : PeriodicBackgroundService
                     userName,
                     lang));
 
-            await _destinyDb.MarkUserBroadcastSentAsync(destinyUserBroadcast);
+            await _broadcastDb.MarkUserBroadcastSentAsync(destinyUserBroadcast);
         }
         else
         {
-            await _destinyDb.MarkUserBroadcastSentAsync(destinyUserBroadcast);
+            await _broadcastDb.MarkUserBroadcastSentAsync(destinyUserBroadcast);
             _logger.LogWarning("Failed to send broadcast due to channel being null {@Broadcast}", destinyUserBroadcast);
             return;
         }

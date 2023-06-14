@@ -9,6 +9,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddSingleton<ISettingsStorage, SqliteSettingsStorage>();
         serviceCollection.AddSingleton<IDbAccess, SqliteDbAccess>();
 
+        serviceCollection.AddSingleton<IBroadcastDb, SqliteBroadcastDb>();
         serviceCollection.AddSingleton<IServerAdminstrationDb, SqliteServerAdminstrationDb>();
         serviceCollection.AddSingleton<IDestinyDb, SqliteDestinyDb>();
 
