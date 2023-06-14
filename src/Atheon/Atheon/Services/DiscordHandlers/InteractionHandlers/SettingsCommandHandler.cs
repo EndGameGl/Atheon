@@ -32,7 +32,6 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
     private readonly EmbedBuilderService _embedBuilderService;
     private readonly IBungieClientProvider _bungieClientProvider;
     private readonly DestinyDefinitionDataService _destinyDefinitionDataService;
-    private readonly ILocalizationService _localizationService;
 
     public SettingsCommandHandler(
         ILogger<SettingsCommandHandler> logger,
@@ -48,7 +47,6 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
         _embedBuilderService = embedBuilderService;
         _bungieClientProvider = bungieClientProvider;
         _destinyDefinitionDataService = destinyDefinitionDataService;
-        _localizationService = localizationService;
     }
 
     [AtheonBotAdminOrOwner]

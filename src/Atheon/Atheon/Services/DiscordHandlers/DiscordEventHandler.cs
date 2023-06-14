@@ -64,6 +64,7 @@ public class DiscordEventHandler : IDiscordEventHandler
 
         _interactionService = new InteractionService(_discordClient, new InteractionServiceConfig()
         {
+            LocalizationManager = new JsonLocalizationManager("./Localization/DiscordCommands/", "commands")
         });
 
         _discordClient.Log += OnDiscordLog;

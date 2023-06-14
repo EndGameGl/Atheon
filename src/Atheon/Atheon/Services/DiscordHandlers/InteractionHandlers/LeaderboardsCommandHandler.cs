@@ -37,7 +37,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
     [SlashCommand("metric", "Shows leaderboard for a certain metric")]
     public async Task CreateLeaderboardForMetricAsync(
         [Autocomplete(typeof(DestinyMetricDefinitionAutocompleter))][Summary("metric", "Metric to show")] string metricHashString,
-        [Summary(description: "Whether to hide this message")] bool hide = false)
+        [Summary("hide", "Whether to hide this message")] bool hide = false)
     {
         await ExecuteAndHandleErrors(async () =>
         {
@@ -92,7 +92,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
 
     [SlashCommand("guardian-ranks", "Shows leaderboard for guardian ranks")]
     public async Task CreateLeaderboardForGuardianRanksAsync(
-        [Summary(description: "Whether to hide this message")] bool hide = false)
+        [Summary("hide", "Whether to hide this message")] bool hide = false)
     {
         await ExecuteAndHandleErrors(async () =>
         {
@@ -139,7 +139,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
 
     [SlashCommand("power", "Shows leaderboard for power")]
     public async Task CreateLeaderboardForPowerLevelAsync(
-        [Summary(description: "Whether to hide this message")] bool hide = false)
+        [Summary("hide", "Whether to hide this message")] bool hide = false)
     {
         await ExecuteAndHandleErrors(async () =>
         {
@@ -185,7 +185,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
 
     [SlashCommand("triumph-score", "Shows leaderboard for triumph score")]
     public async Task CreateLeaderboardForTriumphScoreAsync(
-        [Summary(description: "Whether to hide this message")] bool hide = false)
+        [Summary("hide", "Whether to hide this message")] bool hide = false)
     {
         await ExecuteAndHandleErrors(async () =>
         {
@@ -231,7 +231,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
 
     [SlashCommand("time-played", "Shows leaderboard for time played")]
     public async Task CreateLeaderboardForTimePlayedAsync(
-        [Summary(description: "Whether to hide this message")] bool hide = false)
+        [Summary("hide", "Whether to hide this message")] bool hide = false)
     {
         await ExecuteAndHandleErrors(async () =>
         {
@@ -279,7 +279,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
     [SlashCommand("triumph", "Shows leaderboard for triumph progress")]
     public async Task CreateLeaderboardForTriumphProgress(
         [Autocomplete(typeof(DestinyLeaderboardValidRecordDefinitionAutocompleter))][Summary("triumph", "Triumph")] string triumphHashString,
-        [Summary(description: "Whether to hide this message")] bool hide = false)
+        [Summary("hide", "Whether to hide this message")] bool hide = false)
     {
         await ExecuteAndHandleErrors(async () =>
         {
@@ -343,7 +343,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
 
     [SlashCommand("titles", "Shows leaderboard for total titles")]
     public async Task CreateLeaderboardForTotalTitlesAsync(
-        [Summary(description: "Whether to hide this message")] bool hide = false)
+        [Summary("hide", "Whether to hide this message")] bool hide = false)
     {
         await ExecuteAndHandleErrors(async () =>
         {
@@ -390,7 +390,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
     [SlashCommand("season-pass", "Shows leaderboard for selected season")]
     public async Task CreateLeaderboardForSeasonPassLevelAsync(
         [Autocomplete(typeof(DestinySeasonPassDefinitionAutocompleter))][Summary("season", "Season pass")] string seasonPassHashString,
-        [Summary(description: "Whether to hide this message")] bool hide = false)
+        [Summary("hide", "Whether to hide this message")] bool hide = false)
     {
         await ExecuteAndHandleErrors(async () =>
         {

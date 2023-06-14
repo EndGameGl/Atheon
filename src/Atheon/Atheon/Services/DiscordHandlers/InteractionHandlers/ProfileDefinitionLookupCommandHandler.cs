@@ -43,9 +43,9 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
 
     [SlashCommand("item-check", "Checks who has items")]
     public async Task GetUsersWithItem(
-        [Autocomplete(typeof(DestinyCollectibleDefinitionAutocompleter))][Summary(description: "Collectible")] string collectibleHashString,
-        [Summary(description: "Whether user has item or not")] bool hasItem,
-        [Summary(description: "Whether to hide this message")] bool hide = false)
+        [Autocomplete(typeof(DestinyCollectibleDefinitionAutocompleter))][Summary("item", "Item to look for")] string collectibleHashString,
+        [Summary("has-item", "Whether user has item or not")] bool hasItem,
+        [Summary("hide", "Whether to hide this message")] bool hide = false)
     {
         await ExecuteAndHandleErrors(async () =>
         {
@@ -107,9 +107,9 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
 
     [SlashCommand("triumph-check", "Checks who completed triumph")]
     public async Task GetUsersWithRecord(
-        [Autocomplete(typeof(DestinyRecordDefinitionAutocompleter))][Summary(description: "Record")] string recordHashString,
-        [Summary(description: "Whether user has completed triumph or not")] bool hasCompletedTriumph,
-        [Summary(description: "Whether to hide this message")] bool hide = false)
+        [Autocomplete(typeof(DestinyRecordDefinitionAutocompleter))][Summary("triumph", "Triumph to look for")] string recordHashString,
+        [Summary("has-completed-triumph", "Whether user has completed triumph or not")] bool hasCompletedTriumph,
+        [Summary("hide", "Whether to hide this message")] bool hide = false)
     {
         await ExecuteAndHandleErrors(async () =>
         {
@@ -131,7 +131,7 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
             var embedBuilder = _embedBuilderService
                 .GetTemplateEmbed()
                 .WithThumbnailUrl(recordDefinition.DisplayProperties.Icon.AbsolutePath)
-                .WithTitle(hasCompletedTriumph ? 
+                .WithTitle(hasCompletedTriumph ?
                     FormatText("UsersWithTriumphCount", () => "{0} users have completed {1}", users.Count, recordDefinition.DisplayProperties.Name) :
                     FormatText("UsersWithoutTriumphCount", () => "{0} users have not completed {1}", users.Count, recordDefinition.DisplayProperties.Name));
 
@@ -181,7 +181,7 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
         [Choice("Conditional Finality", "2553509474")]
         [Choice("The Navigator", "161963863")]
         uint collectibleHash,
-        [Summary(description: "Whether to hide this message")]
+        [Summary("hide", "Whether to hide this message")]
         bool hide = false)
     {
         await ExecuteAndHandleErrors(async () =>
@@ -203,8 +203,8 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
                 .GetTemplateEmbed()
                 .WithThumbnailUrl(collectibleDefinition.DisplayProperties.Icon.AbsolutePath)
                 .WithTitle(FormatText(
-                    "UsersWithoutItemCount", 
-                    () => "{0} users miss {1}", 
+                    "UsersWithoutItemCount",
+                    () => "{0} users miss {1}",
                     drystreaks.Count,
                     collectibleDefinition.DisplayProperties.Name));
 
@@ -240,8 +240,8 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
     [SlashCommand("title", "Checks who completed title")]
     public async Task GetUserTitles(
         [Summary("title", "Title to look for")][Autocomplete(typeof(DestinyTitleAutocompleter))] string titleRecordHashString,
-        [Summary(description: "Whether user has title or not")] bool hasTitle,
-        [Summary(description: "Whether to hide this message")] bool hide = false)
+        [Summary("has-title", "Whether user has title or not")] bool hasTitle,
+        [Summary("hide", "Whether to hide this message")] bool hide = false)
     {
         await ExecuteAndHandleErrors(async () =>
         {
@@ -318,8 +318,8 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
     [SlashCommand("game-version", "Checks who has game version")]
     public async Task GetUsersWithGameVersion(
         [Summary("game-version", "Game version to look up")] DestinyGameVersionEnum gameVersion,
-        [Summary(description: "Whether user has title or not")] bool hasVersion,
-        [Summary(description: "Whether to hide this message")] bool hide = false)
+        [Summary("has-version", "Whether user has game version or not")] bool hasVersion,
+        [Summary("hide", "Whether to hide this message")] bool hide = false)
     {
         await ExecuteAndHandleErrors(async () =>
         {

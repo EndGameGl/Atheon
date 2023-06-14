@@ -33,7 +33,6 @@
   <ItemGroup>
     <Folder Include="Models\Events\" />
     <Folder Include="Options\" />
-    <Folder Include="Localization\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Atheon.DataAccess.Sqlite\Atheon.DataAccess.Sqlite.csproj" />
@@ -45,4 +44,5 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+  <ProjectExtensions><VisualStudio><UserProperties localization_4discordcommands_4commands_1en_1json__JsonSchema="https://gist.githubusercontent.com/Cenngo/d46a881de24823302f66c3c7e2f7b254/raw/9cbd8cba55718ffc1e94ea2f2a38628cafed57f5/d-net-localization" /></VisualStudio></ProjectExtensions>
 </Project>
