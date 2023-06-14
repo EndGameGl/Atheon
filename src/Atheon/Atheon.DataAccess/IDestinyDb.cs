@@ -1,5 +1,4 @@
-﻿using Atheon.DataAccess.Models.Administration;
-using Atheon.DataAccess.Models.Destiny;
+﻿using Atheon.DataAccess.Models.Destiny;
 using Atheon.DataAccess.Models.Destiny.Broadcasts;
 using Atheon.DataAccess.Models.Destiny.Clans;
 using Atheon.DataAccess.Models.Destiny.Guilds;
@@ -67,8 +66,4 @@ public interface IDestinyDb
 
     Task UpsertProfileLinkAsync(DiscordToDestinyProfileLink link);
     Task RemoveProfileLinkAsync(ulong discordUserId);
-
-    Task AddServerAdministratorAsync(ServerBotAdministrator serverBotAdministrator);
-    Task RemoveServerAdministratorAsync(ServerBotAdministrator serverBotAdministrator);
-    Task<bool> IsServerAdministratorAsync(ulong guildId, ulong userId);
 }

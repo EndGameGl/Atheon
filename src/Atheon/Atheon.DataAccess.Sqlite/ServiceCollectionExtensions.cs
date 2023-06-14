@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-
-namespace Atheon.DataAccess.Sqlite;
+﻿namespace Atheon.DataAccess.Sqlite;
 
 public static class ServiceCollectionExtensions
 {
@@ -11,6 +9,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddSingleton<ISettingsStorage, SqliteSettingsStorage>();
         serviceCollection.AddSingleton<IDbAccess, SqliteDbAccess>();
 
+        serviceCollection.AddSingleton<IServerAdminstrationDb, SqliteServerAdminstrationDb>();
         serviceCollection.AddSingleton<IDestinyDb, SqliteDestinyDb>();
 
         return serviceCollection;

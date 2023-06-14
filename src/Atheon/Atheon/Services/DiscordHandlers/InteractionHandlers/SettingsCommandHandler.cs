@@ -30,6 +30,7 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
     private readonly EmbedBuilderService _embedBuilderService;
     private readonly IBungieClientProvider _bungieClientProvider;
     private readonly DestinyDefinitionDataService _destinyDefinitionDataService;
+    private readonly IServerAdminstrationDb _serverAdminstrationDb;
 
     public SettingsCommandHandler(
         ILogger<SettingsCommandHandler> logger,
@@ -38,13 +39,15 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
         EmbedBuilderService embedBuilderService,
         IBungieClientProvider bungieClientProvider,
         DestinyDefinitionDataService destinyDefinitionDataService,
-        ILocalizationService localizationService) : base(localizationService, logger, embedBuilderService)
+        ILocalizationService localizationService,
+        IServerAdminstrationDb serverAdminstrationDb) : base(localizationService, logger, embedBuilderService)
     {
         _destinyDb = destinyDb;
         _clanQueue = clanQueue;
         _embedBuilderService = embedBuilderService;
         _bungieClientProvider = bungieClientProvider;
         _destinyDefinitionDataService = destinyDefinitionDataService;
+        _serverAdminstrationDb = serverAdminstrationDb;
     }
 
     [AtheonBotAdminOrOwner]
@@ -153,7 +156,7 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
     {
         await ExecuteAndHandleErrors(async () =>
         {
-            await _destinyDb.AddServerAdministratorAsync(new ServerBotAdministrator()
+            await _serverAdminstrationDb.AddServerAdministratorAsync(new ServerBotAdministrator()
             {
                 DiscordGuildId = Context.Guild.Id,
                 DiscordUserId = user.Id
@@ -172,7 +175,7 @@ public class SettingsCommandHandler : LocalizedSlashCommandHandler
     {
         await ExecuteAndHandleErrors(async () =>
         {
-            await _destinyDb.RemoveServerAdministratorAsync(new ServerBotAdministrator()
+            await _serverAdminstrationDb.RemoveServerAdministratorAsync(new ServerBotAdministrator()
             {
                 DiscordGuildId = GuildId,
                 DiscordUserId = user.Id
