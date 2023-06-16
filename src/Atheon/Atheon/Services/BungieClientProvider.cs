@@ -6,8 +6,10 @@ using DotNetBungieAPI.DefinitionProvider.Sqlite;
 using DotNetBungieAPI.Extensions;
 using DotNetBungieAPI.Models;
 using DotNetBungieAPI.Models.Destiny;
+using DotNetBungieAPI.Models.Destiny.Definitions.ReportReasonCategories;
 using DotNetBungieAPI.Service.Abstractions;
 using Serilog;
+using System.Net;
 
 namespace Atheon.Services;
 
@@ -74,11 +76,47 @@ public class BungieClientProvider : IBungieClientProvider
                 repository.IgnoreDefinitionType(DefinitionsEnum.DestinySackRewardItemListDefinition);
                 repository.IgnoreDefinitionType(DefinitionsEnum.DestinyTalentGridDefinition);
                 repository.IgnoreDefinitionType(DefinitionsEnum.DestinyTraitCategoryDefinition);
+                repository.IgnoreDefinitionType(DefinitionsEnum.DestinyTraitDefinition);
                 repository.IgnoreDefinitionType(DefinitionsEnum.DestinyAchievementDefinition);
                 repository.IgnoreDefinitionType(DefinitionsEnum.DestinyBondDefinition);
                 repository.IgnoreDefinitionType(DefinitionsEnum.DestinyUnlockDefinition);
                 repository.IgnoreDefinitionType(DefinitionsEnum.DestinyUnlockValueDefinition);
                 repository.IgnoreDefinitionType(DefinitionsEnum.DestinyRewardSourceDefinition);
+                repository.IgnoreDefinitionType(DefinitionsEnum.DestinyObjectiveDefinition);
+                repository.IgnoreDefinitionType(DefinitionsEnum.DestinyLoadoutColorDefinition);
+                repository.IgnoreDefinitionType(DefinitionsEnum.DestinyLoadoutConstantsDefinition);
+                repository.IgnoreDefinitionType(DefinitionsEnum.DestinyLoadoutIconDefinition);
+                repository.IgnoreDefinitionType(DefinitionsEnum.DestinyLoadoutNameDefinition);
+                repository.IgnoreDefinitionType(DefinitionsEnum.DestinyProgressionLevelRequirementDefinition);
+                repository.IgnoreDefinitionType(DefinitionsEnum.DestinyProgressionMappingDefinition);
+                repository.IgnoreDefinitionType(DefinitionsEnum.DestinyEnemyRaceDefinition);
+                repository.IgnoreDefinitionType(DefinitionsEnum.DestinyRaceDefinition);
+                repository.IgnoreDefinitionType(DefinitionsEnum.DestinyLoreDefinition);
+                repository.IgnoreDefinitionType(DefinitionsEnum.DestinyVendorDefinition);
+                repository.IgnoreDefinitionType(DefinitionsEnum.DestinyVendorGroupDefinition);
+                repository.IgnoreDefinitionType(DefinitionsEnum.DestinyGuardianRankDefinition);
+                repository.IgnoreDefinitionType(DefinitionsEnum.DestinyGuardianRankConstantsDefinition);
+                repository.IgnoreDefinitionType(DefinitionsEnum.DestinyEventCardDefinition);
+                repository.IgnoreDefinitionType(DefinitionsEnum.DestinySocialCommendationDefinition);
+                repository.IgnoreDefinitionType(DefinitionsEnum.DestinySocialCommendationNodeDefinition);
+                repository.IgnoreDefinitionType(DefinitionsEnum.DestinyPowerCapDefinition);
+                repository.IgnoreDefinitionType(DefinitionsEnum.DestinyMilestoneDefinition);
+                repository.IgnoreDefinitionType(DefinitionsEnum.DestinyMaterialRequirementSetDefinition);
+                repository.IgnoreDefinitionType(DefinitionsEnum.DestinyReportReasonCategoryDefinition);
+            });
+            config.DotNetBungieApiHttpClient.ConfigureDefaultHttpClient(client =>
+            {
+                client.ConfigureHttpHandler = (httpHandler) =>
+                {
+                    httpHandler.PooledConnectionLifetime = TimeSpan.FromSeconds(15);
+                    httpHandler.PooledConnectionIdleTimeout = TimeSpan.FromSeconds(45);
+                    httpHandler.UseCookies = true;
+                    httpHandler.CookieContainer = new CookieContainer();
+                };
+                client.ConfigureHttpClient = (httpClient) =>
+                {
+                    httpClient.DefaultRequestVersion = HttpVersion.Version20;
+                };
             });
         });
 
