@@ -82,7 +82,6 @@ public class BungieClientProvider : IBungieClientProvider
                 repository.IgnoreDefinitionType(DefinitionsEnum.DestinyUnlockDefinition);
                 repository.IgnoreDefinitionType(DefinitionsEnum.DestinyUnlockValueDefinition);
                 repository.IgnoreDefinitionType(DefinitionsEnum.DestinyRewardSourceDefinition);
-                repository.IgnoreDefinitionType(DefinitionsEnum.DestinyObjectiveDefinition);
                 repository.IgnoreDefinitionType(DefinitionsEnum.DestinyLoadoutColorDefinition);
                 repository.IgnoreDefinitionType(DefinitionsEnum.DestinyLoadoutConstantsDefinition);
                 repository.IgnoreDefinitionType(DefinitionsEnum.DestinyLoadoutIconDefinition);

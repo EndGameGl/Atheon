@@ -67,7 +67,8 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
                 user => user.Name,
                 user =>
                 {
-                    return user.Value.FormatUIDisplayValue(metricDefinition.TrackingObjective.GetValueOrNull());
+                    var objective = metricDefinition.TrackingObjective.GetValueOrNull(GuildLocale);
+                    return user.Value.FormatUIDisplayValue(objective);
                 }
             };
 
