@@ -33,6 +33,7 @@
   "FailedToParseRecordHashError": "Failed to parse record hash: {0}",
   "FailedToParseMetricHashError": "Failed to parse metric hash: {0}",
   "FailedToParseSeasonPassHashError": "Failed to parse season pass hash: {0}",
+  "FailedToParseActivityHashError": "Failed to parse activity hash: {0}",
   "AddedAllItemsFromPresentationNodeDescription": "Added **{0}** ({1} item(s)) to tracking",
   "RemovedAllItemsFromPresentationNodeDescription": "Removed **{0}** ({1} item(s)) from tracking",
   "ChangedGuildLocale": "Changed locale language to {0}",
@@ -81,5 +82,8 @@
   "UserGroupCompletedTriumph": "{0} people have completed triumph: **{1}**",
   "UserGroupObtainedTitle": "{0} people have obtained title: **{1}**",
   "UserGroupGildedTitle": "{0} people have gilded title: **{1}**",
-  "UserGildInGroup": "{0} - {1} times"
+  "UserGildInGroup": "{0} - {1} times",
+  "FireteamsTitle": "Searching group for: {0}",
+  "FireteamsActivityType": "Activity type: {0}",
+  "FireteamsSpaceLeft": "Space left: {0}"
 }

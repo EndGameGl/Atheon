@@ -8,6 +8,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddSingleton<IDbBootstrap, SqliteDbBootstrap>();
         serviceCollection.AddSingleton<ISettingsStorage, SqliteSettingsStorage>();
         serviceCollection.AddSingleton<IDbAccess, SqliteDbAccess>();
+        serviceCollection.AddSingleton<IDestinyGroupSearchDb, SqliteDestinyGroupSearchDb>();
 
         serviceCollection.AddSingleton<IGuildDb, GuildDb>();
         serviceCollection.AddSingleton<IBroadcastDb, SqliteBroadcastDb>();

@@ -40,7 +40,6 @@ public class DestinyExcludingCollectibleDefinitionAutocompleter : AutocompleteHa
         try
         {
             var lang = await _localizationService.GetGuildLocaleCachedAsync(context.Guild.Id);
-
             var client = await _bungieClientProvider.GetClientAsync();
             var searchEntry = (string)autocompleteInteraction.Data.Options.First(x => x.Focused).Value;
             var settings = await _guildDb.GetGuildSettingsAsync(context.Guild.Id);

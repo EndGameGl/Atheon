@@ -102,7 +102,7 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
                 embedBuilder.AddField(reference.Name, sb.ToString(), j % 2 == 0);
             }
 
-            return Success(embedBuilder.Build(), hide);
+            return Success(embedBuilder.Build(), hide: hide);
         });
     }
 
@@ -164,7 +164,7 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
                 embedBuilder.AddField(reference.Name, sb.ToString(), j % 2 == 0);
             }
 
-            return Success(embedBuilder.Build(), hide);
+            return Success(embedBuilder.Build(), hide: hide);
         });
     }
 
@@ -234,7 +234,7 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
                 embedBuilder.AddField(reference.Name, $"```{formattedData}```");
             }
 
-            return Success(embedBuilder.Build(), hide);
+            return Success(embedBuilder.Build(), hide: hide);
         });
     }
 
@@ -312,7 +312,7 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
             }
             embedBuilder.WithThumbnailUrl(icon ?? titleDefinition.DisplayProperties.Icon.AbsolutePath);
 
-            return Success(embedBuilder, hide);
+            return Success(embedBuilder, hide: hide);
         });
     }
 
@@ -361,7 +361,7 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
                 embedBuilder.AddField(reference.Name, $"```{formattedData}```");
             }
 
-            return Success(embedBuilder, hide);
+            return Success(embedBuilder, hide: hide);
         });
     }
 }

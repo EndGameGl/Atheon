@@ -33,6 +33,7 @@
   "FailedToParseRecordHashError": "Не удалось распознать триумф: {0}",
   "FailedToParseMetricHashError": "Не удалось распознать метрику: {0}",
   "FailedToParseSeasonPassHashError": "Не удалось распознать сезонный пропуск: {0}",
+  "FailedToParseActivityHashError": "Не удалось распознать активность: {0}",
   "AddedAllItemsFromPresentationNodeDescription": "**{0}** добавлен(а) ({1} предмет(ов)) к отслеживаю",
   "RemovedAllItemsFromPresentationNodeDescription": "**{0}** убрано ({1} предмет(ов)) из отслеживания",
   "ChangedGuildLocale": "Язык сменен на: {0}",

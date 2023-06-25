@@ -88,7 +88,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
                 embedBuilder.AddField(reference.Name, $"```{formattedData}```");
             }
 
-            return Success(embedBuilder.Build(), hide);
+            return Success(embedBuilder.Build(), hide: hide);
         });
     }
 
@@ -135,7 +135,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
                 embedBuilder.AddField(reference.Name, $"```{formattedData}```");
             }
 
-            return Success(embedBuilder.Build(), hide);
+            return Success(embedBuilder.Build(), hide: hide);
         });
     }
 
@@ -181,7 +181,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
                 embedBuilder.AddField(reference.Name, $"```{formattedData}```");
             }
 
-            return Success(embedBuilder.Build(), hide);
+            return Success(embedBuilder.Build(), hide: hide);
         });
     }
 
@@ -227,7 +227,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
                 embedBuilder.AddField(reference.Name, $"```{formattedData}```");
             }
 
-            return Success(embedBuilder.Build(), hide);
+            return Success(embedBuilder.Build(), hide: hide);
         });
     }
 
@@ -274,7 +274,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
                 embedBuilder.AddField(reference.Name, $"```{formattedData}```");
             }
 
-            return Success(embedBuilder.Build(), hide);
+            return Success(embedBuilder.Build(), hide: hide);
         });
     }
 
@@ -339,7 +339,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
                 embedBuilder.AddField(reference.Name, $"```{formattedData}```");
             }
 
-            return Success(embedBuilder.Build(), hide);
+            return Success(embedBuilder.Build(), hide: hide);
         });
     }
 
@@ -385,7 +385,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
                 embedBuilder.AddField(reference.Name, $"```{formattedData}```");
             }
 
-            return Success(embedBuilder.Build(), hide);
+            return Success(embedBuilder.Build(), hide: hide);
         });
     }
 
@@ -442,7 +442,7 @@ public class LeaderboardsCommandHandler : LocalizedSlashCommandHandler
                 embedBuilder.AddField(reference.Name, $"```{formattedData}```");
             }
 
-            return Success(embedBuilder.Build(), hide);
+            return Success(embedBuilder.Build(), hide: hide);
         });
     }
 }

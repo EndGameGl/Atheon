@@ -24,21 +24,43 @@ namespace Atheon.Services.DiscordHandlers.InteractionHandlers.Base
 
         public override Task BeforeExecuteAsync(ICommandInfo command)
         {
-            _logger.LogInformation("Started executing command: {CommandName}", command.Name);
+            _logger.LogInformation("Started executing slash command: {CommandName}", command.Name);
             return Task.CompletedTask;
         }
 
         public override Task AfterExecuteAsync(ICommandInfo command)
         {
-            _logger.LogInformation("Finished executing command: {CommandName}", command.Name);
+            _logger.LogInformation("Finished executing slash command: {CommandName}", command.Name);
             return Task.CompletedTask;
+        }
+
+        private async Task DeferIfTimedOut(TimeSpan timeLeft, CancellationToken cancellationToken)
+        {
+            await Task.Delay(timeLeft, cancellationToken);
+            if (!Context.Interaction.HasResponded)
+            {
+                _logger.LogInformation("Command taking too long, deferring");
+                await Context.Interaction.DeferAsync();
+            }
+        }
+
+        protected TimeSpan GetTimeLeft()
+        {
+            var deadline = Context.Interaction.CreatedAt.UtcDateTime.AddSeconds(3);
+            var currentTime = DateTime.UtcNow;
+            return deadline - currentTime;
         }
 
         protected async Task ExecuteAndHandleErrors(Func<Task<IDiscordCommandResult>> commandResult)
         {
             try
             {
+                var timeLeft = GetTimeLeft();
+                var cts = new CancellationTokenSource(timeLeft);
+
+                _ = DeferIfTimedOut(timeLeft.Subtract(TimeSpan.FromSeconds(0.5)), cts.Token);
                 var result = await commandResult();
+                cts.Cancel();
                 await result.Execute(Context);
             }
             catch (Exception ex)
@@ -85,14 +107,14 @@ namespace Atheon.Services.DiscordHandlers.InteractionHandlers.Base
             return new DiscordCommandErrorEmbedResult("Failed to get load guild settings");
         }
 
-        protected IDiscordCommandResult Success(Embed embed, bool hide = false)
+        protected IDiscordCommandResult Success(Embed embed, MessageComponent? messageComponent = null, bool hide = false)
         {
-            return new DiscordCommandEmbedResult(embed, hide);
+            return new DiscordCommandEmbedResult(embed, messageComponent, hide);
         }
 
-        protected IDiscordCommandResult Success(EmbedBuilder embedBuilder, bool hide = false)
+        protected IDiscordCommandResult Success(EmbedBuilder embedBuilder, ComponentBuilder? componentBuilder = null, bool hide = false)
         {
-            return new DiscordCommandEmbedResult(embedBuilder.Build(), hide);
+            return new DiscordCommandEmbedResult(embedBuilder.Build(), componentBuilder?.Build(), hide);
         }
     }
 }
