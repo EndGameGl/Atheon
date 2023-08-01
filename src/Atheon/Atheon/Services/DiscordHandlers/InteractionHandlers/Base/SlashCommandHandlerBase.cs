@@ -1,10 +1,8 @@
-﻿using Atheon.Extensions;
-using Atheon.Services.DiscordHandlers.InteractionFlow;
+﻿using Atheon.Services.DiscordHandlers.InteractionFlow;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using DotNetBungieAPI.Models.Destiny;
-using Polly;
 
 namespace Atheon.Services.DiscordHandlers.InteractionHandlers.Base
 {
@@ -24,21 +22,45 @@ namespace Atheon.Services.DiscordHandlers.InteractionHandlers.Base
             EmbedBuilderService = embedBuilderService;
         }
 
-        public override void BeforeExecute(ICommandInfo command)
+        public override Task BeforeExecuteAsync(ICommandInfo command)
         {
-            _logger.LogInformation("Started executing command: {CommandName}", command.Name);
+            _logger.LogInformation("Started executing slash command: {CommandName}", command.Name);
+            return Task.CompletedTask;
         }
 
-        public override void AfterExecute(ICommandInfo command)
+        public override Task AfterExecuteAsync(ICommandInfo command)
         {
-            _logger.LogInformation("Finished executing command: {CommandName}", command.Name);
+            _logger.LogInformation("Finished executing slash command: {CommandName}", command.Name);
+            return Task.CompletedTask;
+        }
+
+        private async Task DeferIfTimedOut(TimeSpan timeLeft, CancellationToken cancellationToken)
+        {
+            await Task.Delay(timeLeft, cancellationToken);
+            if (!Context.Interaction.HasResponded)
+            {
+                _logger.LogInformation("Command taking too long, deferring");
+                await Context.Interaction.DeferAsync();
+            }
+        }
+
+        protected TimeSpan GetTimeLeft()
+        {
+            var deadline = Context.Interaction.CreatedAt.UtcDateTime.AddSeconds(3);
+            var currentTime = DateTime.UtcNow;
+            return deadline - currentTime;
         }
 
         protected async Task ExecuteAndHandleErrors(Func<Task<IDiscordCommandResult>> commandResult)
         {
             try
             {
+                var timeLeft = GetTimeLeft();
+                var cts = new CancellationTokenSource(timeLeft);
+
+                _ = DeferIfTimedOut(timeLeft.Subtract(TimeSpan.FromSeconds(0.5)), cts.Token);
                 var result = await commandResult();
+                cts.Cancel();
                 await result.Execute(Context);
             }
             catch (Exception ex)
@@ -65,22 +87,34 @@ namespace Atheon.Services.DiscordHandlers.InteractionHandlers.Base
         protected IDiscordCommandResult DestinyDefinitionNotFound<TDefinition>(uint hash) where TDefinition : IDestinyDefinition
         {
             var type = typeof(TDefinition);
+            if (this is LocalizedSlashCommandHandler localizedSlashCommandHandler)
+            {
+                return new DiscordCommandErrorEmbedResult(localizedSlashCommandHandler.FormatText(
+                    "DefinitionNotFoundError",
+                    () => "Definition {0} {1} not found",
+                    type.Name,
+                    hash));
+            }
             return new DiscordCommandErrorEmbedResult($"Definition {type.Name} {hash} not found");
         }
 
         protected IDiscordCommandResult GuildSettingsNotFound()
         {
+            if (this is LocalizedSlashCommandHandler localizedSlashCommandHandler)
+            {
+                return new DiscordCommandErrorEmbedResult(localizedSlashCommandHandler.Text("GuildSettingsNotFound", () => "Failed to get load guild settings"));
+            }
             return new DiscordCommandErrorEmbedResult("Failed to get load guild settings");
         }
 
-        protected IDiscordCommandResult Success(Embed embed, bool hide = false)
+        protected IDiscordCommandResult Success(Embed embed, MessageComponent? messageComponent = null, bool hide = false)
         {
-            return new DiscordCommandEmbedResult(embed, hide);
+            return new DiscordCommandEmbedResult(embed, messageComponent, hide);
         }
 
-        protected IDiscordCommandResult Success(EmbedBuilder embedBuilder, bool hide = false)
+        protected IDiscordCommandResult Success(EmbedBuilder embedBuilder, ComponentBuilder? componentBuilder = null, bool hide = false)
         {
-            return new DiscordCommandEmbedResult(embedBuilder.Build(), hide);
+            return new DiscordCommandEmbedResult(embedBuilder.Build(), componentBuilder?.Build(), hide);
         }
     }
 }

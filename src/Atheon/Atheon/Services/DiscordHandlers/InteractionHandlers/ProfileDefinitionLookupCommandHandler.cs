@@ -18,13 +18,13 @@ using System.Text;
 namespace Atheon.Services.DiscordHandlers.InteractionHandlers;
 
 [Group("lookup", "Set of commands to check user statuses")]
-public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
+public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandler
 {
     private readonly IDestinyDb _destinyDb;
     private readonly IBungieClientProvider _bungieClientProvider;
     private readonly EmbedBuilderService _embedBuilderService;
     private readonly DestinyDefinitionDataService _destinyDefinitionDataService;
-    private readonly ILocalizationService _localizationService;
+    private readonly IGuildDb _guildDb;
 
     public ProfileDefinitionLookupCommandHandler(
         ILogger<ProfileDefinitionLookupCommandHandler> logger,
@@ -32,27 +32,28 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
         IBungieClientProvider bungieClientProvider,
         EmbedBuilderService embedBuilderService,
         DestinyDefinitionDataService destinyDefinitionDataService,
-        ILocalizationService localizationService) : base(logger, embedBuilderService)
+        ILocalizationService localizationService,
+        IGuildDb guildDb) : base(localizationService, logger, embedBuilderService)
     {
         _destinyDb = destinyDb;
         _bungieClientProvider = bungieClientProvider;
         _embedBuilderService = embedBuilderService;
         _destinyDefinitionDataService = destinyDefinitionDataService;
-        _localizationService = localizationService;
+        _guildDb = guildDb;
     }
 
     [SlashCommand("item-check", "Checks who has items")]
     public async Task GetUsersWithItem(
-        [Autocomplete(typeof(DestinyCollectibleDefinitionAutocompleter))][Summary(description: "Collectible")] string collectibleHashString,
-        [Summary(description: "Whether user has item or not")] bool hasItem,
-        [Summary(description: "Whether to hide this message")] bool hide = false)
+        [Autocomplete(typeof(DestinyCollectibleDefinitionAutocompleter))][Summary("item", "Item to look for")] string collectibleHashString,
+        [Summary("has-item", "Whether user has item or not")] bool hasItem,
+        [Summary("hide", "Whether to hide this message")] bool hide = false)
     {
         await ExecuteAndHandleErrors(async () =>
         {
             if (!uint.TryParse(collectibleHashString, out var collectibleHash))
-                return Error($"Failed to parse collectible hash");
+                return Error(FormatText("FailedToParseCollectibleHashError", () => "Failed to parse collectible hash: {0}", collectibleHashString));
 
-            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var guildSettings = await _guildDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
                 return GuildSettingsNotFound();
 
@@ -60,16 +61,17 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
             var clanIds = users.Select(x => x.ClanId).Distinct().ToArray();
             var clanReferences = await _destinyDb.GetClanReferencesFromIdsAsync(clanIds);
             var bungieClient = await _bungieClientProvider.GetClientAsync();
-            var lang = await _localizationService.GetGuildLocale(GuildId);
 
-            if (!bungieClient.TryGetDefinition<DestinyCollectibleDefinition>(collectibleHash, out var colDef, lang))
+            if (!bungieClient.TryGetDefinition<DestinyCollectibleDefinition>(collectibleHash, out var colDef, GuildLocale))
                 return DestinyDefinitionNotFound<DestinyCollectibleDefinition>(collectibleHash);
 
-            var (defName, defIcon) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(colDef, lang);
+            var (defName, defIcon) = _destinyDefinitionDataService.GetCollectibleDisplayProperties(colDef, GuildLocale);
 
             var embedBuilder = _embedBuilderService
                 .GetTemplateEmbed()
-                .WithTitle($"{users.Count} users {(hasItem ? "have" : "miss")} {defName}")
+                .WithTitle(hasItem ?
+                    FormatText("UsersWithItemCount", () => "{0} users have {1}", users.Count, defName) :
+                    FormatText("UsersWithoutItemCount", () => "{0} users miss {1}", users.Count, defName))
                 .WithThumbnailUrl(defIcon);
 
             for (int j = 0; j < clanReferences.Count; j++)
@@ -92,7 +94,7 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
                     else
                     {
                         var left = usersOfClan.Count - i + 1;
-                        sb.Append($"And {left} more...");
+                        sb.Append(FormatText("HiddenUsersCount", () => "And {0} more...", left));
                         break;
                     }
                 }
@@ -100,22 +102,22 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
                 embedBuilder.AddField(reference.Name, sb.ToString(), j % 2 == 0);
             }
 
-            return Success(embedBuilder.Build(), hide);
+            return Success(embedBuilder.Build(), hide: hide);
         });
     }
 
     [SlashCommand("triumph-check", "Checks who completed triumph")]
     public async Task GetUsersWithRecord(
-        [Autocomplete(typeof(DestinyRecordDefinitionAutocompleter))][Summary(description: "Record")] string recordHashString,
-        [Summary(description: "Whether user has completed triumph or not")] bool hasCompletedTriumph,
-        [Summary(description: "Whether to hide this message")] bool hide = false)
+        [Autocomplete(typeof(DestinyRecordDefinitionAutocompleter))][Summary("triumph", "Triumph to look for")] string recordHashString,
+        [Summary("has-completed-triumph", "Whether user has completed triumph or not")] bool hasCompletedTriumph,
+        [Summary("hide", "Whether to hide this message")] bool hide = false)
     {
         await ExecuteAndHandleErrors(async () =>
         {
             if (!uint.TryParse(recordHashString, out var recordHash))
-                return Error($"Failed to parse record hash");
+                return Error(FormatText("FailedToParseRecordHashError", () => "Failed to parse record hash: {0}", recordHashString));
 
-            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var guildSettings = await _guildDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
                 return GuildSettingsNotFound();
 
@@ -123,15 +125,16 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
             var clanIds = users.Select(x => x.ClanId).Distinct().ToArray();
             var clanReferences = await _destinyDb.GetClanReferencesFromIdsAsync(clanIds);
             var bungieClient = await _bungieClientProvider.GetClientAsync();
-            var lang = await _localizationService.GetGuildLocale(GuildId);
 
-            if (!bungieClient.TryGetDefinition<DestinyRecordDefinition>(recordHash, out var recordDefinition, lang))
+            if (!bungieClient.TryGetDefinition<DestinyRecordDefinition>(recordHash, out var recordDefinition, GuildLocale))
                 return DestinyDefinitionNotFound<DestinyRecordDefinition>(recordHash);
 
             var embedBuilder = _embedBuilderService
                 .GetTemplateEmbed()
                 .WithThumbnailUrl(recordDefinition.DisplayProperties.Icon.AbsolutePath)
-                .WithTitle($"{users.Count} users have{(hasCompletedTriumph ? " " : " not ")}completed {recordDefinition.DisplayProperties.Name}");
+                .WithTitle(hasCompletedTriumph ?
+                    FormatText("UsersWithTriumphCount", () => "{0} users have completed {1}", users.Count, recordDefinition.DisplayProperties.Name) :
+                    FormatText("UsersWithoutTriumphCount", () => "{0} users have not completed {1}", users.Count, recordDefinition.DisplayProperties.Name));
 
             for (int j = 0; j < clanReferences.Count; j++)
             {
@@ -153,7 +156,7 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
                     else
                     {
                         var left = usersOfClan.Count - i + 1;
-                        sb.Append($"And {left} more...");
+                        sb.Append(FormatText("HiddenUsersCount", () => "And {0} more...", left));
                         break;
                     }
                 }
@@ -161,7 +164,7 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
                 embedBuilder.AddField(reference.Name, sb.ToString(), j % 2 == 0);
             }
 
-            return Success(embedBuilder.Build(), hide);
+            return Success(embedBuilder.Build(), hide: hide);
         });
     }
 
@@ -179,18 +182,17 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
         [Choice("Conditional Finality", "2553509474")]
         [Choice("The Navigator", "161963863")]
         uint collectibleHash,
-        [Summary(description: "Whether to hide this message")]
+        [Summary("hide", "Whether to hide this message")]
         bool hide = false)
     {
         await ExecuteAndHandleErrors(async () =>
         {
             var client = await _bungieClientProvider.GetClientAsync();
-            var lang = await _localizationService.GetGuildLocale(GuildId);
 
-            if (!client.TryGetDefinition<DestinyCollectibleDefinition>(collectibleHash, out var collectibleDefinition, lang))
+            if (!client.TryGetDefinition<DestinyCollectibleDefinition>(collectibleHash, out var collectibleDefinition, GuildLocale))
                 return DestinyDefinitionNotFound<DestinyCollectibleDefinition>(collectibleHash);
 
-            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var guildSettings = await _guildDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
                 return GuildSettingsNotFound();
 
@@ -201,7 +203,11 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
             var embedBuilder = _embedBuilderService
                 .GetTemplateEmbed()
                 .WithThumbnailUrl(collectibleDefinition.DisplayProperties.Icon.AbsolutePath)
-                .WithTitle($"Users who don't have {collectibleDefinition.DisplayProperties.Name}");
+                .WithTitle(FormatText(
+                    "UsersWithoutItemCount",
+                    () => "{0} users miss {1}",
+                    drystreaks.Count,
+                    collectibleDefinition.DisplayProperties.Name));
 
             if (Destiny2Metadata.DryStreakItemSources.TryGetValue(collectibleHash, out var source))
             {
@@ -215,7 +221,7 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
 
                 var formattedData = _embedBuilderService.FormatAsStringTable<DestinyProfileLiteWithValue<int>, long>(
                     usersOfClan.Count,
-                    "No users",
+                    Text("NoUsersFound", () => "No users"),
                     usersOfClan,
                     (user) => user.MembershipId,
                     new Func<DestinyProfileLiteWithValue<int>, object>[]
@@ -228,30 +234,29 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
                 embedBuilder.AddField(reference.Name, $"```{formattedData}```");
             }
 
-            return Success(embedBuilder.Build(), hide);
+            return Success(embedBuilder.Build(), hide: hide);
         });
     }
 
     [SlashCommand("title", "Checks who completed title")]
     public async Task GetUserTitles(
         [Summary("title", "Title to look for")][Autocomplete(typeof(DestinyTitleAutocompleter))] string titleRecordHashString,
-        [Summary(description: "Whether user has title or not")] bool hasTitle,
-        [Summary(description: "Whether to hide this message")] bool hide = false)
+        [Summary("has-title", "Whether user has title or not")] bool hasTitle,
+        [Summary("hide", "Whether to hide this message")] bool hide = false)
     {
         await ExecuteAndHandleErrors(async () =>
         {
             if (!uint.TryParse(titleRecordHashString, out var titleRecordHash))
-                return Error($"Failed to parse record hash");
+                return Error(FormatText("FailedToParseRecordHashError", () => "Failed to parse record hash: {0}", titleRecordHashString));
 
             var client = await _bungieClientProvider.GetClientAsync();
-            var lang = await _localizationService.GetGuildLocale(GuildId);
 
-            if (!client.TryGetDefinition<DestinyRecordDefinition>(titleRecordHash, out var titleDefinition, lang))
+            if (!client.TryGetDefinition<DestinyRecordDefinition>(titleRecordHash, out var titleDefinition, GuildLocale))
                 return DestinyDefinitionNotFound<DestinyRecordDefinition>(titleRecordHash);
 
 
             var titleName = titleDefinition.TitleInfo.TitlesByGenderHash[DefinitionHashes.Genders.Masculine];
-            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var guildSettings = await _guildDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
                 return GuildSettingsNotFound();
 
@@ -260,8 +265,8 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
             var clanReferences = await _destinyDb.GetClanReferencesFromIdsAsync(clanIds);
 
             var embedBuilder = _embedBuilderService
-            .GetTemplateEmbed()
-                .WithTitle($"Users who have {titleName} title");
+                .GetTemplateEmbed()
+                .WithTitle(FormatText("UsersWithTitleTitle", () => "Users who have {0} title", titleName));
 
             var gettersList = new List<Func<DestinyProfileLiteWithValue<int>, object>>()
             {
@@ -282,7 +287,7 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
 
                 var formattedData = _embedBuilderService.FormatAsStringTable<DestinyProfileLiteWithValue<int>, long>(
                     usersOfClan.Count,
-                    "No users",
+                    Text("NoUsersFound", () => "No users"),
                     usersOfClan,
                     (user) => user.MembershipId,
                     getters,
@@ -307,20 +312,19 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
             }
             embedBuilder.WithThumbnailUrl(icon ?? titleDefinition.DisplayProperties.Icon.AbsolutePath);
 
-            return Success(embedBuilder.Build(), hide);
+            return Success(embedBuilder, hide: hide);
         });
     }
 
     [SlashCommand("game-version", "Checks who has game version")]
     public async Task GetUsersWithGameVersion(
         [Summary("game-version", "Game version to look up")] DestinyGameVersionEnum gameVersion,
-        [Summary(description: "Whether user has title or not")] bool hasVersion,
-        [Summary(description: "Whether to hide this message")] bool hide = false)
+        [Summary("has-version", "Whether user has game version or not")] bool hasVersion,
+        [Summary("hide", "Whether to hide this message")] bool hide = false)
     {
         await ExecuteAndHandleErrors(async () =>
         {
-            var lang = await _localizationService.GetGuildLocale(GuildId);
-            var guildSettings = await _destinyDb.GetGuildSettingsAsync(GuildId);
+            var guildSettings = await _guildDb.GetGuildSettingsAsync(GuildId);
             if (guildSettings is null)
                 return GuildSettingsNotFound();
 
@@ -330,7 +334,9 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
 
             var embedBuilder = _embedBuilderService
                 .GetTemplateEmbed()
-                .WithTitle($"Users who {(hasVersion is false ? "don't " : "")}have {gameVersion}");
+                .WithTitle(hasVersion is false ?
+                    FormatText("UsersWithoutGameVersion", () => "Users who don't have {0}", gameVersion) :
+                    FormatText("UsersWithGameVersion", () => "Users who have {0}", gameVersion));
 
             var gettersList = new List<Func<DestinyProfileLite, object>>()
             {
@@ -346,7 +352,7 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
 
                 var formattedData = _embedBuilderService.FormatAsStringTable<DestinyProfileLite, long>(
                     usersOfClan.Count,
-                    "No users",
+                    Text("NoUsersFound", () => "No users"),
                     usersOfClan,
                     (user) => user.MembershipId,
                     getters,
@@ -355,7 +361,7 @@ public class ProfileDefinitionLookupCommandHandler : SlashCommandHandlerBase
                 embedBuilder.AddField(reference.Name, $"```{formattedData}```");
             }
 
-            return Success(embedBuilder.Build(), hide);
+            return Success(embedBuilder, hide: hide);
         });
     }
 }

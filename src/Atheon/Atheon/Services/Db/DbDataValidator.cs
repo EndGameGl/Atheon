@@ -9,15 +9,18 @@ namespace Atheon.Services.Db.Sqlite
     {
         private readonly IDestinyDb _destinyDb;
         private readonly IDiscordClientProvider _discordClientProvider;
+        private readonly IGuildDb _guildDb;
         private readonly ILogger<DbDataValidator> _logger;
 
         public DbDataValidator(
             IDestinyDb destinyDb,
             IDiscordClientProvider discordClientProvider,
+            IGuildDb guildDb,
             ILogger<DbDataValidator> logger)
         {
             _destinyDb = destinyDb;
             _discordClientProvider = discordClientProvider;
+            _guildDb = guildDb;
             _logger = logger;
         }
 
@@ -33,7 +36,7 @@ namespace Atheon.Services.Db.Sqlite
             var discordClient = _discordClientProvider.Client!;
 
             var guilds = discordClient.Guilds.ToList();
-            var savedGuildSettings = await _destinyDb.GetAllGuildSettings();
+            var savedGuildSettings = await _guildDb.GetAllGuildSettings();
             await AddMissingDbSettings(guilds, savedGuildSettings);
             await RemoveObsoleteSettingsFromDb(guilds, savedGuildSettings);
         }
@@ -44,7 +47,7 @@ namespace Atheon.Services.Db.Sqlite
             {
                 if (!savedGuildSettings.Any(x => x.GuildId == guild.Id))
                 {
-                    await _destinyDb.UpsertGuildSettingsAsync(DiscordGuildSettingsDbModel.CreateDefault(guild.Id, guild.Name));
+                    await _guildDb.UpsertGuildSettingsAsync(DiscordGuildSettingsDbModel.CreateDefault(guild.Id, guild.Name));
                 }
             }
         }
@@ -55,7 +58,7 @@ namespace Atheon.Services.Db.Sqlite
             {
                 if (!guilds.Any(x => x.Id == savedGuildSetting.GuildId))
                 {
-                    await _destinyDb.DeleteGuildSettingsAsync(savedGuildSetting.GuildId);
+                    await _guildDb.DeleteGuildSettingsAsync(savedGuildSetting.GuildId);
                 }
             }
         }

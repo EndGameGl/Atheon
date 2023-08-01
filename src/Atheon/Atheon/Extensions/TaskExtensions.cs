@@ -3,7 +3,7 @@
 public static class TaskExtensions
 {
     public static async Task ExecuteInTimeOrThrow(
-        this Task task, 
+        this Task task,
         int millisecondsTimeout)
     {
         var delayTask = Task.Delay(millisecondsTimeout);

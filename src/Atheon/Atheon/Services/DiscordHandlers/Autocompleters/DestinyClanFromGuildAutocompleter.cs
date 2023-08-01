@@ -6,11 +6,11 @@ namespace Atheon.Services.DiscordHandlers.Autocompleters
 {
     public class DestinyClanFromGuildAutocompleter : AutocompleteHandler
     {
-        private readonly IDestinyDb _destinyDb;
+        private readonly IGuildDb _guildDb;
 
-        public DestinyClanFromGuildAutocompleter(IDestinyDb destinyDb)
+        public DestinyClanFromGuildAutocompleter(IGuildDb guildDb)
         {
-            _destinyDb = destinyDb;
+            _guildDb = guildDb;
         }
 
         public override async Task<AutocompletionResult> GenerateSuggestionsAsync(
@@ -20,10 +20,10 @@ namespace Atheon.Services.DiscordHandlers.Autocompleters
             IServiceProvider services)
         {
             var guildId = context.Guild.Id;
-            var guildClans = await _destinyDb.GetClanReferencesFromGuildAsync(guildId);
+            var guildClans = await _guildDb.GetClanReferencesFromGuildAsync(guildId);
             if (guildClans is null or { Count: 0 })
                 return AutocompletionResult.FromSuccess();
-           return AutocompletionResult.FromSuccess(guildClans.Select(x => new AutocompleteResult(x.Name, x.Id.ToString())));
+            return AutocompletionResult.FromSuccess(guildClans.Select(x => new AutocompleteResult(x.Name, x.Id.ToString())));
         }
     }
 }

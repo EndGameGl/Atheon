@@ -1,7 +1,4 @@
-﻿using Atheon.Extensions;
-using Discord;
-using System;
-using System.Drawing;
+﻿using Discord;
 
 namespace Atheon.Services.DiscordHandlers.InteractionFlow
 {
@@ -26,7 +23,15 @@ namespace Atheon.Services.DiscordHandlers.InteractionFlow
             embedBuilder.WithDescription($"```{_errorMessage}```");
 
             var embed = embedBuilder.Build();
-            await interactionContext.Interaction.RespondAsync(embed: embed);
+
+            if (interactionContext.Interaction.HasResponded)
+            {
+                await interactionContext.Interaction.FollowupAsync(embed: embed);
+            }
+            else
+            {
+                await interactionContext.Interaction.RespondAsync(embed: embed);
+            }
         }
     }
 }

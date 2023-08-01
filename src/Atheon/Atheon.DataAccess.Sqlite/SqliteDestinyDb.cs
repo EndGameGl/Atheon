@@ -1,12 +1,8 @@
-﻿using Atheon.DataAccess.Models.Administration;
-using Atheon.DataAccess.Models.Destiny;
-using Atheon.DataAccess.Models.Destiny.Broadcasts;
+﻿using Atheon.DataAccess.Models.Destiny;
 using Atheon.DataAccess.Models.Destiny.Clans;
-using Atheon.DataAccess.Models.Destiny.Guilds;
 using Atheon.DataAccess.Models.Destiny.Links;
 using Atheon.DataAccess.Models.Destiny.Profiles;
 using Atheon.DataAccess.Models.Destiny.Tracking;
-using Atheon.DataAccess.Models.Discord;
 using DotNetBungieAPI.Models.Destiny;
 
 namespace Atheon.DataAccess.Sqlite;
@@ -18,107 +14,6 @@ public class SqliteDestinyDb : IDestinyDb
     public SqliteDestinyDb(IDbAccess dbAccess)
     {
         _dbAccess = dbAccess;
-    }
-
-    private const string GetGuildReferencesQuery =
-            """
-            SELECT 
-                GuildId,
-                GuildName
-            FROM Guilds;
-            """;
-    public async Task<List<GuildReference>> GetGuildReferencesAsync()
-    {
-        return await _dbAccess.QueryAsync<GuildReference>(GetGuildReferencesQuery);
-    }
-
-    private const string GetAllGuildSettingsQuery =
-            """
-            SELECT * FROM Guilds;
-            """;
-    public async Task<List<DiscordGuildSettingsDbModel>> GetAllGuildSettings()
-    {
-        return await _dbAccess.QueryAsync<DiscordGuildSettingsDbModel>(GetAllGuildSettingsQuery);
-    }
-
-    private const string UpsertGuildSettingsQuery =
-    $"""
-    INSERT INTO Guilds 
-        (
-            {nameof(DiscordGuildSettingsDbModel.GuildId)},
-            {nameof(DiscordGuildSettingsDbModel.GuildName)},
-            {nameof(DiscordGuildSettingsDbModel.DefaultReportChannel)},
-            {nameof(DiscordGuildSettingsDbModel.TrackedMetrics)},
-            {nameof(DiscordGuildSettingsDbModel.TrackedRecords)},
-            {nameof(DiscordGuildSettingsDbModel.TrackedCollectibles)},
-            {nameof(DiscordGuildSettingsDbModel.TrackedProgressions)},
-            {nameof(DiscordGuildSettingsDbModel.SystemReportsEnabled)},
-            {nameof(DiscordGuildSettingsDbModel.SystemReportsOverrideChannel)},
-            {nameof(DiscordGuildSettingsDbModel.Clans)},
-            {nameof(DiscordGuildSettingsDbModel.ReportClanChanges)},
-            {nameof(DiscordGuildSettingsDbModel.DestinyManifestLocale)}
-        )
-        VALUES 
-        (
-            @{nameof(DiscordGuildSettingsDbModel.GuildId)},
-            @{nameof(DiscordGuildSettingsDbModel.GuildName)},
-            @{nameof(DiscordGuildSettingsDbModel.DefaultReportChannel)},
-            @{nameof(DiscordGuildSettingsDbModel.TrackedMetrics)},
-            @{nameof(DiscordGuildSettingsDbModel.TrackedRecords)},
-            @{nameof(DiscordGuildSettingsDbModel.TrackedCollectibles)},
-            @{nameof(DiscordGuildSettingsDbModel.TrackedProgressions)},
-            @{nameof(DiscordGuildSettingsDbModel.SystemReportsEnabled)},
-            @{nameof(DiscordGuildSettingsDbModel.SystemReportsOverrideChannel)},
-            @{nameof(DiscordGuildSettingsDbModel.Clans)},
-            @{nameof(DiscordGuildSettingsDbModel.ReportClanChanges)},
-            @{nameof(DiscordGuildSettingsDbModel.DestinyManifestLocale)}
-        )
-        ON CONFLICT (GuildId) DO UPDATE SET
-            {nameof(DiscordGuildSettingsDbModel.GuildId)} = @{nameof(DiscordGuildSettingsDbModel.GuildId)},
-            {nameof(DiscordGuildSettingsDbModel.GuildName)} = @{nameof(DiscordGuildSettingsDbModel.GuildName)},
-            {nameof(DiscordGuildSettingsDbModel.DefaultReportChannel)} = @{nameof(DiscordGuildSettingsDbModel.DefaultReportChannel)},
-            {nameof(DiscordGuildSettingsDbModel.TrackedMetrics)} = @{nameof(DiscordGuildSettingsDbModel.TrackedMetrics)},
-            {nameof(DiscordGuildSettingsDbModel.TrackedRecords)} = @{nameof(DiscordGuildSettingsDbModel.TrackedRecords)},
-            {nameof(DiscordGuildSettingsDbModel.TrackedCollectibles)} = @{nameof(DiscordGuildSettingsDbModel.TrackedCollectibles)},
-            {nameof(DiscordGuildSettingsDbModel.TrackedProgressions)} = @{nameof(DiscordGuildSettingsDbModel.TrackedProgressions)},
-            {nameof(DiscordGuildSettingsDbModel.SystemReportsEnabled)} = @{nameof(DiscordGuildSettingsDbModel.SystemReportsEnabled)},
-            {nameof(DiscordGuildSettingsDbModel.SystemReportsOverrideChannel)} = @{nameof(DiscordGuildSettingsDbModel.SystemReportsOverrideChannel)},
-            {nameof(DiscordGuildSettingsDbModel.Clans)} = @{nameof(DiscordGuildSettingsDbModel.Clans)},
-            {nameof(DiscordGuildSettingsDbModel.ReportClanChanges)} = @{nameof(DiscordGuildSettingsDbModel.ReportClanChanges)},
-            {nameof(DiscordGuildSettingsDbModel.DestinyManifestLocale)} = @{nameof(DiscordGuildSettingsDbModel.DestinyManifestLocale)}
-    """;
-    public async Task UpsertGuildSettingsAsync(DiscordGuildSettingsDbModel guildSettings)
-    {
-        await _dbAccess.ExecuteAsync(UpsertGuildSettingsQuery, guildSettings);
-    }
-
-    private const string DeleteGuildSettingsQuery =
-    $"""
-    DELETE FROM Guilds
-    WHERE {nameof(DiscordGuildSettingsDbModel.GuildId)} = @{nameof(DiscordGuildSettingsDbModel.GuildId)};
-    """;
-    public async Task DeleteGuildSettingsAsync(ulong guildId)
-    {
-        await _dbAccess.ExecuteAsync(DeleteGuildSettingsQuery, new { GuildId = guildId });
-    }
-
-    private const string GetGuildSettingsQuery =
-            """
-            SELECT * FROM Guilds WHERE GuildId = @GuildId;
-            """;
-    public async Task<DiscordGuildSettingsDbModel?> GetGuildSettingsAsync(ulong guildId)
-    {
-        return await _dbAccess.QueryFirstOrDefaultAsync<DiscordGuildSettingsDbModel?>(GetGuildSettingsQuery, new { GuildId = guildId });
-    }
-
-    private const string GetAllGuildSettingsForClanQuery =
-        """
-        SELECT * FROM Guilds 
-        WHERE EXISTS (SELECT 1 FROM json_each(Clans) WHERE value = @ClanId);
-        """;
-    public async Task<List<DiscordGuildSettingsDbModel>> GetAllGuildSettingsForClanAsync(long clanId)
-    {
-        return await _dbAccess.QueryAsync<DiscordGuildSettingsDbModel>(GetAllGuildSettingsForClanQuery, new { ClanId = clanId });
     }
 
     private const string GetClanIdsQuery =
@@ -304,65 +199,6 @@ public class SqliteDestinyDb : IDestinyDb
         });
     }
 
-    private const string TryInsertClanBroadcastQuery =
-        $"""
-        INSERT INTO DestinyClanBroadcasts
-            (
-                {nameof(ClanBroadcastDbModel.GuildId)},
-                {nameof(ClanBroadcastDbModel.ClanId)},
-                {nameof(ClanBroadcastDbModel.WasAnnounced)},
-                {nameof(ClanBroadcastDbModel.Date)},
-                {nameof(ClanBroadcastDbModel.Type)},
-                {nameof(ClanBroadcastDbModel.OldValue)},
-                {nameof(ClanBroadcastDbModel.NewValue)}
-            )
-            VALUES 
-            (
-                @{nameof(ClanBroadcastDbModel.GuildId)},
-                @{nameof(ClanBroadcastDbModel.ClanId)},
-                @{nameof(ClanBroadcastDbModel.WasAnnounced)},
-                @{nameof(ClanBroadcastDbModel.Date)},
-                @{nameof(ClanBroadcastDbModel.Type)},
-                @{nameof(ClanBroadcastDbModel.OldValue)},
-                @{nameof(ClanBroadcastDbModel.NewValue)}
-            )
-        """;
-    public async Task TryInsertClanBroadcastAsync(ClanBroadcastDbModel clanBroadcast)
-    {
-        await _dbAccess.ExecuteAsync(TryInsertClanBroadcastQuery, clanBroadcast);
-    }
-
-    private const string TryInsertProfileBroadcastQuery =
-        $"""
-        INSERT INTO DestinyUserBroadcasts
-            (
-                {nameof(DestinyUserProfileBroadcastDbModel.GuildId)},
-                {nameof(DestinyUserProfileBroadcastDbModel.ClanId)},
-                {nameof(DestinyUserProfileBroadcastDbModel.WasAnnounced)},
-                {nameof(DestinyUserProfileBroadcastDbModel.Date)},
-                {nameof(DestinyUserProfileBroadcastDbModel.Type)},
-                {nameof(DestinyUserProfileBroadcastDbModel.MembershipId)},
-                {nameof(DestinyUserProfileBroadcastDbModel.DefinitionHash)},
-                {nameof(DestinyUserProfileBroadcastDbModel.AdditionalData)}
-            )
-            VALUES 
-            (
-                @{nameof(DestinyUserProfileBroadcastDbModel.GuildId)},
-                @{nameof(DestinyUserProfileBroadcastDbModel.ClanId)},
-                @{nameof(DestinyUserProfileBroadcastDbModel.WasAnnounced)},
-                @{nameof(DestinyUserProfileBroadcastDbModel.Date)},
-                @{nameof(DestinyUserProfileBroadcastDbModel.Type)},
-                @{nameof(DestinyUserProfileBroadcastDbModel.MembershipId)},
-                @{nameof(DestinyUserProfileBroadcastDbModel.DefinitionHash)},
-                @{nameof(DestinyUserProfileBroadcastDbModel.AdditionalData)}
-            )
-            ON CONFLICT DO NOTHING;
-        """;
-    public async Task TryInsertProfileBroadcastAsync(DestinyUserProfileBroadcastDbModel profileBroadcast)
-    {
-        await _dbAccess.ExecuteAsync(TryInsertProfileBroadcastQuery, profileBroadcast);
-    }
-
     private const string GetProfileDisplayNameQuery =
         $"""
         SELECT Name FROM DestinyProfiles WHERE MembershipId = @MembershipId
@@ -370,41 +206,6 @@ public class SqliteDestinyDb : IDestinyDb
     public async Task<string?> GetProfileDisplayNameAsync(long membershipId)
     {
         return await _dbAccess.QueryFirstOrDefaultAsync<string?>(GetProfileDisplayNameQuery, new { MembershipId = membershipId });
-    }
-
-
-    private const string MarkClanBroadcastSentQuery =
-        $"""
-        UPDATE DestinyClanBroadcasts
-            SET 
-                {nameof(ClanBroadcastDbModel.WasAnnounced)} = true
-            WHERE 
-                {nameof(ClanBroadcastDbModel.Type)} = @{nameof(ClanBroadcastDbModel.Type)} AND
-                {nameof(ClanBroadcastDbModel.ClanId)} = @{nameof(ClanBroadcastDbModel.ClanId)} AND
-                {nameof(ClanBroadcastDbModel.GuildId)} = @{nameof(ClanBroadcastDbModel.GuildId)} AND
-                {nameof(ClanBroadcastDbModel.Date)} = @{nameof(ClanBroadcastDbModel.Date)} AND
-                {nameof(ClanBroadcastDbModel.NewValue)} = @{nameof(ClanBroadcastDbModel.NewValue)};
-        """;
-    public async Task MarkClanBroadcastSentAsync(ClanBroadcastDbModel clanBroadcast)
-    {
-        await _dbAccess.ExecuteAsync(MarkClanBroadcastSentQuery, clanBroadcast);
-    }
-
-    private const string MarkUserBroadcastSentQuery =
-        $"""
-        UPDATE DestinyUserBroadcasts
-            SET 
-                {nameof(DestinyUserProfileBroadcastDbModel.WasAnnounced)} = true
-            WHERE 
-                {nameof(DestinyUserProfileBroadcastDbModel.Type)} = @{nameof(DestinyUserProfileBroadcastDbModel.Type)} AND
-                {nameof(DestinyUserProfileBroadcastDbModel.ClanId)} = @{nameof(DestinyUserProfileBroadcastDbModel.ClanId)} AND
-                {nameof(DestinyUserProfileBroadcastDbModel.GuildId)} = @{nameof(DestinyUserProfileBroadcastDbModel.GuildId)} AND
-                {nameof(DestinyUserProfileBroadcastDbModel.DefinitionHash)} = @{nameof(DestinyUserProfileBroadcastDbModel.DefinitionHash)} AND
-                {nameof(DestinyUserProfileBroadcastDbModel.MembershipId)} = @{nameof(DestinyUserProfileBroadcastDbModel.MembershipId)};
-        """;
-    public async Task MarkUserBroadcastSentAsync(DestinyUserProfileBroadcastDbModel profileBroadcast)
-    {
-        await _dbAccess.ExecuteAsync(MarkUserBroadcastSentQuery, profileBroadcast);
     }
 
     private const string GetClanMemberReferencesQuery =
@@ -559,72 +360,7 @@ public class SqliteDestinyDb : IDestinyDb
         await _dbAccess.ExecuteAsync(RemoveProfileLinkQuery, new { DiscordUserId = discordUserId });
     }
 
-    private const string GetClanReferencesFromGuildQuery =
-        """
-        SELECT 
-        	value as Id,
-        	Clans.ClanName as Name
-        FROM 
-        	Guilds, 
-        	json_each(Guilds.Clans)
-        LEFT JOIN Clans ON Clans.ClanId = value
-        WHERE GuildId = @GuildId
-        """;
-    public async Task<List<ClanReference>> GetClanReferencesFromGuildAsync(ulong guildId)
-    {
-        return await _dbAccess.QueryAsync<ClanReference>(GetClanReferencesFromGuildQuery, new { GuildId = guildId });
-    }
-
-    private const string AddServerAdministratorQuery =
-        $"""
-        INSERT INTO ServerBotAdministrators
-        (
-            {nameof(ServerBotAdministrator.DiscordGuildId)},
-            {nameof(ServerBotAdministrator.DiscordUserId)}
-        )
-        VALUES 
-        (
-            @{nameof(ServerBotAdministrator.DiscordGuildId)},
-            @{nameof(ServerBotAdministrator.DiscordUserId)}
-        )
-        ON CONFLICT (DiscordGuildId, DiscordUserId) DO NOTHING
-        """;
-    public async Task AddServerAdministratorAsync(ServerBotAdministrator serverBotAdministrator)
-    {
-        await _dbAccess.ExecuteAsync(AddServerAdministratorQuery, serverBotAdministrator);
-    }
-
-    private const string RemoveServerAdministratorQuery =
-        $"""
-        DELETE FROM ServerBotAdministrators
-        WHERE 
-            {nameof(ServerBotAdministrator.DiscordGuildId)} = @{nameof(ServerBotAdministrator.DiscordGuildId)} AND
-            {nameof(ServerBotAdministrator.DiscordUserId)} = @{nameof(ServerBotAdministrator.DiscordUserId)}
-        """;
-    public async Task RemoveServerAdministratorAsync(ServerBotAdministrator serverBotAdministrator)
-    {
-        await _dbAccess.ExecuteAsync(RemoveServerAdministratorQuery, serverBotAdministrator);
-    }
-
-    private const string IsServerAdministratorQuery =
-        $"""
-        SELECT 1 FROM ServerBotAdministrators
-        WHERE 
-            {nameof(ServerBotAdministrator.DiscordGuildId)} = @{nameof(ServerBotAdministrator.DiscordGuildId)} AND
-            {nameof(ServerBotAdministrator.DiscordUserId)} = @{nameof(ServerBotAdministrator.DiscordUserId)}
-        """;
-    public async Task<bool> IsServerAdministratorAsync(ulong guildId, ulong userId)
-    {
-        var result = await _dbAccess.QueryFirstOrDefaultAsync<bool?>(IsServerAdministratorQuery,
-            new
-            {
-                DiscordGuildId = guildId,
-                DiscordUserId = userId
-            });
-        if (!result.HasValue)
-            return false;
-        return result.Value;
-    }
+    
 
     private const string GetClansFromIdsQuery =
         """
@@ -857,25 +593,6 @@ public class SqliteDestinyDb : IDestinyDb
                 new { ClanIds = clanIds });
     }
 
-    private const string GetGuildLanguageQuery =
-        """
-        SELECT DestinyManifestLocale
-        FROM Guilds
-        WHERE GuildId = @GuildId
-        """;
-    public async Task<DiscordDestinyLanguageEnum> GetGuildLanguageAsync(ulong guildId)
-    {
-        var result = await _dbAccess.QueryFirstOrDefaultAsync<DiscordDestinyLanguageEnum?>(GetGuildLanguageQuery, new
-        {
-            GuildId = guildId
-        });
-
-        if (result is null)
-            return DiscordDestinyLanguageEnum.English;
-
-        return result.Value;
-    }
-
     private const string SetClanRescanQuery =
         $"""
         UPDATE Clans SET {nameof(DestinyClanDbModel.ShouldRescan)} = 1 WHERE {nameof(DestinyClanDbModel.ClanId)} = @ClanId;
@@ -935,59 +652,6 @@ public class SqliteDestinyDb : IDestinyDb
                 ClanIds = clanIds,
                 Version = gameVersion
             });
-    }
-
-    private const string TryInsertProfileCustomBroadcastQuery =
-        $"""
-        INSERT INTO DestinyUserCustomBroadcasts
-            (
-                {nameof(DestinyUserProfileCustomBroadcastDbModel.GuildId)},
-                {nameof(DestinyUserProfileCustomBroadcastDbModel.ClanId)},
-                {nameof(DestinyUserProfileCustomBroadcastDbModel.WasAnnounced)},
-                {nameof(DestinyUserProfileCustomBroadcastDbModel.Date)},
-                {nameof(DestinyUserProfileCustomBroadcastDbModel.Type)},
-                {nameof(DestinyUserProfileCustomBroadcastDbModel.MembershipId)},
-                {nameof(DestinyUserProfileCustomBroadcastDbModel.OldValue)},
-                {nameof(DestinyUserProfileCustomBroadcastDbModel.NewValue)},
-                {nameof(DestinyUserProfileCustomBroadcastDbModel.AdditionalData)}
-            )
-            VALUES 
-            (
-                @{nameof(DestinyUserProfileCustomBroadcastDbModel.GuildId)},
-                @{nameof(DestinyUserProfileCustomBroadcastDbModel.ClanId)},
-                @{nameof(DestinyUserProfileCustomBroadcastDbModel.WasAnnounced)},
-                @{nameof(DestinyUserProfileCustomBroadcastDbModel.Date)},
-                @{nameof(DestinyUserProfileCustomBroadcastDbModel.Type)},
-                @{nameof(DestinyUserProfileCustomBroadcastDbModel.MembershipId)},
-                @{nameof(DestinyUserProfileCustomBroadcastDbModel.OldValue)},
-                @{nameof(DestinyUserProfileCustomBroadcastDbModel.NewValue)},
-                @{nameof(DestinyUserProfileCustomBroadcastDbModel.AdditionalData)}
-            )
-            ON CONFLICT DO NOTHING;
-        """;
-
-    public async Task TryInsertProfileCustomBroadcastAsync(DestinyUserProfileCustomBroadcastDbModel profileCustomBroadcast)
-    {
-        await _dbAccess.ExecuteAsync(TryInsertProfileCustomBroadcastQuery, profileCustomBroadcast);
-    }
-
-    private const string MarkUserCustomBroadcastSentQuery =
-        $"""
-        UPDATE DestinyUserCustomBroadcasts
-            SET 
-                {nameof(DestinyUserProfileCustomBroadcastDbModel.WasAnnounced)} = true
-            WHERE 
-                {nameof(DestinyUserProfileCustomBroadcastDbModel.Type)} = @{nameof(DestinyUserProfileCustomBroadcastDbModel.Type)} AND
-                {nameof(DestinyUserProfileCustomBroadcastDbModel.ClanId)} = @{nameof(DestinyUserProfileCustomBroadcastDbModel.ClanId)} AND
-                {nameof(DestinyUserProfileCustomBroadcastDbModel.GuildId)} = @{nameof(DestinyUserProfileCustomBroadcastDbModel.GuildId)} AND
-                {nameof(DestinyUserProfileCustomBroadcastDbModel.OldValue)} = @{nameof(DestinyUserProfileCustomBroadcastDbModel.OldValue)} AND
-                {nameof(DestinyUserProfileCustomBroadcastDbModel.OldValue)} = @{nameof(DestinyUserProfileCustomBroadcastDbModel.OldValue)} AND
-                {nameof(DestinyUserProfileCustomBroadcastDbModel.MembershipId)} = @{nameof(DestinyUserProfileCustomBroadcastDbModel.MembershipId)};
-        """;
-
-    public async Task MarkUserCustomBroadcastSentAsync(DestinyUserProfileCustomBroadcastDbModel profileCustomBroadcast)
-    {
-        await _dbAccess.ExecuteAsync(MarkUserCustomBroadcastSentQuery, profileCustomBroadcast);
     }
 
     private const string GetGuardianSeasonPassLevelsQuery =

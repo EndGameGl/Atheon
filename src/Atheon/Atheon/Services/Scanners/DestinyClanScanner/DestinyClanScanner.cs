@@ -1,13 +1,13 @@
 ﻿using Atheon.Attributes;
+using Atheon.DataAccess;
+using Atheon.DataAccess.Models.Destiny.Broadcasts;
+using Atheon.Destiny2.Metadata;
 using Atheon.Services.BungieApi;
 using Atheon.Services.Interfaces;
 using Atheon.Services.Scanners.Entities;
+using DotNetBungieAPI.HashReferences;
 using DotNetBungieAPI.Models;
 using Polly;
-using DotNetBungieAPI.HashReferences;
-using Atheon.Destiny2.Metadata;
-using Atheon.DataAccess;
-using Atheon.DataAccess.Models.Destiny.Broadcasts;
 
 namespace Atheon.Services.Scanners.DestinyClanScanner;
 
@@ -20,6 +20,7 @@ public class DestinyClanScanner : EntityScannerBase<DestinyClanScannerInput, Des
     private readonly ICommonEvents _commonEvents;
     private readonly IMemoryCache _memoryCache;
     private readonly ISettingsStorage _settingsStorage;
+    private readonly IGuildDb _guildDb;
     private AsyncPolicy _apiCallPolicy;
 
     public DestinyClanScanner(
@@ -30,7 +31,8 @@ public class DestinyClanScanner : EntityScannerBase<DestinyClanScannerInput, Des
         IDestinyDb destinyDb,
         ICommonEvents commonEvents,
         IMemoryCache memoryCache,
-        ISettingsStorage settingsStorage) : base(logger)
+        ISettingsStorage settingsStorage,
+        IGuildDb guildDb) : base(logger)
     {
         Initialize();
         BuildApiCallPolicy();
@@ -41,6 +43,7 @@ public class DestinyClanScanner : EntityScannerBase<DestinyClanScannerInput, Des
         _commonEvents = commonEvents;
         _memoryCache = memoryCache;
         _settingsStorage = settingsStorage;
+        _guildDb = guildDb;
     }
 
     private void BuildApiCallPolicy()
@@ -143,7 +146,7 @@ public class DestinyClanScanner : EntityScannerBase<DestinyClanScannerInput, Des
              $"Clan_Guild_Settings_{input.ClanId}",
              async () =>
              {
-                 return await _destinyDb.GetAllGuildSettingsForClanAsync(input.ClanId);
+                 return await _guildDb.GetAllGuildSettingsForClanAsync(input.ClanId);
              },
              TimeSpan.FromMinutes(1),
              Caching.CacheExpirationType.Absolute);

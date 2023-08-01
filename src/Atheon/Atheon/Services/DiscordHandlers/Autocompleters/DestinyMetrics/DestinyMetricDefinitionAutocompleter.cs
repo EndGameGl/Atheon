@@ -30,7 +30,7 @@ namespace Atheon.Services.DiscordHandlers.Autocompleters.DestinyMetrics
         {
             try
             {
-                var lang = await _localizationService.GetGuildLocale(context.Guild.Id);
+                var lang = await _localizationService.GetGuildLocaleCachedAsync(context.Guild.Id);
 
                 var client = await _bungieClientProvider.GetClientAsync();
                 var searchEntry = (string)autocompleteInteraction.Data.Options.First(x => x.Focused).Value;

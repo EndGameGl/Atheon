@@ -15,6 +15,7 @@ public class DiscordEventHandler : IDiscordEventHandler
 {
     private readonly IDiscordClientProvider _discordClientProvider;
     private readonly IDestinyDb _destinyDb;
+    private readonly IGuildDb _guildDb;
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<DiscordEventHandler> _logger;
     private readonly EmbedBuilderService _embedBuilderService;
@@ -25,12 +26,14 @@ public class DiscordEventHandler : IDiscordEventHandler
     public DiscordEventHandler(
         IDiscordClientProvider discordClientProvider,
         IDestinyDb destinyDb,
+        IGuildDb guildDb,
         IServiceProvider serviceProvider,
         ILogger<DiscordEventHandler> logger,
         EmbedBuilderService embedBuilderService)
     {
         _discordClientProvider = discordClientProvider;
         _destinyDb = destinyDb;
+        _guildDb = guildDb;
         _serviceProvider = serviceProvider;
         _logger = logger;
         _embedBuilderService = embedBuilderService;
@@ -64,6 +67,7 @@ public class DiscordEventHandler : IDiscordEventHandler
 
         _interactionService = new InteractionService(_discordClient, new InteractionServiceConfig()
         {
+            LocalizationManager = new JsonLocalizationManager("./Localization/DiscordCommands/", "commands")
         });
 
         _discordClient.Log += OnDiscordLog;
@@ -100,12 +104,12 @@ public class DiscordEventHandler : IDiscordEventHandler
     {
         var newGuildData = DiscordGuildSettingsDbModel.CreateDefault(socketGuild.Id, socketGuild.Name);
 
-        await _destinyDb.UpsertGuildSettingsAsync(newGuildData);
+        await _guildDb.UpsertGuildSettingsAsync(newGuildData);
     }
 
     private async Task OnGuildLeft(SocketGuild socketGuild)
     {
-        await _destinyDb.DeleteGuildSettingsAsync(socketGuild.Id);
+        await _guildDb.DeleteGuildSettingsAsync(socketGuild.Id);
     }
 
     private async Task OnDiscordLog(LogMessage logMessage)
@@ -135,7 +139,7 @@ public class DiscordEventHandler : IDiscordEventHandler
 
     public async Task ReportToSystemChannelAsync(string message)
     {
-        var guildSettings = await _destinyDb.GetAllGuildSettings();
+        var guildSettings = await _guildDb.GetAllGuildSettings();
 
         var embed = _embedBuilderService.CreateSimpleResponseEmbed("System alert", message, Color.Orange).Build();
         foreach (var guildSetting in guildSettings)

@@ -1,9 +1,9 @@
-﻿using Atheon.Services.Interfaces;
+﻿using Atheon.DataAccess.Models.Destiny;
+using Atheon.DataAccess.Models.Destiny.Profiles;
+using Atheon.Destiny2.Metadata;
+using Atheon.Services.Interfaces;
 using DotNetBungieAPI.Models.Destiny.Responses;
 using DotNetBungieAPI.Service.Abstractions;
-using Atheon.Destiny2.Metadata;
-using Atheon.DataAccess.Models.Destiny;
-using Atheon.DataAccess.Models.Destiny.Profiles;
 
 namespace Atheon.Services.Scanners.ProfileUpdaters;
 

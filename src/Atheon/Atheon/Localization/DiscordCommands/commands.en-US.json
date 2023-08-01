@@ -1,0 +1,210 @@
+{
+  "destiny-time-info": {
+    "name": "destiny-time-info",
+    "description": "Group of commands to show time-related info for Destiny 2",
+    "daily-reset": {
+      "name": "daily-reset",
+      "description": "Shows how much time is left until daily reset"
+    },
+    "weekly-reset": {
+      "name": "weekly-reset",
+      "description": "Shows how much time is left until weekly reset"
+    },
+    "season-end": {
+      "name": "season-end",
+      "description": "Shows how much time is left until season ends"
+    }
+  },
+  "leaderboards": {
+    "name": "leaderboards",
+    "description": "Group of commands to show leaderboards for Destiny 2",
+    "metric": {
+      "name": "metric",
+      "description": "Shows leaderboard for a certain metric",
+      "metric": {
+        "name": "metric",
+        "description": "Metric to show"
+      },
+      "hide": {
+        "name": "hide",
+        "description": "Whether to hide this message"
+      }
+    },
+    "guardian-ranks": {
+      "name": "guardian-ranks",
+      "description": "Shows leaderboard for guardian ranks",
+      "hide": {
+        "name": "hide",
+        "description": "Whether to hide this message"
+      }
+    },
+    "power": {
+      "name": "power",
+      "description": "Shows leaderboard for power",
+      "hide": {
+        "name": "hide",
+        "description": "Whether to hide this message"
+      }
+    },
+    "triumph-score": {
+      "name": "triumph-score",
+      "description": "Shows leaderboard for triumph score",
+      "hide": {
+        "name": "hide",
+        "description": "Whether to hide this message"
+      }
+    },
+    "time-played": {
+      "name": "time-played",
+      "description": "Shows leaderboard for time played",
+      "hide": {
+        "name": "hide",
+        "description": "Whether to hide this message"
+      }
+    },
+    "triumph": {
+      "name": "triumph",
+      "description": "Shows leaderboard for triumph progress",
+      "triumph": {
+        "name": "triumph",
+        "description": "Triumph"
+      },
+      "hide": {
+        "name": "hide",
+        "description": "Whether to hide this message"
+      }
+    },
+    "titles": {
+      "name": "titles",
+      "description": "Shows leaderboard for total titles",
+      "hide": {
+        "name": "hide",
+        "description": "Whether to hide this message"
+      }
+    },
+    "season-pass": {
+      "name": "season-pass",
+      "description": "Shows leaderboard for selected season",
+      "season": {
+        "name": "season",
+        "description": "Season pass"
+      },
+      "hide": {
+        "name": "hide",
+        "description": "Whether to hide this message"
+      }
+    }
+  },
+  "lookup": {
+    "name": "lookup",
+    "description": "Set of commands to check user statuses",
+    "item-check": {
+      "name": "item-check",
+      "description": "Checks who has items",
+      "item": {
+        "name": "item",
+        "description": "Item to look for"
+      },
+      "has-item": {
+        "name": "has-item",
+        "description": "Whether user has item or not"
+      },
+      "hide": {
+        "name": "hide",
+        "description": "Whether to hide this message"
+      }
+    },
+    "triumph-check": {
+      "name": "triumph-check",
+      "description": "Checks who completed triumph",
+      "triumph": {
+        "name": "triumph",
+        "description": "Triumph to look for"
+      },
+      "has-completed-triumph": {
+        "name": "has-completed-triumph",
+        "description": "Whether user has completed triumph or not"
+      },
+      "hide": {
+        "name": "hide",
+        "description": "Whether to hide this message"
+      }
+    },
+    "drystreaks": {
+      "name": "drystreaks",
+      "description": "Checks who don't have item YET",
+      "item": {
+        "name": "item",
+        "description": "Item to look for"
+      },
+      "hide": {
+        "name": "hide",
+        "description": "Whether to hide this message"
+      }
+    },
+    "title": {
+      "name": "title",
+      "description": "Checks who completed title",
+      "title": {
+        "name": "title",
+        "description": "Title to look for"
+      },
+      "has-title": {
+        "name": "has-title",
+        "description": "Whether user has title or not"
+      },
+      "hide": {
+        "name": "hide",
+        "description": "Whether to hide this message"
+      }
+    },
+    "game-version": {
+      "name": "game-version",
+      "description": "Checks who has game version",
+      "game-version": {
+        "name": "game-version",
+        "description": "Game version to look up"
+      },
+      "has-version": {
+        "name": "has-version",
+        "description": "Whether user has game version or not"
+      },
+      "hide": {
+        "name": "hide",
+        "description": "Whether to hide this message"
+      }
+    }
+  },
+  "settings": {
+    "name": "settings",
+    "description": "Group of commands related to guild settings",
+    "clan-add": {
+      "name": "clan-add",
+      "description": "Adds new clan to guild",
+      "clan": {
+        "name": "clan",
+        "description": "Clan ID to add"
+      }
+    },
+    "clan-remove": {
+      "name": "clan-remove",
+      "description": "Removes selected clan from guild",
+      "clan": {
+        "name": "clan",
+        "description": "Clan to remove"
+      }
+    },
+    "link-user": {
+      "name": "link-user",
+      "description": "Links discord user to destiny profile",
+      "user": {
+        "name": "user",
+        "description": "Destiny 2 user profile"
+      },
+      "link-to": {
+        "name": "link-to",
+        "desctiption": "Discord user to link to"
+      }
+    }
+  }
+}

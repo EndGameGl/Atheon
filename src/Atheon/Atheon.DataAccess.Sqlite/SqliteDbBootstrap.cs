@@ -76,6 +76,7 @@ public class SqliteDbBootstrap : IDbBootstrap
         DapperExtensions.RegisterJsonHandler<DefinitionTrackSettings<DestinyCollectibleDefinition>>(_jsonOptions.Value.SerializerOptions);
         DapperExtensions.RegisterJsonHandler<DefinitionTrackSettings<DestinyProgressionDefinition>>(_jsonOptions.Value.SerializerOptions);
         DapperExtensions.RegisterJsonHandler<HashSet<long>>(_jsonOptions.Value.SerializerOptions);
+        DapperExtensions.RegisterJsonHandler<HashSet<ulong>>(_jsonOptions.Value.SerializerOptions);
         DapperExtensions.RegisterJsonHandler<HashSet<uint>>(_jsonOptions.Value.SerializerOptions);
         DapperExtensions.RegisterJsonHandler<Dictionary<uint, DestinyRecordDbModel>>(_jsonOptions.Value.SerializerOptions);
         DapperExtensions.RegisterJsonHandler<Dictionary<uint, DestinyProgressionDbModel>>(_jsonOptions.Value.SerializerOptions);

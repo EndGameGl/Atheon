@@ -1,14 +1,13 @@
 ﻿using Atheon.Attributes;
-using Atheon.Extensions;
-using Atheon.Services.Scanners.Entities;
-using DotNetBungieAPI.Models.Destiny.Responses;
-using DotNetBungieAPI.Models;
-using System.Text.Json;
-using Atheon.Services.BungieApi;
-using Atheon.Services.Interfaces;
-using Atheon.Destiny2.Metadata;
 using Atheon.DataAccess;
 using Atheon.DataAccess.Models.Destiny;
+using Atheon.Destiny2.Metadata;
+using Atheon.Services.BungieApi;
+using Atheon.Services.Interfaces;
+using Atheon.Services.Scanners.Entities;
+using DotNetBungieAPI.Models;
+using DotNetBungieAPI.Models.Destiny.Responses;
+using System.Text.Json;
 
 namespace Atheon.Services.Scanners.DestinyClanMemberScanner;
 

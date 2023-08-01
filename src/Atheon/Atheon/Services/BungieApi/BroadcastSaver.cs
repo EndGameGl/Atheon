@@ -6,25 +6,25 @@ namespace Atheon.Services.BungieApi
     public class BroadcastSaver
     {
         private readonly ICommonEvents _commonEvents;
-        private readonly IDestinyDb _destinyDb;
+        private readonly IBroadcastDb _broadcastDb;
 
         public BroadcastSaver(
             ICommonEvents commonEvents,
-            IDestinyDb destinyDb)
+            IBroadcastDb broadcastDb)
         {
             _commonEvents = commonEvents;
-            _destinyDb = destinyDb;
+            _broadcastDb = broadcastDb;
             _commonEvents.ClanBroadcasts.Published += (e) =>
             {
-                _ = _destinyDb.TryInsertClanBroadcastAsync(e);
+                _ = _broadcastDb.TryInsertClanBroadcastAsync(e);
             };
             _commonEvents.ProfileBroadcasts.Published += (e) =>
             {
-                _ = _destinyDb.TryInsertProfileBroadcastAsync(e);
+                _ = _broadcastDb.TryInsertProfileBroadcastAsync(e);
             };
             _commonEvents.CustomProfileBroadcasts.Published += (e) =>
             {
-                _ = _destinyDb.TryInsertProfileCustomBroadcastAsync(e);
+                _ = _broadcastDb.TryInsertProfileCustomBroadcastAsync(e);
             };
         }
     }

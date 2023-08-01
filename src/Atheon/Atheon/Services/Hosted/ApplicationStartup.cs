@@ -2,7 +2,6 @@
 using Atheon.Extensions;
 using Atheon.Services.BungieApi;
 using Atheon.Services.Interfaces;
-using Discord;
 
 namespace Atheon.Services.Hosted
 {
