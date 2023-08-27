@@ -103,6 +103,7 @@ public static class Destiny2Metadata
 		{
 			DestinyComponentType.Profiles,
 			DestinyComponentType.ProfileInventories,
+			DestinyComponentType.ProfileProgression,
 			DestinyComponentType.Characters,
 			DestinyComponentType.CharacterProgressions,
 			DestinyComponentType.CharacterActivities,

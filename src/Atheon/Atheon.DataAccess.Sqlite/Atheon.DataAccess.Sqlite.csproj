@@ -8,8 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Dapper" Version="2.0.143" />
-    <PackageReference Include="DotNetBungieAPI" Version="2.11.1" />
+    <PackageReference Include="Dapper" Version="2.0.151" />
+    <PackageReference Include="DotNetBungieAPI" Version="2.12.0" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="7.0.10" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.1" />
   </ItemGroup>
