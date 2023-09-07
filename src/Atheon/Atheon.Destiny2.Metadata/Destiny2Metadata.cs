@@ -23,7 +23,8 @@ public static class Destiny2Metadata
 			DefinitionHashes.Metrics.VaultofGlassCompletions,
 			DefinitionHashes.Metrics.VowoftheDiscipleCompletions,
 			DefinitionHashes.Metrics.KingsFallCompletions,
-			DefinitionHashes.Metrics.RootofNightmaresCompletions
+			DefinitionHashes.Metrics.RootofNightmaresCompletions,
+			DefinitionHashes.Metrics.CrotasEndCompletions
 		};
 
 	public static ReadOnlyDictionary<uint, uint> DryStreakItemSettings { get; } =
