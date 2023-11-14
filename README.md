@@ -43,7 +43,7 @@ This application uses SQLite as it's storage, so I strongly recommend users to d
 
 # Possible errors on startup
 
-1. Be sure to download [Dotnet 7 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/7.0)
+1. Be sure to download [Dotnet 8 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
 2. Try running `dotnet restore` in console from `/src/Atheon/Atheon/` folder
 3. If you're on windows, try syncing system time
 

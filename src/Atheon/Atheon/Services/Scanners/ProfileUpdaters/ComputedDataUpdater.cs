@@ -3,9 +3,12 @@ using Atheon.DataAccess.Models.Destiny.Profiles;
 using Atheon.Destiny2.Metadata;
 using Atheon.Services.BungieApi;
 using Atheon.Services.Interfaces;
+using Discord;
 using DotNetBungieAPI.Extensions;
 using DotNetBungieAPI.HashReferences;
 using DotNetBungieAPI.Models.Destiny;
+using DotNetBungieAPI.Models.Destiny.Components;
+using DotNetBungieAPI.Models.Destiny.Definitions.InventoryItems;
 using DotNetBungieAPI.Models.Destiny.Responses;
 using DotNetBungieAPI.Service.Abstractions;
 
@@ -137,7 +140,13 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
 			}
 			catch (Exception ex)
 			{
-				_logger.LogError(ex, "Failed to calculate light based on inventory");
+				_logger.LogError(
+					ex,
+					"Failed to calculate light based on inventory: Name: {Name}, Type: {Type}, Id: {Id}",
+					dbModel.Name,
+					dbModel.MembershipType,
+					dbModel.MembershipId
+				);
 			}
 
 			if (
@@ -153,17 +162,11 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
 					?.Progress;
 			}
 
-			if (
-				dbModel.Records.TryGetValue(
-					DefinitionHashes.Records.ArtifactPowerBonus_3093587483,
-					out var artifactPowerRecord
-				)
-			)
-			{
-				dbModel.ComputedData.ArtifactPowerLevel = artifactPowerRecord.Objectives
-					?.FirstOrDefault()
-					?.Progress;
-			}
+			dbModel.ComputedData.ArtifactPowerLevel = profileResponse
+				.ProfileProgression
+				.Data
+				.SeasonalArtifact
+				.PowerBonus;
 
 			dbModel.ComputedData.LifetimeScore = profileResponse.ProfileRecords.Data.LifetimeScore;
 			dbModel.ComputedData.ActiveScore = profileResponse.ProfileRecords.Data.ActiveScore;
@@ -175,9 +178,11 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
 
 		private int CalculateHighestLightBasedOnInventory(DestinyProfileResponse profileResponse)
 		{
+			if (profileResponse.Profile.Data.UserInfo.MembershipId == 4611686018429871637) { }
+
 			var highestLightValue = 0;
 
-			var highlestLightWeapons = new Dictionary<uint, int>()
+			var highestLightWeapons = new Dictionary<uint, int>()
 			{
 				{ DefinitionHashes.InventoryBuckets.KineticWeapons, 0 },
 				{ DefinitionHashes.InventoryBuckets.EnergyWeapons, 0 },
@@ -188,36 +193,18 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
 				var (characterId, characterEquipment) in profileResponse.CharacterEquipment.Data
 			)
 			{
-				foreach (var characterEquippedItem in characterEquipment.Items)
+				foreach (var item in characterEquipment.Items)
 				{
-					if (!characterEquippedItem.Item.TryGetDefinition(out var itemDefinition))
+					if (!TryGetItemAndBucketHash(item, out var itemDefinition, out var bucketHash))
 						continue;
 
-					if (itemDefinition.Inventory is null)
+					if (!highestLightWeapons.ContainsKey(bucketHash))
 						continue;
 
-					if (!itemDefinition.Inventory.BucketType.HasValidHash)
+					if (!TryGetItemInstance(profileResponse, item, out var instance))
 						continue;
 
-					var bucketHash = itemDefinition.Inventory.BucketType.Hash.GetValueOrDefault();
-
-					if (!highlestLightWeapons.ContainsKey(bucketHash))
-						continue;
-
-					var instance = profileResponse.ItemComponents.Instances.Data[
-						characterEquippedItem.ItemInstanceId.GetValueOrDefault()
-					];
-
-					var lightValue = instance.PrimaryStat is not null
-						? instance.PrimaryStat.Value
-						: instance.ItemLevel * 10 + instance.Quality;
-
-					var currentValue = highlestLightWeapons[bucketHash];
-
-					if (currentValue < lightValue)
-					{
-						highlestLightWeapons[bucketHash] = lightValue;
-					}
+					ReassignLightValues(instance, highestLightWeapons, bucketHash);
 				}
 			}
 
@@ -226,7 +213,7 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
 				var characterClassType = profileResponse.Characters.Data[characterId].ClassType;
 				var characterEquipment = profileResponse.CharacterEquipment.Data[characterId];
 
-				var highlestLightArmorInBucket = new Dictionary<uint, int>()
+				var highestLightArmorInBucket = new Dictionary<uint, int>()
 				{
 					{ DefinitionHashes.InventoryBuckets.Helmet, 0 },
 					{ DefinitionHashes.InventoryBuckets.Gauntlets, 0 },
@@ -237,71 +224,23 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
 
 				foreach (var item in characterItems.Items)
 				{
-					if (!item.Item.TryGetDefinition(out var itemDefinition))
+					if (!TryGetItemAndBucketHash(item, out var itemDefinition, out var bucketHash))
 						continue;
 
-					if (itemDefinition.Inventory is null)
-						continue;
+                    CalculatePowerLevelForItemAndAssign(
+                        highestLightArmorInBucket,
+                        highestLightWeapons,
+                        bucketHash,
+                        profileResponse,
+                        item);
+                }
 
-					if (!itemDefinition.Inventory.BucketType.HasValidHash)
-						continue;
-
-					var bucketHash = itemDefinition.Inventory.BucketType.Hash.GetValueOrDefault();
-
-					if (highlestLightArmorInBucket.TryGetValue(bucketHash, out var currentValue))
-					{
-						var instance = profileResponse.ItemComponents.Instances.Data[
-							item.ItemInstanceId.GetValueOrDefault()
-						];
-
-						if (instance.PrimaryStat is null)
-							continue;
-
-						var lightValue = instance.PrimaryStat is not null
-							? instance.PrimaryStat.Value
-							: instance.ItemLevel * 10 + instance.Quality;
-
-						if (currentValue < lightValue)
-						{
-							highlestLightArmorInBucket[bucketHash] = lightValue;
-						}
-					}
-					else if (
-						highlestLightWeapons.TryGetValue(bucketHash, out var currentWeaponValue)
-					)
-					{
-						var instance = profileResponse.ItemComponents.Instances.Data[
-							item.ItemInstanceId.GetValueOrDefault()
-						];
-
-						if (instance.PrimaryStat is null)
-							continue;
-
-						var lightValue = instance.PrimaryStat is not null
-							? instance.PrimaryStat.Value
-							: instance.ItemLevel * 10 + instance.Quality;
-
-						if (currentWeaponValue < lightValue)
-						{
-							highlestLightWeapons[bucketHash] = lightValue;
-						}
-					}
-				}
-
-				foreach (var profileItem in profileResponse.ProfileInventory.Data.Items)
+				foreach (var item in profileResponse.ProfileInventory.Data.Items)
 				{
-					if (!profileItem.Item.TryGetDefinition(out var itemDefinition))
+					if (!TryGetItemAndBucketHash(item, out var itemDefinition, out var bucketHash))
 						continue;
 
-					if (itemDefinition.Inventory is null)
-						continue;
-
-					if (!itemDefinition.Inventory.BucketType.HasValidHash)
-						continue;
-
-					var bucketHash = itemDefinition.Inventory.BucketType.Hash.GetValueOrDefault();
-
-					if (!highlestLightArmorInBucket.ContainsKey(bucketHash))
+					if (!highestLightArmorInBucket.ContainsKey(bucketHash))
 						continue;
 
 					if (
@@ -310,102 +249,30 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
 					)
 						continue;
 
-					if (highlestLightArmorInBucket.TryGetValue(bucketHash, out var currentValue))
-					{
-						var instance = profileResponse.ItemComponents.Instances.Data[
-							profileItem.ItemInstanceId.GetValueOrDefault()
-						];
+                    CalculatePowerLevelForItemAndAssign(
+                        highestLightArmorInBucket,
+                        highestLightWeapons,
+                        bucketHash,
+                        profileResponse,
+                        item);
+                }
 
-						if (instance.PrimaryStat is null)
-							continue;
-
-						var lightValue = instance.PrimaryStat is not null
-							? instance.PrimaryStat.Value
-							: instance.ItemLevel * 10 + instance.Quality;
-
-						if (currentValue < lightValue)
-						{
-							highlestLightArmorInBucket[bucketHash] = lightValue;
-						}
-					}
-					else if (
-						highlestLightWeapons.TryGetValue(bucketHash, out var currentWeaponValue)
-					)
-					{
-						var instance = profileResponse.ItemComponents.Instances.Data[
-							profileItem.ItemInstanceId.GetValueOrDefault()
-						];
-
-						if (instance.PrimaryStat is null)
-							continue;
-
-						var lightValue = instance.PrimaryStat is not null
-							? instance.PrimaryStat.Value
-							: instance.ItemLevel * 10 + instance.Quality;
-
-						if (currentWeaponValue < lightValue)
-						{
-							highlestLightWeapons[bucketHash] = lightValue;
-						}
-					}
-				}
-
-				foreach (var characterEquippedItem in characterEquipment.Items)
+				foreach (var item in characterEquipment.Items)
 				{
-					if (!characterEquippedItem.Item.TryGetDefinition(out var itemDefinition))
+					if (!TryGetItemAndBucketHash(item, out var itemDefinition, out var bucketHash))
 						continue;
 
-					if (itemDefinition.Inventory is null)
-						continue;
-
-					if (!itemDefinition.Inventory.BucketType.HasValidHash)
-						continue;
-
-					var bucketHash = itemDefinition.Inventory.BucketType.Hash.GetValueOrDefault();
-
-					if (highlestLightArmorInBucket.TryGetValue(bucketHash, out var currentValue))
-					{
-						var instance = profileResponse.ItemComponents.Instances.Data[
-							characterEquippedItem.ItemInstanceId.GetValueOrDefault()
-						];
-
-						if (instance.PrimaryStat is null)
-							continue;
-
-						var lightValue = instance.PrimaryStat is not null
-							? instance.PrimaryStat.Value
-							: instance.ItemLevel * 10 + instance.Quality;
-
-						if (currentValue < lightValue)
-						{
-							highlestLightArmorInBucket[bucketHash] = lightValue;
-						}
-					}
-					else if (
-						highlestLightWeapons.TryGetValue(bucketHash, out var currentWeaponValue)
-					)
-					{
-						var instance = profileResponse.ItemComponents.Instances.Data[
-							characterEquippedItem.ItemInstanceId.GetValueOrDefault()
-						];
-
-						if (instance.PrimaryStat is null)
-							continue;
-
-						var lightValue = instance.PrimaryStat is not null
-							? instance.PrimaryStat.Value
-							: instance.ItemLevel * 10 + instance.Quality;
-
-						if (currentWeaponValue < lightValue)
-						{
-							highlestLightWeapons[bucketHash] = lightValue;
-						}
-					}
+					CalculatePowerLevelForItemAndAssign(
+						highestLightArmorInBucket,
+                        highestLightWeapons,
+						bucketHash,
+						profileResponse,
+						item);
 				}
 
 				var totalLight =
-					highlestLightArmorInBucket.Sum(x => x.Value)
-					+ highlestLightWeapons.Sum(x => x.Value);
+					highestLightArmorInBucket.Sum(x => x.Value)
+					+ highestLightWeapons.Sum(x => x.Value);
 
 				var medianLight = (int)Math.Floor(totalLight / (double)8);
 
@@ -416,6 +283,96 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
 			}
 
 			return highestLightValue;
+		}
+
+		private static int GetItemPowerLevel(DestinyItemInstanceComponent itemInstance)
+		{
+			return itemInstance.PrimaryStat is not null
+				? itemInstance.PrimaryStat.Value
+				: itemInstance.ItemLevel * 10 + itemInstance.Quality;
+		}
+
+		private static bool TryGetItemAndBucketHash(
+			DestinyItemComponent item,
+			out DestinyInventoryItemDefinition itemDefinition,
+			out uint bucketHash
+		)
+		{
+			bucketHash = 0;
+
+			if (!item.Item.TryGetDefinition(out itemDefinition!))
+				return false;
+
+			if (itemDefinition.Inventory is null)
+				return false;
+
+			if (!itemDefinition.Inventory.BucketType.HasValidHash)
+				return false;
+
+			bucketHash = itemDefinition.Inventory.BucketType.Hash.GetValueOrDefault();
+			return bucketHash > 0;
+		}
+
+		private static void ReassignLightValues(
+			DestinyItemInstanceComponent itemInstance,
+			Dictionary<uint, int> lightValuesByBucket,
+			uint bucketHash
+		)
+		{
+			var lightValue = GetItemPowerLevel(itemInstance);
+
+			var currentValue = lightValuesByBucket[bucketHash];
+
+			if (currentValue < lightValue)
+			{
+				lightValuesByBucket[bucketHash] = lightValue;
+			}
+		}
+
+		private static bool TryGetItemInstance(
+			DestinyProfileResponse profileResponse,
+			DestinyItemComponent itemComponent,
+			out DestinyItemInstanceComponent destinyItemInstance
+		)
+		{
+			return profileResponse.ItemComponents.Instances.Data.TryGetValue(
+				itemComponent.ItemInstanceId.GetValueOrDefault(),
+				out destinyItemInstance!
+			);
+		}
+
+		private static void CalculatePowerLevelForItemAndAssign(
+			Dictionary<uint, int> armorBucketValues,
+			Dictionary<uint, int> weaponBucketValues,
+			uint bucketHash,
+			DestinyProfileResponse profileResponse,
+			DestinyItemComponent item
+		)
+		{
+			if (armorBucketValues.TryGetValue(bucketHash, out var currentValue))
+			{
+				if (!TryGetItemInstance(profileResponse, item, out var instance))
+					return;
+
+				var lightValue = GetItemPowerLevel(instance);
+
+				if (currentValue < lightValue)
+				{
+					armorBucketValues[bucketHash] = lightValue;
+				}
+			}
+			else if (weaponBucketValues.TryGetValue(bucketHash, out var currentWeaponValue))
+			{
+				if (!TryGetItemInstance(profileResponse, item, out var instance))
+					return;
+
+				var lightValue = GetItemPowerLevel(instance);
+
+				if (currentWeaponValue < lightValue)
+				{
+					weaponBucketValues[bucketHash] = lightValue;
+				}
+			}
 		}
 	}
 }
