@@ -35,7 +35,7 @@ public class MetricUpdater : IProfileUpdater
         DestinyProfileDbModel dbProfile,
         DestinyProfileResponse profileResponse)
     {
-        dbProfile.Metrics ??= new Dictionary<uint, DestinyMetricDbModel>();
+        dbProfile.Metrics ??= [];
 
         foreach (var (metricHash, metricComponent) in profileResponse.Metrics.Data.Metrics)
         {

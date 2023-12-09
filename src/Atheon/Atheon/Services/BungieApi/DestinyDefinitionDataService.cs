@@ -216,7 +216,7 @@ public class DestinyDefinitionDataService
 
         foreach (var nodeSealEntry in sealsPresentationNodeDefinition.Children.PresentationNodes)
         {
-            uint titleHash = 0;
+            uint titleHash;
             uint? gildingHash = null;
 
             if (!nodeSealEntry.PresentationNode.TryGetDefinition(out var sealDefinition))

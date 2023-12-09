@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="DotNetBungieAPI" Version="2.12.2" />
-    <PackageReference Include="DotNetBungieAPI.HashReferences" Version="1.21.1" />
+    <PackageReference Include="DotNetBungieAPI.HashReferences" Version="1.22.1" />
   </ItemGroup>
 
   <ItemGroup>

@@ -63,7 +63,7 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
                 dbProfile.CurrentActivityData.PlaylistActivityHash = charActivities.CurrentPlaylistActivity.Hash;
                 dbProfile.CurrentActivityData.DateActivityStarted = charActivities.DateActivityStarted;
                 dbProfile.CurrentActivityData.ActivityModeHash = charActivities.CurrentActivityMode.Hash;
-                dbProfile.CurrentActivityData.ActivityModeHashes = new List<uint>();
+                dbProfile.CurrentActivityData.ActivityModeHashes = [];
                 foreach (var mode in charActivities.CurrentActivityModes)
                 {
                     var hash = mode.Hash.GetValueOrDefault();
@@ -95,7 +95,7 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
                 dbProfile.CurrentActivityData.PlaylistActivityHash = charActivities.CurrentPlaylistActivity.Hash;
                 dbProfile.CurrentActivityData.DateActivityStarted = charActivities.DateActivityStarted;
                 dbProfile.CurrentActivityData.ActivityModeHash = charActivities.CurrentActivityMode.Hash;
-                dbProfile.CurrentActivityData.ActivityModeHashes = new List<uint>();
+                dbProfile.CurrentActivityData.ActivityModeHashes = [];
                 foreach (var mode in charActivities.CurrentActivityModes)
                 {
                     var hash = mode.Hash.GetValueOrDefault();

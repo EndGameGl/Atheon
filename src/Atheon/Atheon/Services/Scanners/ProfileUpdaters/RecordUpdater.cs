@@ -35,7 +35,7 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
             DestinyProfileResponse profileResponse,
             List<DiscordGuildSettingsDbModel> guildSettings)
         {
-            var titleAndGildHashes = _destinyDefinitionDataService.GetTitleHashesCachedAsync().GetAwaiter().GetResult()!;
+            var titleAndGildHashes = await _destinyDefinitionDataService.GetTitleHashesCachedAsync();
             foreach (var (recordHash, recordComponent) in profileResponse.ProfileRecords.Data.Records)
             {
                 if (dbProfile.Records.TryGetValue(recordHash, out var dbRecord))
@@ -88,8 +88,8 @@ namespace Atheon.Services.Scanners.ProfileUpdaters
                                     WasAnnounced = false,
                                     AdditionalData = new Dictionary<string, string>
                                     {
-                                        { "parentTitleHash", parentTitleRecord.Hash.ToString() },
-                                        { "gildedCount", recordComponent.CompletedCount.ToString() }
+                                        ["parentTitleHash"] = parentTitleRecord.Hash.ToString(),
+                                        ["gildedCount"] = recordComponent.CompletedCount.GetValueOrDefault().ToString()
                                     }
                                 });
                             }
