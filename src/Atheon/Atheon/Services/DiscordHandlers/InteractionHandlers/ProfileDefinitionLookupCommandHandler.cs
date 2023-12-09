@@ -181,6 +181,7 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
         [Choice("Hierarchy of Needs", "3558330464")]
         [Choice("Conditional Finality", "2553509474")]
         [Choice("The Navigator", "161963863")]
+        [Choice("Buried Bloodline", "3275654322")]
         uint collectibleHash,
         [Summary("hide", "Whether to hide this message")]
         bool hide = false)
