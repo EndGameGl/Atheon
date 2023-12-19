@@ -1,8 +1,10 @@
-﻿namespace Atheon.Services.Interfaces
+﻿using DotNetBungieAPI.Models;
+
+namespace Atheon.Services.Interfaces;
+
+public interface IDiscordEventHandler
 {
-    public interface IDiscordEventHandler
-    {
-        void SubscribeToEvents();
-        Task ReportToSystemChannelAsync(string message);
-    }
+    void SubscribeToEvents();
+    Task ReportToSystemChannelAsync(string message);
+    Task ReportGlobalAlertToSystemChannelAsync(GlobalAlert alert);
 }

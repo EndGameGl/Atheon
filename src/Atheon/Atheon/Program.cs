@@ -101,6 +101,7 @@ void ConfigureServices(WebApplicationBuilder applicationBuilder)
 
     applicationBuilder.Services.AddHostedService<ApplicationStartup>();
 
+    applicationBuilder.Services.AddHostedServiceWithInterface<IBungieAlertService, BungieAlertService>();
     applicationBuilder.Services.AddHostedServiceWithInterface<IDestinyManifestHandler, DestinyManifestHandler>();
     applicationBuilder.Services.AddHostedServiceWithInterface<IBungieApiStatus, BungieLifecheckService>();
     applicationBuilder.Services.AddHostedServiceWithInterface<IUserQueue, UserQueueBackgroundProcessor>();
