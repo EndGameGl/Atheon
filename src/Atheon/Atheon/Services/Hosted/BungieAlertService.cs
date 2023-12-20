@@ -10,33 +10,34 @@ public class BungieAlertService : PeriodicBackgroundService, IBungieAlertService
 {
     private readonly ILogger<BungieAlertService> _logger;
     private readonly IBungieClientProvider _bungieClientProvider;
-	private readonly BungieNetApiCallHandler _bungieNetApiCallHandler;
-	private readonly IDiscordEventHandler _discordEventHandler;
+    private readonly BungieNetApiCallHandler _bungieNetApiCallHandler;
+    private readonly IDiscordEventHandler _discordEventHandler;
 
     public IReadOnlyCollection<GlobalAlert> CurrentAlerts { get; private set; }
 
-	public BungieAlertService(
-		ILogger<BungieAlertService> logger,
-		IBungieClientProvider bungieClientProvider,
-		BungieNetApiCallHandler bungieNetApiCallHandler,
-		IDiscordEventHandler discordEventHandler
-	)
-		: base(logger)
-	{
+    public BungieAlertService(
+        ILogger<BungieAlertService> logger,
+        IBungieClientProvider bungieClientProvider,
+        BungieNetApiCallHandler bungieNetApiCallHandler,
+        IDiscordEventHandler discordEventHandler
+    )
+        : base(logger)
+    {
         _logger = logger;
         _bungieClientProvider = bungieClientProvider;
-		_bungieNetApiCallHandler = bungieNetApiCallHandler;
-		_discordEventHandler = discordEventHandler;
-	}
+        _bungieNetApiCallHandler = bungieNetApiCallHandler;
+        _discordEventHandler = discordEventHandler;
+        CurrentAlerts = [];
+    }
 
-	protected override Task BeforeExecutionAsync(CancellationToken stoppingToken)
-	{
+    protected override Task BeforeExecutionAsync(CancellationToken stoppingToken)
+    {      
         ChangeTimerSafe(TimeSpan.FromSeconds(30));
         return Task.CompletedTask;
     }
 
-	protected override async Task OnTimerExecuted(CancellationToken cancellationToken) 
-	{
+    protected override async Task OnTimerExecuted(CancellationToken cancellationToken)
+    {
         try
         {
             if (!_bungieClientProvider.IsReady)
