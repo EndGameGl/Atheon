@@ -114,7 +114,7 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
 			{
 				var reference = clanReferences[j];
 				var sb = new StringBuilder();
-				sb.Append("```");
+				sb.Append("```\n");
 				var usersOfClan = users.Where(x => x.ClanId == reference.Id).ToList();
 
 				for (int i = 0; i < usersOfClan.Count; i++)
@@ -208,7 +208,7 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
 			{
 				var reference = clanReferences[j];
 				var sb = new StringBuilder();
-				sb.Append("```");
+				sb.Append("```\n");
 				var usersOfClan = users.Where(x => x.ClanId == reference.Id).ToList();
 
 				for (int i = 0; i < usersOfClan.Count; i++)
