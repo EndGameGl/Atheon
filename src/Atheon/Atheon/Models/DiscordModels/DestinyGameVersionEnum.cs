@@ -4,33 +4,39 @@ namespace Atheon.Models.DiscordModels;
 
 public enum DestinyGameVersionEnum
 {
-    [Hide]
-    None = 0,
-    [Hide]
-    Vanilla = 1,
-    [Hide]
-    Osiris = 2,
-    [Hide]
-    Warmind = 4,
+	[Hide]
+	None = 0,
 
-    [ChoiceDisplay("Forsaken")]
-    Forsaken = 8,
+	[Hide]
+	Vanilla = 1,
 
-    [ChoiceDisplay("Year Two Annual Pass")]
-    YearTwoAnnualPass = 16,
+	[Hide]
+	Osiris = 2,
 
-    [ChoiceDisplay("Shadowkeep")]
-    Shadowkeep = 32,
+	[Hide]
+	Warmind = 4,
 
-    [ChoiceDisplay("Beyond Light")]
-    BeyondLight = 64,
+	[ChoiceDisplay("Forsaken")]
+	Forsaken = 8,
 
-    [ChoiceDisplay("Anniversary 30th")]
-    Anniversary30th = 128,
+	[ChoiceDisplay("Year Two Annual Pass")]
+	YearTwoAnnualPass = 16,
 
-    [ChoiceDisplay("The Witch Queen")]
-    TheWitchQueen = 256,
+	[ChoiceDisplay("Shadowkeep")]
+	Shadowkeep = 32,
 
-    [ChoiceDisplay("Lightfall")]
-    Lightfall = 512
+	[ChoiceDisplay("Beyond Light")]
+	BeyondLight = 64,
+
+	[ChoiceDisplay("Anniversary 30th")]
+	Anniversary30th = 128,
+
+	[ChoiceDisplay("The Witch Queen")]
+	TheWitchQueen = 256,
+
+	[ChoiceDisplay("Lightfall")]
+	Lightfall = 512,
+
+	[ChoiceDisplay("Final Shape")]
+	FinalShape = 1024,
 }

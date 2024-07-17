@@ -1,4 +1,5 @@
-﻿using Atheon.DataAccess;
+﻿using System.Text;
+using Atheon.DataAccess;
 using Atheon.DataAccess.Models.Destiny.Profiles;
 using Atheon.Destiny2.Metadata;
 using Atheon.Extensions;
@@ -13,7 +14,6 @@ using DotNetBungieAPI.HashReferences;
 using DotNetBungieAPI.Models.Destiny.Definitions.Collectibles;
 using DotNetBungieAPI.Models.Destiny.Definitions.PresentationNodes;
 using DotNetBungieAPI.Models.Destiny.Definitions.Records;
-using System.Text;
 
 namespace Atheon.Services.DiscordHandlers.InteractionHandlers;
 
@@ -71,7 +71,7 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
 			var users = await _destinyDb.GetProfilesCollectibleStatusAsync(
 				collectibleHash,
 				hasItem,
-				guildSettings.Clans.ToArray()
+				[.. guildSettings.Clans]
 			);
 			var clanIds = users.Select(x => x.ClanId).Distinct().ToArray();
 			var clanReferences = await _destinyDb.GetClanReferencesFromIdsAsync(clanIds);
@@ -170,7 +170,7 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
 			var users = await _destinyDb.GetProfilesRecordStatusAsync(
 				recordHash,
 				hasCompletedTriumph,
-				guildSettings.Clans.ToArray()
+				[.. guildSettings.Clans]
 			);
 			var clanIds = users.Select(x => x.ClanId).Distinct().ToArray();
 			var clanReferences = await _destinyDb.GetClanReferencesFromIdsAsync(clanIds);
@@ -250,6 +250,7 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
 		[Choice("Conditional Finality", "2553509474")]
 		[Choice("The Navigator", "161963863")]
 		[Choice("Buried Bloodline", "3275654322")]
+		[Choice("Euphony", "3411864064")]
 			uint collectibleHash,
 		[Summary("hide", "Whether to hide this message")] bool hide = false
 	)
@@ -273,7 +274,7 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
 
 			var drystreaks = await _destinyDb.GetProfileDrystreaksAsync(
 				collectibleHash,
-				guildSettings.Clans.ToArray()
+				[.. guildSettings.Clans]
 			);
 			var clanIds = drystreaks.Select(x => x.ClanId).Distinct().ToArray();
 			var clanReferences = await _destinyDb.GetClanReferencesFromIdsAsync(clanIds);
@@ -308,11 +309,7 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
 					Text("NoUsersFound", () => "No users"),
 					usersOfClan,
 					(user) => user.MembershipId,
-					new Func<DestinyProfileLiteWithValue<int>, object>[]
-					{
-						user => user.Name,
-						user => user.Value
-					},
+					[user => user.Name, user => user.Value],
 					limit: 1018
 				);
 
@@ -355,7 +352,7 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
 				return DestinyDefinitionNotFound<DestinyRecordDefinition>(titleRecordHash);
 
 			var titleName = titleDefinition.TitleInfo.TitlesByGenderHash[
-				DefinitionHashes.Genders.Masculine
+				DefinitionHashes.Genders.BodyType1
 			];
 			var guildSettings = await _guildDb.GetGuildSettingsAsync(GuildId);
 			if (guildSettings is null)
@@ -364,7 +361,7 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
 			var titles = await _destinyDb.GetProfileTitlesAsync(
 				titleRecordHash,
 				hasTitle,
-				guildSettings.Clans.ToArray()
+				[.. guildSettings.Clans]
 			);
 			var clanIds = titles.Select(x => x.ClanId).Distinct().ToArray();
 			var clanReferences = await _destinyDb.GetClanReferencesFromIdsAsync(clanIds);
@@ -415,8 +412,8 @@ public class ProfileDefinitionLookupCommandHandler : LocalizedSlashCommandHandle
 			}
 			else
 			{
-				var parentNode = client.Repository
-					.GetAll<DestinyPresentationNodeDefinition>()
+				var parentNode = client
+					.Repository.GetAll<DestinyPresentationNodeDefinition>()
 					.FirstOrDefault(x => x.CompletionRecord == titleDefinition.Hash);
 
 				icon = parentNode?.DisplayProperties.Icon.AbsolutePath;

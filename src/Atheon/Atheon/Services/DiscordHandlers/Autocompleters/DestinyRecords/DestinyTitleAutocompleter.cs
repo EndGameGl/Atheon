@@ -11,48 +11,62 @@ namespace Atheon.Services.DiscordHandlers.Autocompleters.DestinyRecords;
 
 public class DestinyTitleAutocompleter : AutocompleteHandler
 {
-    private readonly IBungieClientProvider _bungieClientProvider;
-    private readonly ILogger<DestinyCollectibleDefinitionAutocompleter> _logger;
-    private readonly DestinyDefinitionDataService _destinyDefinitionDataService;
-    private readonly ILocalizationService _localizationService;
+	private readonly IBungieClientProvider _bungieClientProvider;
+	private readonly ILogger<DestinyCollectibleDefinitionAutocompleter> _logger;
+	private readonly DestinyDefinitionDataService _destinyDefinitionDataService;
+	private readonly ILocalizationService _localizationService;
 
-    public DestinyTitleAutocompleter(
-        IBungieClientProvider bungieClientProvider,
-        ILogger<DestinyCollectibleDefinitionAutocompleter> logger,
-        DestinyDefinitionDataService destinyDefinitionDataService,
-        ILocalizationService localizationService)
-    {
-        _bungieClientProvider = bungieClientProvider;
-        _logger = logger;
-        _destinyDefinitionDataService = destinyDefinitionDataService;
-        _localizationService = localizationService;
-    }
+	public DestinyTitleAutocompleter(
+		IBungieClientProvider bungieClientProvider,
+		ILogger<DestinyCollectibleDefinitionAutocompleter> logger,
+		DestinyDefinitionDataService destinyDefinitionDataService,
+		ILocalizationService localizationService
+	)
+	{
+		_bungieClientProvider = bungieClientProvider;
+		_logger = logger;
+		_destinyDefinitionDataService = destinyDefinitionDataService;
+		_localizationService = localizationService;
+	}
 
-    public override async Task<AutocompletionResult> GenerateSuggestionsAsync(
-        IInteractionContext context,
-        IAutocompleteInteraction autocompleteInteraction,
-        IParameterInfo parameter,
-        IServiceProvider services)
-    {
-        var lang = await _localizationService.GetGuildLocaleCachedAsync(context.Guild.Id);
+	public override async Task<AutocompletionResult> GenerateSuggestionsAsync(
+		IInteractionContext context,
+		IAutocompleteInteraction autocompleteInteraction,
+		IParameterInfo parameter,
+		IServiceProvider services
+	)
+	{
+		var lang = await _localizationService.GetGuildLocaleCachedAsync(context.Guild.Id);
 
-        var searchEntry = (string)autocompleteInteraction.Data.Options.First(x => x.Focused).Value;
+		var searchEntry = (string)autocompleteInteraction.Data.Options.First(x => x.Focused).Value;
 
-        var client = await _bungieClientProvider.GetClientAsync();
+		var client = await _bungieClientProvider.GetClientAsync();
 
-        var titles = await _destinyDefinitionDataService.GetAllTitleDefinitionsAsync(lang);
+		var titles = await _destinyDefinitionDataService.GetAllTitleDefinitionsAsync(lang);
 
-        var searchResults = titles
-            .Where(x =>
-                !string.IsNullOrEmpty(x.DisplayProperties.Name) &&
-                (x.DisplayProperties.Name.Contains(searchEntry, StringComparison.InvariantCultureIgnoreCase) ||
-                x.TitleInfo.TitlesByGenderHash[DefinitionHashes.Genders.Masculine].Contains(searchEntry, StringComparison.InvariantCultureIgnoreCase)))
-            .Take(20);
+		var searchResults = titles
+			.Where(x =>
+				!string.IsNullOrEmpty(x.DisplayProperties.Name)
+				&& (
+					x.DisplayProperties.Name.Contains(
+						searchEntry,
+						StringComparison.InvariantCultureIgnoreCase
+					)
+					|| x.TitleInfo.TitlesByGenderHash[DefinitionHashes.Genders.BodyType1]
+						.Contains(searchEntry, StringComparison.InvariantCultureIgnoreCase)
+				)
+			)
+			.Take(20);
 
-        var results = searchResults
-                .Where(x => x.DisplayProperties.Name.Length > 0)
-                .Select(x => new AutocompleteResult($"{x.TitleInfo.TitlesByGenderHash[DefinitionHashes.Genders.Masculine]} ({x.DisplayProperties.Name})", x.Hash.ToString()));
+		var results = searchResults
+			.Where(x => x.DisplayProperties.Name.Length > 0)
+			.Select(x => new AutocompleteResult(
+				$"{x.TitleInfo.TitlesByGenderHash[DefinitionHashes.Genders.BodyType1]} ({x.DisplayProperties.Name})",
+				x.Hash.ToString()
+			));
 
-        return !results.Any() ? AutocompletionResult.FromSuccess() : AutocompletionResult.FromSuccess(results);
-    }
+		return !results.Any()
+			? AutocompletionResult.FromSuccess()
+			: AutocompletionResult.FromSuccess(results);
+	}
 }
